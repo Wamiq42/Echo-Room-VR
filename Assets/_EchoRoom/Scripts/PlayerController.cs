@@ -5,7 +5,6 @@ public class PlayerController : MonoBehaviour
     [Header("Subsystems")]
     [SerializeField] private PingEmitter pingEmitter;
     [SerializeField] private EchoPulseController echoPulseController;
-
     private void Awake()
     {
         // Optional safety check
