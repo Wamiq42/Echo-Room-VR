@@ -858,7 +858,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 42946bcd8268fb248a1f9b4eca88ff4e, type: 2}
   - {fileID: 2100000, guid: 2038ccefa63656b459ab7b951c07e530, type: 2}
   pingSpeed: 0.75
-  pulseColor: {r: 0, g: 0, b: 0, a: 1}
+  pulseColor: {r: 1, g: 1, b: 1, a: 0}
   pulseWidth: 0.5
   maxRadius: 1.5
 --- !u!1001 &1764314586697066544
@@ -1034,6 +1034,22 @@ PrefabInstance:
     - target: {fileID: 1539283720157032111, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       propertyPath: m_LocalPosition.y
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6176391489480280370, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_BackGroundColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6176391489480280370, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_BackGroundColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6176391489480280370, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_BackGroundColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6176391489480280370, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_BackGroundColor.r
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       propertyPath: m_Name
