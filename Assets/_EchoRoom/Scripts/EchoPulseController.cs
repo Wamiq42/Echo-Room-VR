@@ -3,7 +3,8 @@ using System.Collections;
 
 public class EchoPulseController : MonoBehaviour
 {
-    [SerializeField] private Material pulseMaterial;
+    [SerializeField] private Material[] pulseMaterials;
+
     [SerializeField] private float pingSpeed = 5f;
     [SerializeField] private Color pulseColor = Color.white;
     [SerializeField] private float pulseWidth = 0.5f;
@@ -23,18 +24,35 @@ public class EchoPulseController : MonoBehaviour
     {
         float currentRadius = 0f;
 
-        pulseMaterial.SetVector("_PingOrigin", origin);
-        pulseMaterial.SetColor("_PulseColor", pulseColor);
-        pulseMaterial.SetFloat("_PulseWidth", pulseWidth);
+        foreach (var mat in pulseMaterials)
+        {
+            if (mat != null)
+            {
+                mat.SetVector("_PingOrigin", origin);
+                mat.SetColor("_PulseColor", pulseColor);
+                mat.SetFloat("_PulseWidth", pulseWidth);
+            }
+        }
 
         while (currentRadius < maxRadius)
         {
             currentRadius += Time.deltaTime * pingSpeed;
-            pulseMaterial.SetFloat("_PingRadius", currentRadius);
+
+            foreach (var mat in pulseMaterials)
+            {
+                if (mat != null)
+                    mat.SetFloat("_PingRadius", currentRadius);
+            }
+
             yield return null;
         }
 
-        pulseMaterial.SetFloat("_PingRadius", 0f);
+        foreach (var mat in pulseMaterials)
+        {
+            if (mat != null)
+                mat.SetFloat("_PingRadius", 0f);
+        }
+
         pulseRoutine = null;
     }
 }

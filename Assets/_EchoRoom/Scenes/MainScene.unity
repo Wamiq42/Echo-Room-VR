@@ -854,9 +854,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9da3f9a39c41c042b3d2bb04e1fc777, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pulseMaterial: {fileID: 2100000, guid: f1de00942c44fe1458d3973b4fc5e047, type: 2}
+  pulseMaterial: {fileID: 2100000, guid: 42946bcd8268fb248a1f9b4eca88ff4e, type: 2}
   pingSpeed: 5
-  pulseColor: {r: 1, g: 0, b: 0, a: 1}
+  pulseColor: {r: 0, g: 0, b: 0, a: 1}
   pulseWidth: 0.5
   maxRadius: 20
 --- !u!1001 &1764314586697066544
@@ -964,9 +964,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3282896733244751652, guid: 2f208bf08727b1b4ba66469714ba973d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 2038ccefa63656b459ab7b951c07e530, type: 2}
     - target: {fileID: 3384311038902762984, guid: 2f208bf08727b1b4ba66469714ba973d, type: 3}
       propertyPath: m_Name
       value: Floor
+      objectReference: {fileID: 0}
+    - target: {fileID: 3384311038902762984, guid: 2f208bf08727b1b4ba66469714ba973d, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
