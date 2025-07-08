@@ -7,63 +7,71 @@ public class PingEmitter : MonoBehaviour
     [SerializeField] private bool isDebugging = false;
 
     [Header("Ping Settings")]
-    [SerializeField] private float pingRange = 10f;               // Max distance the ping can travel
-    [SerializeField] private float pingRadius = 0.1f;             // Radius of the spherecast
-    [SerializeField] private LayerMask pingLayers;                // What layers the ping can interact with
+    [SerializeField] private float pingRange = 10f;
+    [SerializeField] private float pingRadius = 0.1f;
+    [SerializeField] private LayerMask pingLayers;
 
     [Header("Input")]
-    [SerializeField] private InputActionProperty pingAction;      // Input binding (e.g., trigger press)
+    [SerializeField] private InputActionProperty pingAction;
 
     [Header("Feedback")]
-    [SerializeField] private AudioSource pingSound;               // Sound played when ping is emitted
-    [SerializeField] private GameObject hitEffectPrefab;          // Optional VFX when ping hits something
+    [SerializeField] private AudioSource pingSound;
+    [SerializeField] private GameObject hitEffectPrefab;
 
-    private void Update()
+    // NEW: Event to notify player controller
+    public event System.Action<Vector3> OnPingEmitted;
+
+    private void OnEnable()
     {
-        // Runtime input (VR controller)
-        if (pingAction.action.WasPressedThisFrame())
-        {
-            EmitPing();
-        }
+        pingAction.action.performed += OnPingPerformed;
+    }
+
+    private void OnDisable()
+    {
+        pingAction.action.performed -= OnPingPerformed;
+    }
+
+    private void OnPingPerformed(InputAction.CallbackContext ctx)
+    {
+        EmitPing();
+    }
 
 #if UNITY_EDITOR
-        // Editor-only testing with keyboard
+    private void Update()
+    {
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             LogDebug("Editor test key pressed (SPACE)");
             EmitPing();
         }
-#endif
     }
-
+#endif
 
     private void EmitPing()
     {
         Vector3 origin = transform.position;
         Vector3 direction = transform.forward;
 
-        // Spherecast forward from the controller to detect hits
         RaycastHit hit;
         bool hitSomething = Physics.SphereCast(origin, pingRadius, direction, out hit, pingRange, pingLayers);
 
-        // Play ping sound
         if (pingSound != null)
             pingSound.Play();
 
-        // If something was hit, log it and show feedback
         if (hitSomething)
         {
             LogDebug("Ping hit: " + hit.collider.name);
-
             if (hitEffectPrefab)
                 Instantiate(hitEffectPrefab, hit.point, Quaternion.identity);
         }
+
+        // NEW: Notify other systems
+        OnPingEmitted?.Invoke(origin);
     }
 
     private void LogDebug(string msg)
     {
         if (!isDebugging) return;
-
         Debug.Log($"[PingEmitter] {msg}");
     }
 }
