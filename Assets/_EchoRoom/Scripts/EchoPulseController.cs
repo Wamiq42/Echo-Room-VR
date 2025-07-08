@@ -6,7 +6,6 @@ public class EchoPulseController : MonoBehaviour
     [SerializeField] private Material[] pulseMaterials;
 
     [SerializeField] private float pingSpeed = 5f;
-    [SerializeField] private Color pulseColor = Color.white;
     [SerializeField] private float pulseWidth = 0.5f;
     [SerializeField] private float maxRadius = 20f;
 
@@ -29,7 +28,6 @@ public class EchoPulseController : MonoBehaviour
             if (mat != null)
             {
                 mat.SetVector("_PingOrigin", origin);
-                mat.SetColor("_PulseColor", pulseColor);
                 mat.SetFloat("_PulseWidth", pulseWidth);
             }
         }
