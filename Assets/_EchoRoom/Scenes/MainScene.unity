@@ -230,8 +230,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isDebugging: 1
-  pingRange: 10
-  pingRadius: 0.1
+  pingRange: 0.25
+  pingRadius: 1
   pingLayers:
     serializedVersion: 2
     m_Bits: 1024
@@ -857,10 +857,10 @@ MonoBehaviour:
   pulseMaterials:
   - {fileID: 2100000, guid: 42946bcd8268fb248a1f9b4eca88ff4e, type: 2}
   - {fileID: 2100000, guid: 2038ccefa63656b459ab7b951c07e530, type: 2}
-  pingSpeed: 1.5
+  pingSpeed: 0.75
   pulseColor: {r: 0, g: 0, b: 0, a: 1}
   pulseWidth: 0.5
-  maxRadius: 3
+  maxRadius: 1.5
 --- !u!1001 &1764314586697066544
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1030,6 +1030,10 @@ PrefabInstance:
     - target: {fileID: 856360250439717618, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1539283720157032111, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       propertyPath: m_Name

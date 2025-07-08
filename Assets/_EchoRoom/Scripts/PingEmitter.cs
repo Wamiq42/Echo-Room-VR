@@ -18,6 +18,12 @@ public class PingEmitter : MonoBehaviour
     [SerializeField] private AudioSource pingSound;
     [SerializeField] private GameObject hitEffectPrefab;
 
+#if UNITY_EDITOR
+    private Vector3 debugHitPoint;
+    private Vector3 debugDirection;
+    private float debugDistance;
+#endif
+    
     // NEW: Event to notify player controller
     public event System.Action<Vector3> OnPingEmitted;
 
@@ -50,23 +56,27 @@ public class PingEmitter : MonoBehaviour
     private void EmitPing()
     {
         Vector3 origin = transform.position;
-        Vector3 direction = transform.forward;
-
-        RaycastHit hit;
-        bool hitSomething = Physics.SphereCast(origin, pingRadius, direction, out hit, pingRange, pingLayers);
 
         if (pingSound != null)
             pingSound.Play();
 
-        if (hitSomething)
+        // OverlapSphere detects ALL colliders within the radius
+        Collider[] hits = Physics.OverlapSphere(origin, pingRadius, pingLayers);
+    
+        foreach (var hit in hits)
         {
-            LogDebug("Ping hit: " + hit.collider.name);
+            LogDebug("Ping detected: " + hit.name);
             if (hitEffectPrefab)
-                Instantiate(hitEffectPrefab, hit.point, Quaternion.identity);
+                Instantiate(hitEffectPrefab, hit.transform.position, Quaternion.identity);
+            OnPingEmitted?.Invoke(origin);
         }
 
-        // NEW: Notify other systems
-        OnPingEmitted?.Invoke(origin);
+       
+
+#if UNITY_EDITOR
+        debugHitPoint = origin;
+        debugDistance = pingRadius;
+#endif
     }
 
     private void LogDebug(string msg)
@@ -74,4 +84,15 @@ public class PingEmitter : MonoBehaviour
         if (!isDebugging) return;
         Debug.Log($"[PingEmitter] {msg}");
     }
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        if (!isDebugging) return;
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(debugHitPoint, debugDistance);
+    }
+#endif
+
+
 }
