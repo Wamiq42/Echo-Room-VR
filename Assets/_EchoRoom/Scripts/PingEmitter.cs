@@ -26,15 +26,18 @@ public class PingEmitter : MonoBehaviour
     
     // NEW: Event to notify player controller
     public event System.Action<Vector3> OnPingEmitted;
+    public static System.Action PlayPingSound;
 
     private void OnEnable()
     {
         pingAction.action.performed += OnPingPerformed;
+        PlayPingSound += PingSound;
     }
 
     private void OnDisable()
     {
         pingAction.action.performed -= OnPingPerformed;
+        PlayPingSound -= PingSound;
     }
 
     private void OnPingPerformed(InputAction.CallbackContext ctx)
@@ -57,9 +60,6 @@ public class PingEmitter : MonoBehaviour
     {
         Vector3 origin = transform.position;
 
-        if (pingSound != null)
-            pingSound.Play();
-
         // OverlapSphere detects ALL colliders within the radius
         Collider[] hits = Physics.OverlapSphere(origin, pingRadius, pingLayers);
     
@@ -79,6 +79,11 @@ public class PingEmitter : MonoBehaviour
 #endif
     }
 
+    private void PingSound()
+    {
+        if (pingSound != null)
+            pingSound.Play();
+    }
     private void LogDebug(string msg)
     {
         if (!isDebugging) return;

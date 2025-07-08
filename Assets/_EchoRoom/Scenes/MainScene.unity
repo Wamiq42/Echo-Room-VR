@@ -858,8 +858,8 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 42946bcd8268fb248a1f9b4eca88ff4e, type: 2}
   - {fileID: 2100000, guid: 2038ccefa63656b459ab7b951c07e530, type: 2}
   pingSpeed: 0.75
-  pulseColor: {r: 1, g: 1, b: 1, a: 0}
   pulseWidth: 0.5
+  fadeDuration: 1.5
   maxRadius: 1.5
 --- !u!1001 &1764314586697066544
 PrefabInstance:

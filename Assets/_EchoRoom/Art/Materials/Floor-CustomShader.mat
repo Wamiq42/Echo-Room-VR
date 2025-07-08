@@ -137,8 +137,8 @@ Material:
     - _BaseColor: {r: 0.13207549, g: 0.1302065, b: 0.1302065, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _PingOrigin: {r: 0.101046585, g: 0.95, b: 0.29964912, a: 0}
-    - _PulseColor: {r: 0, g: 0, b: 0, a: 1}
+    - _PingOrigin: {r: 0.17423828, g: 0.95, b: 0.26389587, a: 0}
+    - _PulseColor: {r: 1, g: 1, b: 1, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _Tiling: {r: 50, g: 50, b: 0, a: 0}
   m_BuildTextureStacks: []
