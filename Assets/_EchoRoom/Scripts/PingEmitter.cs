@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -17,7 +18,11 @@ public class PingEmitter : MonoBehaviour
     [Header("Feedback")]
     [SerializeField] private AudioSource pingSound;
     [SerializeField] private GameObject hitEffectPrefab;
-
+    [SerializeField] private GameObject echoSoundPrefab;
+    [SerializeField] private float sphereCastRadius = 0.2f;
+    [SerializeField] private float maxEchoDistance = 20f;
+    
+    
 #if UNITY_EDITOR
     private Vector3 debugHitPoint;
     private Vector3 debugDirection;
@@ -55,7 +60,12 @@ public class PingEmitter : MonoBehaviour
         }
     }
 #endif
-
+    
+    /// <summary>
+    /// Emits a short-range ping using OverlapSphere to detect nearby objects,
+    /// triggers visual hit effects, and notifies listeners.
+    /// Also calls EmitDirectionalEcho() for forward-facing echo feedback.
+    /// </summary>
     private void EmitPing()
     {
         Vector3 origin = transform.position;
@@ -77,8 +87,51 @@ public class PingEmitter : MonoBehaviour
         debugHitPoint = origin;
         debugDistance = pingRadius;
 #endif
+        EmitDirectionalEcho();
     }
+    
+    /// <summary>
+    /// Performs a directional SphereCast in the forward direction.
+    /// If an object is hit, calculates the echo delay based on distance
+    /// and plays a delayed echo sound at the hit point.
+    /// </summary>
+    private void EmitDirectionalEcho()
+    {
+        Ray ray = new Ray(transform.position, transform.forward);
+        if (Physics.SphereCast(ray, sphereCastRadius, out RaycastHit hit, maxEchoDistance, pingLayers))
+        {
+            float distance = hit.distance;
+            float delay = distance / 343f; // speed of sound
 
+            LogDebug($"Echo hit: {hit.collider.name} at {distance:F2}m (delay: {delay:F2}s)");
+            StartCoroutine(PlayEchoAfterDelay(hit.point, delay));
+
+#if UNITY_EDITOR
+            debugHitPoint = hit.point;
+            debugDirection = transform.forward;
+            debugDistance = distance;
+#endif
+        }
+    }
+    
+    /// <summary>
+    /// Waits for a time delay based on hit distance, then instantiates
+    /// and plays an echo sound at the specified world position.
+    /// </summary>
+    private IEnumerator PlayEchoAfterDelay(Vector3 position, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (echoSoundPrefab != null)
+        {
+            GameObject echo = Instantiate(echoSoundPrefab, position, Quaternion.identity);
+            AudioSource src = echo.GetComponent<AudioSource>();
+            if (src != null)
+                src.Play();
+
+            Destroy(echo, 5f); // cleanup
+        }
+    }
     private void PingSound()
     {
         if (pingSound != null)
