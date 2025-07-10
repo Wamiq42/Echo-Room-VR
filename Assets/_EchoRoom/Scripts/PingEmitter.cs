@@ -17,11 +17,15 @@ public class PingEmitter : MonoBehaviour
 
     [Header("Feedback")]
     [SerializeField] private AudioSource pingSound;
-    [SerializeField] private GameObject hitEffectPrefab;
+    
     [SerializeField] private GameObject echoSoundPrefab;
+    
+    [SerializeField] private ParticleSystem pingRippleFX;
+    
     [SerializeField] private float sphereCastRadius = 0.2f;
     [SerializeField] private float maxEchoDistance = 20f;
     
+    private float nextPingTime = 0f;
     
 #if UNITY_EDITOR
     private Vector3 debugHitPoint;
@@ -68,6 +72,9 @@ public class PingEmitter : MonoBehaviour
     /// </summary>
     private void EmitPing()
     {
+        if (Time.time < nextPingTime)
+            return;
+        
         Vector3 origin = transform.position;
 
         // OverlapSphere detects ALL colliders within the radius
@@ -76,8 +83,6 @@ public class PingEmitter : MonoBehaviour
         foreach (var hit in hits)
         {
             LogDebug("Ping detected: " + hit.name);
-            if (hitEffectPrefab)
-                Instantiate(hitEffectPrefab, hit.transform.position, Quaternion.identity);
             OnPingEmitted?.Invoke(origin);
         }
 
@@ -88,6 +93,11 @@ public class PingEmitter : MonoBehaviour
         debugDistance = pingRadius;
 #endif
         EmitDirectionalEcho();
+        
+        if (pingSound != null && pingSound.clip != null)
+        {
+            nextPingTime = Time.time + pingSound.clip.length;
+        }
     }
     
     /// <summary>
@@ -97,6 +107,7 @@ public class PingEmitter : MonoBehaviour
     /// </summary>
     private void EmitDirectionalEcho()
     {
+        PlayDetachedParticle(); //Particle of the emission ping.
         Ray ray = new Ray(transform.position, transform.forward);
         if (Physics.SphereCast(ray, sphereCastRadius, out RaycastHit hit, maxEchoDistance, pingLayers))
         {
@@ -137,6 +148,35 @@ public class PingEmitter : MonoBehaviour
         if (pingSound != null)
             pingSound.Play();
     }
+    private void PlayDetachedParticle()
+    {
+        if (pingRippleFX == null) return;
+
+        // Detach from parent (usually Right Controller)
+        Transform particleTransform = pingRippleFX.transform;
+        particleTransform.SetParent(null);
+
+        // Set position and rotation to emitter's current location
+        particleTransform.position = transform.position;
+        particleTransform.rotation = transform.rotation;
+
+        // Clear and play
+        pingRippleFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        pingRippleFX.Play();
+
+        // Reattach after particle finishes
+        StartCoroutine(ReattachParticleAfterDelay(pingRippleFX.main.duration));
+    }
+
+    private IEnumerator ReattachParticleAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (pingRippleFX != null)
+        {
+            pingRippleFX.transform.SetParent(transform);
+        }
+    }
+    
     private void LogDebug(string msg)
     {
         if (!isDebugging) return;

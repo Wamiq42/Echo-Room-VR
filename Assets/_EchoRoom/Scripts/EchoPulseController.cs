@@ -16,7 +16,7 @@ public class EchoPulseController : MonoBehaviour
 
     public void TriggerPing(Vector3 origin)
     {
-        if (isPulsing) return;
+        //if (isPulsing) return;
 
         if (pulseRoutine != null)
             StopCoroutine(pulseRoutine);
@@ -69,7 +69,7 @@ public class EchoPulseController : MonoBehaviour
             if (mat != null) mat.SetFloat("_PingRadius", 0f);
 
         pulseRoutine = null;
-        isPulsing = false;
+       // isPulsing = false;
     }
 
 }
