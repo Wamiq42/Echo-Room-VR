@@ -21,7 +21,7 @@ public class PingEmitter : MonoBehaviour
     [SerializeField] private GameObject echoSoundPrefab;
     
     [SerializeField] private ParticleSystem pingRippleFX;
-    
+    [SerializeField] private Transform playerOrigin; // Assign this in the inspector
     [SerializeField] private float sphereCastRadius = 0.2f;
     [SerializeField] private float maxEchoDistance = 20f;
     
@@ -107,8 +107,12 @@ public class PingEmitter : MonoBehaviour
     /// </summary>
     private void EmitDirectionalEcho()
     {
-        PlayDetachedParticle(); //Particle of the emission ping.
-        Ray ray = new Ray(transform.position, transform.forward);
+        // Ray starts from player origin, but goes in controller's forward direction
+        Vector3 origin = playerOrigin.position;
+        Vector3 direction = transform.forward;
+
+        Ray ray = new Ray(origin, direction);
+        PlayDetachedParticle(ray);
         if (Physics.SphereCast(ray, sphereCastRadius, out RaycastHit hit, maxEchoDistance, pingLayers))
         {
             float distance = hit.distance;
@@ -123,6 +127,10 @@ public class PingEmitter : MonoBehaviour
             debugDistance = distance;
 #endif
         }
+        PlayDetachedParticle(ray);
+        
+        // DEBUG: Draw the ray in the Scene view
+        Debug.DrawRay(ray.origin, ray.direction * maxEchoDistance, Color.cyan, 1.0f);
     }
     
     /// <summary>
@@ -148,25 +156,36 @@ public class PingEmitter : MonoBehaviour
         if (pingSound != null)
             pingSound.Play();
     }
-    private void PlayDetachedParticle()
+  
+    private void PlayDetachedParticle(Ray ray)
     {
         if (pingRippleFX == null) return;
 
-        // Detach from parent (usually Right Controller)
         Transform particleTransform = pingRippleFX.transform;
+
+        // Store parent
+        Transform originalParent = particleTransform.parent;
+
+        // Detach it so it doesn’t move with the controller
         particleTransform.SetParent(null);
 
-        // Set position and rotation to emitter's current location
-        particleTransform.position = transform.position;
-        particleTransform.rotation = transform.rotation;
+        // Set position only — we already rotated the prefab manually in Unity
+        particleTransform.position = ray.origin + ray.direction * 0.2f;
 
+        // Rotation with -90° Y offset to match prefab orientation
+        Quaternion forwardRotation = Quaternion.LookRotation(ray.direction);
+        Quaternion offset = Quaternion.Euler(0, -90f, 0);
+        particleTransform.rotation = forwardRotation * offset;
+        
         // Clear and play
         pingRippleFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         pingRippleFX.Play();
 
-        // Reattach after particle finishes
+        // Reattach after it's finished
         StartCoroutine(ReattachParticleAfterDelay(pingRippleFX.main.duration));
     }
+
+
 
     private IEnumerator ReattachParticleAfterDelay(float delay)
     {
