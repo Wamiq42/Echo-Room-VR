@@ -108,7 +108,7 @@ public class PingEmitter : MonoBehaviour
     private void EmitDirectionalEcho()
     {
         // Ray starts from player origin, but goes in controller's forward direction
-        Vector3 origin = playerOrigin.position;
+        Vector3 origin = Camera.main.transform.position; // Or cache MainCamera transform if preferred
         Vector3 direction = transform.forward;
 
         Ray ray = new Ray(origin, direction);

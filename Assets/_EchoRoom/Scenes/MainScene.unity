@@ -363,7 +363,7 @@ GameObject:
   - component: {fileID: 149629121}
   - component: {fileID: 149629120}
   - component: {fileID: 149629119}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Long Wall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -714,6 +714,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Door_3_Brown
       objectReference: {fileID: 0}
+    - target: {fileID: 1202036086350856, guid: 83b0e1aa6fd302d48bf48b1a30f9031c, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1277515215171538, guid: 83b0e1aa6fd302d48bf48b1a30f9031c, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1889589370831100, guid: 83b0e1aa6fd302d48bf48b1a30f9031c, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1908674092843544, guid: 83b0e1aa6fd302d48bf48b1a30f9031c, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 4651603642805868, guid: 83b0e1aa6fd302d48bf48b1a30f9031c, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.0000002
@@ -771,6 +787,11 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 4651603642805868, guid: 83b0e1aa6fd302d48bf48b1a30f9031c, type: 3}
   m_PrefabInstance: {fileID: 214900655}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &274873329 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 856360250439717618, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+  m_PrefabInstance: {fileID: 8338603742182400825}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &285783406
 GameObject:
@@ -839,7 +860,7 @@ MonoBehaviour:
   pingSound: {fileID: 285783409}
   echoSoundPrefab: {fileID: 997486918461003773, guid: 089cef7dc5407264e8b862bcd64272be, type: 3}
   pingRippleFX: {fileID: 1945871886273133206}
-  playerOrigin: {fileID: 1264771006}
+  playerOrigin: {fileID: 274873329}
   sphereCastRadius: 0.2
   maxEchoDistance: 20
 --- !u!82 &285783409
@@ -1057,6 +1078,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6781390985292887290, guid: 76bee378b07b2f549ad647a1c401319a, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 45a9ab88490887c40a11b1db55394dba, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1145,7 +1170,7 @@ GameObject:
   - component: {fileID: 550477215}
   - component: {fileID: 550477214}
   - component: {fileID: 550477213}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Long Wall (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1498,7 +1523,7 @@ GameObject:
   - component: {fileID: 562549535}
   - component: {fileID: 562549534}
   - component: {fileID: 562549533}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Long Wall (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2152,7 +2177,7 @@ GameObject:
   - component: {fileID: 1030406502}
   - component: {fileID: 1030406501}
   - component: {fileID: 1030406500}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Wall With Corridor Face
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2685,6 +2710,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6781390985292887290, guid: 76bee378b07b2f549ad647a1c401319a, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 45a9ab88490887c40a11b1db55394dba, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2899,11 +2928,6 @@ Transform:
   - {fileID: 2024407644}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!4 &1264771006 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1539283720157032111, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
-  m_PrefabInstance: {fileID: 8338603742182400825}
-  m_PrefabAsset: {fileID: 0}
 --- !u!43 &1319306734
 Mesh:
   m_ObjectHideFlags: 0
@@ -3477,9 +3501,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9da3f9a39c41c042b3d2bb04e1fc777, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pulseMaterials:
-  - {fileID: 2100000, guid: 42946bcd8268fb248a1f9b4eca88ff4e, type: 2}
-  - {fileID: 2100000, guid: 2038ccefa63656b459ab7b951c07e530, type: 2}
+  pulseShader: {fileID: -6465566751694194690, guid: 91c7532bceea7a149b5b01666d755eda, type: 3}
   pingSpeed: 0.75
   pulseWidth: 0.5
   fadeDuration: 1.5
@@ -3498,7 +3520,7 @@ GameObject:
   - component: {fileID: 2024407647}
   - component: {fileID: 2024407646}
   - component: {fileID: 2024407645}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Door Frame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
