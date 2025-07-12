@@ -19,6 +19,7 @@ public class PingEmitter : MonoBehaviour
     [SerializeField] private AudioSource pingSound;
     [SerializeField] private GameObject echoSoundPrefab;
     [SerializeField] private ParticleSystem pingRippleFX;
+    [SerializeField] private GameObject echoRippleFX;
 
     [Header("Ray Settings")]
     [SerializeField] private Transform playerOrigin;
@@ -146,15 +147,16 @@ public class PingEmitter : MonoBehaviour
         Vector3 direction = transform.forward;
 
         Ray ray = new Ray(origin, direction);
-        PlayDetachedParticle(ray);
+        //PlayDetachedParticle(ray);
 
         if (Physics.SphereCast(ray, sphereCastRadius, out RaycastHit hit, maxEchoDistance, pingLayers))
         {
             float distance = hit.distance;
             float delay = distance / 343f;
-
+            
             LogDebug($"Echo hit: {hit.collider.name} at {distance:F2}m (delay: {delay:F2}s)");
             StartCoroutine(PlayEchoAfterDelay(hit.point, delay));
+            StartCoroutine(GenerateEchoParticleEffect(hit, delay));
 
 #if UNITY_EDITOR
             _debugHitPoint = hit.point;
@@ -183,6 +185,20 @@ public class PingEmitter : MonoBehaviour
                 src.Play();
 
             Destroy(echo, 5f);
+        }
+    }
+    /// <summary>
+    /// Instantiate the echo particle prefab at a location after a timed delay.
+    /// </summary>
+    private IEnumerator GenerateEchoParticleEffect(RaycastHit hit, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (echoRippleFX != null)
+        {
+            Vector3 spawnPosition = hit.point + hit.normal * 0.05f;
+            Quaternion rotation = Quaternion.LookRotation(-hit.normal);
+            Instantiate(echoRippleFX, spawnPosition, rotation);
         }
     }
 
