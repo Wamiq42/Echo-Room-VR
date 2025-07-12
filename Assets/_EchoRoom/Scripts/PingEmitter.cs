@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 public class PingEmitter : MonoBehaviour
 {
-    [Header("Logger")]
+    [Header("Debug")]
     [SerializeField] private bool isDebugging = false;
 
     [Header("Ping Settings")]
@@ -19,26 +19,44 @@ public class PingEmitter : MonoBehaviour
     [SerializeField] private AudioSource pingSound;
     [SerializeField] private GameObject echoSoundPrefab;
     [SerializeField] private ParticleSystem pingRippleFX;
+
+    [Header("Ray Settings")]
     [SerializeField] private Transform playerOrigin;
     [SerializeField] private float sphereCastRadius = 0.2f;
     [SerializeField] private float maxEchoDistance = 20f;
 
-    private float nextPingTime = 0f;
-    private float echoClipLength = 0f;
+    [Header("Light Feedback")]
+    [SerializeField] private Light pingFlashLight;
+    [SerializeField] private float flashIntensity = 2f;
+    [SerializeField] private float flashRange = 3f;
+    [SerializeField] private float flashDuration = 0.3f;
+
+    private float _nextPingTime = 0f;
+    private float _echoClipLength = 0f;
+    private float _defaultIntensity;
+    private float _defaultRange;
+
     public static Func<float> RequestPing;
     public static Action PlayPingSound;
     public event Action<Vector3> OnPingEmitted;
 
 #if UNITY_EDITOR
-    private Vector3 debugHitPoint;
-    private Vector3 debugDirection;
-    private float debugDistance;
+    private Vector3 _debugHitPoint;
+    private Vector3 _debugDirection;
+    private float _debugDistance;
 #endif
 
     private void Awake()
     {
-        echoClipLength = echoSoundPrefab.GetComponent<AudioSource>().clip.length;
+        if(echoSoundPrefab.TryGetComponent(out AudioSource audioSource))
+        {
+            _echoClipLength = audioSource.clip.length;
+        }
+
+        SetLightDefaultValues();
     }
+
+   
 
     private void OnEnable()
     {
@@ -76,11 +94,11 @@ public class PingEmitter : MonoBehaviour
     /// </summary>
     private float TryEmitFromExternal()
     {
-        if (Time.time < nextPingTime)
+        if (Time.time < _nextPingTime)
             return 0f;
 
         EmitPing();
-        return Mathf.Max(0f, nextPingTime - Time.time); // return remaining duration
+        return Mathf.Max(0f, _nextPingTime - Time.time);
     }
 
     /// <summary>
@@ -89,7 +107,7 @@ public class PingEmitter : MonoBehaviour
     /// </summary>
     private void EmitPing()
     {
-        if (Time.time < nextPingTime)
+        if (Time.time < _nextPingTime)
             return;
 
         Vector3 origin = transform.position;
@@ -102,8 +120,8 @@ public class PingEmitter : MonoBehaviour
         }
 
 #if UNITY_EDITOR
-        debugHitPoint = origin;
-        debugDistance = pingRadius;
+        _debugHitPoint = origin;
+        _debugDistance = pingRadius;
 #endif
 
         float echoDelay = EmitDirectionalEcho();
@@ -111,9 +129,11 @@ public class PingEmitter : MonoBehaviour
         if (pingSound != null && pingSound.clip != null)
             pingSound.Play();
 
-        float echoDuration = echoClipLength;
+        if (pingFlashLight != null)
+            StartCoroutine(FlashLight());
 
-        nextPingTime = Time.time + echoDelay + echoDuration;
+        float echoDuration = _echoClipLength;
+        _nextPingTime = Time.time + echoDelay + echoDuration;
     }
 
     /// <summary>
@@ -136,20 +156,17 @@ public class PingEmitter : MonoBehaviour
             LogDebug($"Echo hit: {hit.collider.name} at {distance:F2}m (delay: {delay:F2}s)");
             StartCoroutine(PlayEchoAfterDelay(hit.point, delay));
 
-
-            PlayDetachedParticle(ray);
-            Debug.DrawRay(ray.origin, ray.direction * maxEchoDistance, Color.cyan, 1.0f);
-            
 #if UNITY_EDITOR
-            debugHitPoint = hit.point;
-            debugDirection = transform.forward;
-            debugDistance = distance;
+            _debugHitPoint = hit.point;
+            _debugDirection = transform.forward;
+            _debugDistance = distance;
 #endif
+            Debug.DrawRay(ray.origin, ray.direction * maxEchoDistance, Color.cyan, 1.0f);
             return delay;
         }
+
         return 0f;
     }
-
 
     /// <summary>
     /// Plays the echo sound prefab at a location after a timed delay.
@@ -169,6 +186,40 @@ public class PingEmitter : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Smoothly boosts the point light to simulate a pulse flash, then fades it back to default.
+    /// </summary>
+    private IEnumerator FlashLight()
+    {
+        pingFlashLight.intensity = flashIntensity;
+        pingFlashLight.range = flashRange;
+
+        float elapsed = 0f;
+
+        while (elapsed < flashDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / flashDuration;
+
+            pingFlashLight.intensity = Mathf.Lerp(flashIntensity, _defaultIntensity, t);
+            pingFlashLight.range = Mathf.Lerp(flashRange, _defaultRange, t);
+
+            yield return null;
+        }
+
+        pingFlashLight.intensity = _defaultIntensity;
+        pingFlashLight.range = _defaultRange;
+
+        LogDebug("Ping flash light smoothly reset.");
+    }
+    private void SetLightDefaultValues()
+    {
+        if (pingFlashLight != null)
+        {
+            _defaultIntensity = pingFlashLight.intensity;
+            _defaultRange = pingFlashLight.range;
+        }
+    }
     /// <summary>
     /// Plays the ping audio immediately if assigned.
     /// </summary>
@@ -211,7 +262,7 @@ public class PingEmitter : MonoBehaviour
     }
 
     /// <summary>
-    /// Logs debug messages if enabled.
+    /// Logs debug messages if debugging is enabled.
     /// </summary>
     private void LogDebug(string msg)
     {
@@ -224,7 +275,7 @@ public class PingEmitter : MonoBehaviour
     {
         if (!isDebugging) return;
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(debugHitPoint, debugDistance);
+        Gizmos.DrawWireSphere(_debugHitPoint, _debugDistance);
     }
 #endif
 }
