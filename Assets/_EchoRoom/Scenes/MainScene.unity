@@ -803,6 +803,7 @@ GameObject:
   m_Component:
   - component: {fileID: 285783407}
   - component: {fileID: 285783408}
+  - component: {fileID: 285783410}
   - component: {fileID: 285783409}
   m_Layer: 0
   m_Name: PingEmiiter
@@ -840,7 +841,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isDebugging: 1
-  pingRange: 0.25
   pingRadius: 1
   pingLayers:
     serializedVersion: 2
@@ -959,6 +959,21 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &285783410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 285783406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8def56d3e3dd8ba46ba0d078c4b9d485, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isDebugging: 0
+  sensitivity: 0.1
+  checkInterval: 0.1
 --- !u!4 &312097106 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1327041611117458807, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}

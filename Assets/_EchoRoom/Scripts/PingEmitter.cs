@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -8,7 +9,6 @@ public class PingEmitter : MonoBehaviour
     [SerializeField] private bool isDebugging = false;
 
     [Header("Ping Settings")]
-    [SerializeField] private float pingRange = 10f;
     [SerializeField] private float pingRadius = 0.1f;
     [SerializeField] private LayerMask pingLayers;
 
@@ -17,36 +17,41 @@ public class PingEmitter : MonoBehaviour
 
     [Header("Feedback")]
     [SerializeField] private AudioSource pingSound;
-    
     [SerializeField] private GameObject echoSoundPrefab;
-    
     [SerializeField] private ParticleSystem pingRippleFX;
-    [SerializeField] private Transform playerOrigin; // Assign this in the inspector
+    [SerializeField] private Transform playerOrigin;
     [SerializeField] private float sphereCastRadius = 0.2f;
     [SerializeField] private float maxEchoDistance = 20f;
-    
+
     private float nextPingTime = 0f;
-    
+    private float echoClipLength = 0f;
+    public static Func<float> RequestPing;
+    public static Action PlayPingSound;
+    public event Action<Vector3> OnPingEmitted;
+
 #if UNITY_EDITOR
     private Vector3 debugHitPoint;
     private Vector3 debugDirection;
     private float debugDistance;
 #endif
-    
-    // NEW: Event to notify player controller
-    public event System.Action<Vector3> OnPingEmitted;
-    public static System.Action PlayPingSound;
+
+    private void Awake()
+    {
+        echoClipLength = echoSoundPrefab.GetComponent<AudioSource>().clip.length;
+    }
 
     private void OnEnable()
     {
         pingAction.action.performed += OnPingPerformed;
         PlayPingSound += PingSound;
+        RequestPing += TryEmitFromExternal;
     }
 
     private void OnDisable()
     {
         pingAction.action.performed -= OnPingPerformed;
         PlayPingSound -= PingSound;
+        RequestPing -= TryEmitFromExternal;
     }
 
     private void OnPingPerformed(InputAction.CallbackContext ctx)
@@ -64,78 +69,90 @@ public class PingEmitter : MonoBehaviour
         }
     }
 #endif
-    
+
     /// <summary>
-    /// Emits a short-range ping using OverlapSphere to detect nearby objects,
-    /// triggers visual hit effects, and notifies listeners.
-    /// Also calls EmitDirectionalEcho() for forward-facing echo feedback.
+    /// Called externally by other systems (e.g. mic trigger) to attempt a ping.
+    /// Respects the internal cooldown timer.
+    /// </summary>
+    private float TryEmitFromExternal()
+    {
+        if (Time.time < nextPingTime)
+            return 0f;
+
+        EmitPing();
+        return Mathf.Max(0f, nextPingTime - Time.time); // return remaining duration
+    }
+
+    /// <summary>
+    /// Emits a ping using overlap detection and triggers directional echo feedback.
+    /// Applies internal cooldown to prevent rapid reuse.
     /// </summary>
     private void EmitPing()
     {
         if (Time.time < nextPingTime)
             return;
-        
+
         Vector3 origin = transform.position;
 
-        // OverlapSphere detects ALL colliders within the radius
         Collider[] hits = Physics.OverlapSphere(origin, pingRadius, pingLayers);
-    
         foreach (var hit in hits)
         {
             LogDebug("Ping detected: " + hit.name);
             OnPingEmitted?.Invoke(origin);
         }
 
-       
-
 #if UNITY_EDITOR
         debugHitPoint = origin;
         debugDistance = pingRadius;
 #endif
-        EmitDirectionalEcho();
-        
+
+        float echoDelay = EmitDirectionalEcho();
+
         if (pingSound != null && pingSound.clip != null)
-        {
-            nextPingTime = Time.time + pingSound.clip.length;
-        }
+            pingSound.Play();
+
+        float echoDuration = echoClipLength;
+
+        nextPingTime = Time.time + echoDelay + echoDuration;
     }
-    
+
     /// <summary>
-    /// Performs a directional SphereCast in the forward direction.
-    /// If an object is hit, calculates the echo delay based on distance
-    /// and plays a delayed echo sound at the hit point.
+    /// Sends a forward-facing echo pulse using a spherecast.
+    /// If it hits, plays echo audio after a delay based on distance.
     /// </summary>
-    private void EmitDirectionalEcho()
+    private float EmitDirectionalEcho()
     {
-        // Ray starts from player origin, but goes in controller's forward direction
-        Vector3 origin = Camera.main.transform.position; // Or cache MainCamera transform if preferred
+        Vector3 origin = Camera.main.transform.position;
         Vector3 direction = transform.forward;
 
         Ray ray = new Ray(origin, direction);
         PlayDetachedParticle(ray);
+
         if (Physics.SphereCast(ray, sphereCastRadius, out RaycastHit hit, maxEchoDistance, pingLayers))
         {
             float distance = hit.distance;
-            float delay = distance / 343f; // speed of sound
+            float delay = distance / 343f;
 
             LogDebug($"Echo hit: {hit.collider.name} at {distance:F2}m (delay: {delay:F2}s)");
             StartCoroutine(PlayEchoAfterDelay(hit.point, delay));
 
+
+            PlayDetachedParticle(ray);
+            Debug.DrawRay(ray.origin, ray.direction * maxEchoDistance, Color.cyan, 1.0f);
+            
 #if UNITY_EDITOR
             debugHitPoint = hit.point;
             debugDirection = transform.forward;
             debugDistance = distance;
 #endif
+            return delay;
         }
-        PlayDetachedParticle(ray);
-        
-        // DEBUG: Draw the ray in the Scene view
-        Debug.DrawRay(ray.origin, ray.direction * maxEchoDistance, Color.cyan, 1.0f);
+        return 0f;
     }
-    
+
+
     /// <summary>
-    /// Waits for a time delay based on hit distance, then instantiates
-    /// and plays an echo sound at the specified world position.
+    /// Plays the echo sound prefab at a location after a timed delay.
     /// </summary>
     private IEnumerator PlayEchoAfterDelay(Vector3 position, float delay)
     {
@@ -148,45 +165,42 @@ public class PingEmitter : MonoBehaviour
             if (src != null)
                 src.Play();
 
-            Destroy(echo, 5f); // cleanup
+            Destroy(echo, 5f);
         }
     }
+
+    /// <summary>
+    /// Plays the ping audio immediately if assigned.
+    /// </summary>
     private void PingSound()
     {
         if (pingSound != null)
             pingSound.Play();
     }
-  
+
+    /// <summary>
+    /// Detaches the ripple effect particle system, positions it along the ray, and plays it.
+    /// </summary>
     private void PlayDetachedParticle(Ray ray)
     {
         if (pingRippleFX == null) return;
 
         Transform particleTransform = pingRippleFX.transform;
-
-        // Store parent
         Transform originalParent = particleTransform.parent;
 
-        // Detach it so it doesn’t move with the controller
         particleTransform.SetParent(null);
-
-        // Set position only — we already rotated the prefab manually in Unity
         particleTransform.position = ray.origin + ray.direction * 0.2f;
+        particleTransform.rotation = Quaternion.LookRotation(ray.direction) * Quaternion.Euler(0, -90f, 0);
 
-        // Rotation with -90° Y offset to match prefab orientation
-        Quaternion forwardRotation = Quaternion.LookRotation(ray.direction);
-        Quaternion offset = Quaternion.Euler(0, -90f, 0);
-        particleTransform.rotation = forwardRotation * offset;
-        
-        // Clear and play
         pingRippleFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         pingRippleFX.Play();
 
-        // Reattach after it's finished
         StartCoroutine(ReattachParticleAfterDelay(pingRippleFX.main.duration));
     }
 
-
-
+    /// <summary>
+    /// Reattaches the particle system to this object after playing.
+    /// </summary>
     private IEnumerator ReattachParticleAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
@@ -195,21 +209,22 @@ public class PingEmitter : MonoBehaviour
             pingRippleFX.transform.SetParent(transform);
         }
     }
-    
+
+    /// <summary>
+    /// Logs debug messages if enabled.
+    /// </summary>
     private void LogDebug(string msg)
     {
         if (!isDebugging) return;
         Debug.Log($"[PingEmitter] {msg}");
     }
+
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
         if (!isDebugging) return;
-
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(debugHitPoint, debugDistance);
     }
 #endif
-
-
 }
