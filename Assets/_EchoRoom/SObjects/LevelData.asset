@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e90b2358ea986245857770b5e2c09c0, type: 3}
   m_Name: LevelData
   m_EditorClassIdentifier: 
-  levelName: Level 1
-  levelPrefab: {fileID: 361475908990514205, guid: fa2cddf0fab12b24fa3a7412353c8557, type: 3}
-  previewImage: {fileID: 0}
-  description: 
+  levels:
+  - levelName: Level 1
+    levelPrefab: {fileID: 361475908990514205, guid: fa2cddf0fab12b24fa3a7412353c8557, type: 3}
+    previewImage: {fileID: 0}
+    description: Find all the boxes in the maze, to open the exit door.

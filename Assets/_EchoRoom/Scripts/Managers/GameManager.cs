@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private bool enableDebugging = false;  // ✅ debug toggle on top
-    [SerializeField] private Transform levelRoot;           // Empty parent in scene where levels will spawn
-    [SerializeField] private List<LevelData> levels;        // Assign LevelData assets here in Inspector
+    [SerializeField] private bool enableDebugging = false;   // ✅ debug toggle on top
+    [SerializeField] private Transform levelRoot;            // Empty parent in scene where levels will spawn
+    [SerializeField] private LevelData levelData;            // ✅ single asset that holds all level info
 
     private int _currentLevelIndex = -1;
     private GameObject _currentLevelInstance;
@@ -15,8 +14,8 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     // Events
-    public event Action<LevelData> OnLevelLoaded;
-    public event Action<LevelData> OnLevelCompleted;
+    public event Action<Level> OnLevelLoaded;
+    public event Action<Level> OnLevelCompleted;
 
     private void Awake()
     {
@@ -36,7 +35,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void LoadLevel(int index)
     {
-        if (index < 0 || index >= levels.Count)
+        if (levelData == null || levelData.levels == null || index < 0 || index >= levelData.levels.Length)
         {
             Log($"Invalid level index: {index}");
             return;
@@ -47,7 +46,7 @@ public class GameManager : MonoBehaviour
             Destroy(_currentLevelInstance);
 
         _currentLevelIndex = index;
-        LevelData data = levels[_currentLevelIndex];
+        Level data = levelData.levels[_currentLevelIndex];
 
         // Spawn new level prefab
         if (data.levelPrefab != null)
@@ -57,7 +56,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Log($"LevelData at index {index} has no prefab assigned.");
+            Log($"Level at index {index} has no prefab assigned.");
         }
 
         OnLevelLoaded?.Invoke(data);
@@ -68,8 +67,8 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void CompleteLevel()
     {
-        if (_currentLevelIndex < 0 || _currentLevelIndex >= levels.Count) return;
-        LevelData data = levels[_currentLevelIndex];
+        if (_currentLevelIndex < 0 || _currentLevelIndex >= levelData.levels.Length) return;
+        Level data = levelData.levels[_currentLevelIndex];
         Log($"Level completed: {data.levelName}");
         OnLevelCompleted?.Invoke(data);
     }
@@ -80,7 +79,7 @@ public class GameManager : MonoBehaviour
     public void LoadNextLevel()
     {
         int nextIndex = _currentLevelIndex + 1;
-        if (nextIndex < levels.Count)
+        if (levelData != null && nextIndex < levelData.levels.Length)
         {
             LoadLevel(nextIndex);
         }
