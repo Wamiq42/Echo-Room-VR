@@ -1,8 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-namespace DoorScript
-{
+
 	[RequireComponent(typeof(AudioSource))]
 
 
@@ -39,5 +38,4 @@ public class Door : MonoBehaviour {
 		asource.clip = open?openDoor:closeDoor;
 		asource.Play ();
 	}
-}
 }
