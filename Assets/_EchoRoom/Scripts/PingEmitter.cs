@@ -116,15 +116,16 @@ public class PingEmitter : MonoBehaviour
         Collider[] hits = Physics.OverlapSphere(origin, pingRadius, pingLayers);
         foreach (var hit in hits)
         {
+            // Check for an EchoTarget or anything implementing IEchoInteractable
+            if (hit.TryGetComponent<IEchoInteractable>(out var interactable))
+            {
+                interactable.OnPingHit();  // ✅ Register ping on that object
+            }
+            
             LogDebug("Ping detected: " + hit.name);
             OnPingEmitted?.Invoke(origin);
         }
-
-#if UNITY_EDITOR
-        _debugHitPoint = origin;
-        _debugDistance = pingRadius;
-#endif
-
+        
         float echoDelay = EmitDirectionalEcho();
 
         if (pingSound != null && pingSound.clip != null)
@@ -135,6 +136,11 @@ public class PingEmitter : MonoBehaviour
 
         float echoDuration = _echoClipLength;
         _nextPingTime = Time.time + echoDelay + echoDuration;
+        
+#if UNITY_EDITOR
+        _debugHitPoint = origin;
+        _debugDistance = pingRadius;
+#endif
     }
 
     /// <summary>
