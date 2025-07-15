@@ -29,6 +29,7 @@ public class EchoTarget : MonoBehaviour, IEchoInteractable
         if (_isActivated) return;
 
         _isActivated = true;
+        if(audioSource != null)
         audioSource?.Play();
         StartCoroutine(FlashEffect());
 

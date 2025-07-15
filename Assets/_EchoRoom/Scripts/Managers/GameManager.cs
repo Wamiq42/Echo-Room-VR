@@ -30,6 +30,11 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject); // stays alive through scene transitions if needed
     }
 
+    private void Start()
+    {
+        LoadLevel(0);
+    }
+
     /// <summary>
     /// Load a level by index.
     /// Destroys the previous level instance if it exists.
