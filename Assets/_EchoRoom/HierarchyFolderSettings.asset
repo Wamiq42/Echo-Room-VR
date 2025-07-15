@@ -19,3 +19,5 @@ MonoBehaviour:
     backgroundColor: {r: 1, g: 0.9315591, b: 0, a: 1}
   - folderName: _Environment
     backgroundColor: {r: 0, g: 0.06572676, b: 1, a: 1}
+  - folderName: _Game Management
+    backgroundColor: {r: 1, g: 0, b: 0.92679024, a: 1}
