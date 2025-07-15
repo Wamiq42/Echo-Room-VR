@@ -10,7 +10,7 @@ public class EchoPuzzleController : PuzzleBase
     void Awake()
     {
         _targets.AddRange(GetComponentsInChildren<EchoTarget>());
-        if (enableDebugging) Debug.Log($"[EchoPuzzleController] Found {_targets.Count} targets.");
+        Log($"Found {_targets.Count} targets.");
     }
 
     /// <summary>
@@ -25,8 +25,7 @@ public class EchoPuzzleController : PuzzleBase
         _countedTargets.Add(target);
         _hitCount++;
 
-        if (enableDebugging)
-            Debug.Log($"[EchoPuzzleController] Progress: {_hitCount}/{_targets.Count}");
+        Log($"Progress: {_hitCount}/{_targets.Count}");
 
         if (_hitCount >= _targets.Count)
         {

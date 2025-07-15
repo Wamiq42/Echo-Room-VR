@@ -24,4 +24,11 @@ public abstract class PuzzleBase : MonoBehaviour
     /// Reset puzzle state and elements.
     /// </summary>
     public abstract void ResetPuzzle();
+    
+    // ---------- Debugging ----------
+    protected void Log(string message)
+    {
+        if (enableDebugging)
+            Debug.Log($"[{GetType().Name}] {message}");
+    }
 }
