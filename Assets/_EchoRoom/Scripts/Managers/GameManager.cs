@@ -6,7 +6,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool enableDebugging = false;   // ✅ debug toggle on top
     [SerializeField] private Transform levelRoot;            // Empty parent in scene where levels will spawn
     [SerializeField] private LevelData levelData;            // ✅ single asset that holds all level info
-
+    [SerializeField] private PlayerController playerController;
+    
     private int _currentLevelIndex = -1;
     private GameObject _currentLevelInstance;
 
@@ -51,8 +52,16 @@ public class GameManager : MonoBehaviour
         // Spawn new level prefab
         if (data.levelPrefab != null)
         {
+            // After spawning the level
             _currentLevelInstance = Instantiate(data.levelPrefab, levelRoot);
             Log($"Loaded level: {data.levelName}");
+
+            // Find LevelSetup on this instance
+            LevelSetup setup = _currentLevelInstance.GetComponent<LevelSetup>();
+            if (setup != null && setup.playerSpawnPoint != null)
+            {
+                playerController.MovePlayerToSpawn(setup.playerSpawnPoint.position, setup.playerSpawnPoint.rotation);
+            }
         }
         else
         {

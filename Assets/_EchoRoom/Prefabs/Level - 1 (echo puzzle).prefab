@@ -362,6 +362,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 508157784916194863}
+  - component: {fileID: -6154567468150505361}
   m_Layer: 0
   m_Name: Level - 1 (echo puzzle)
   m_TagString: Untagged
@@ -389,6 +390,19 @@ Transform:
   - {fileID: 5784047134253581705}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-6154567468150505361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 361475908990514205}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 944f0c507ca093a4e857516ccdf3c72d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerSpawnPoint: {fileID: 5784047134253581705}
 --- !u!1 &795525730755794156
 GameObject:
   m_ObjectHideFlags: 0
@@ -7541,6 +7555,14 @@ PrefabInstance:
     - target: {fileID: 6639511031445227550, guid: a6ddfb55e40eb8145932c46eec36c712, type: 3}
       propertyPath: m_SharedVertices.Array.size
       value: 17
+      objectReference: {fileID: 0}
+    - target: {fileID: 6639511031445227550, guid: a6ddfb55e40eb8145932c46eec36c712, type: 3}
+      propertyPath: m_Tangents.Array.data[36].w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6639511031445227550, guid: a6ddfb55e40eb8145932c46eec36c712, type: 3}
+      propertyPath: m_Tangents.Array.data[36].y
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6639511031445227550, guid: a6ddfb55e40eb8145932c46eec36c712, type: 3}
       propertyPath: m_Positions.Array.data[36].x
