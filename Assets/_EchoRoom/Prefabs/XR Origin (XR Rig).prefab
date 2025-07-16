@@ -307,6 +307,83 @@ MonoBehaviour:
       m_Flags: 0
     m_Reference: {fileID: -1636515391019944688, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   m_ButtonPressPoint: 0.5
+--- !u!1 &1875125756093277201
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5083485459906134499}
+  - component: {fileID: 1650462650236084584}
+  - component: {fileID: 6980793120841757919}
+  m_Layer: 2
+  m_Name: PlayerController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5083485459906134499
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1875125756093277201}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 856360250439717618}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1650462650236084584
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1875125756093277201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f43d7c7f79011a34f83fd20f1cb69cca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDebugging: 0
+  pingEmitter: {fileID: 8416053744947094760}
+  echoPulseController: {fileID: 7189654928853140017}
+  xrOrigin: {fileID: 856360250439717618}
+--- !u!114 &6980793120841757919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1875125756093277201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ffbd15ab3e896a408dcd06c2b1bc0b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDebugging: 0
+  moveProvider: {fileID: 2407624353111627174}
+  sprintAction:
+    m_UseReference: 1
+    m_Action:
+      m_Name: Sprint
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: f083b0d7-3c44-44af-9400-cd4e4802f7ff
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 4105815097800583798, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+  normalSpeed: 1
+  sprintSpeed: 3
 --- !u!1 &2153818478967586166
 GameObject:
   m_ObjectHideFlags: 0
@@ -370,7 +447,7 @@ MonoBehaviour:
       m_Interactions: 
       m_SingletonActionBindings: []
       m_Flags: 0
-    m_Reference: {fileID: 187161793506945269, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+    m_Reference: {fileID: 1184606327916650432, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   pingSound: {fileID: 5063217100221876388}
   echoSoundPrefab: {fileID: 997486918461003773, guid: 089cef7dc5407264e8b862bcd64272be, type: 3}
   pingRippleFX: {fileID: 7223239753762232890}
@@ -615,9 +692,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5772631025027859343}
-  - component: {fileID: 6442871501455739962}
   m_Layer: 0
-  m_Name: PlayerController
+  m_Name: Custom Objects Scripts
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -640,22 +716,6 @@ Transform:
   - {fileID: 4141890772921508245}
   m_Father: {fileID: 1327041611117458807}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6442871501455739962
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5568366016201419355}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f43d7c7f79011a34f83fd20f1cb69cca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  enableDebugging: 0
-  pingEmitter: {fileID: 8416053744947094760}
-  echoPulseController: {fileID: 7189654928853140017}
-  xrOrigin: {fileID: 856360250439717618}
 --- !u!1 &5719925207354129139
 GameObject:
   m_ObjectHideFlags: 0
@@ -1470,6 +1530,7 @@ Transform:
   m_Children:
   - {fileID: 1539283720157032111}
   - {fileID: 6907691451449454121}
+  - {fileID: 5083485459906134499}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &178819243864471633

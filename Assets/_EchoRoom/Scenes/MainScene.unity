@@ -396,7 +396,7 @@ MonoBehaviour:
   enableDebugging: 0
   levelRoot: {fileID: 1902498831}
   levelData: {fileID: 11400000, guid: 4478f8e819aef4147b5aaf220699c68f, type: 2}
-  playerController: {fileID: 715188073}
+  playerController: {fileID: 0}
 --- !u!1 &124233579
 GameObject:
   m_ObjectHideFlags: 0
@@ -1822,6 +1822,39 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &373398951 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1875125756093277201, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+  m_PrefabInstance: {fileID: 8338603742182400825}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &373398954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 373398951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ffbd15ab3e896a408dcd06c2b1bc0b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDebugging: 0
+  moveProvider: {fileID: 8338603742182400826}
+  sprintAction:
+    m_UseReference: 1
+    m_Action:
+      m_Name: Sprint
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: f083b0d7-3c44-44af-9400-cd4e4802f7ff
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 4105815097800583798, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+  normalSpeed: 1
+  sprintSpeed: 3
 --- !u!1001 &437641092
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3122,17 +3155,6 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
---- !u!114 &715188073 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6442871501455739962, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
-  m_PrefabInstance: {fileID: 8338603742182400825}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f43d7c7f79011a34f83fd20f1cb69cca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &784116013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7161,10 +7183,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8416053744947094760, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
-      propertyPath: pingAction.m_Reference
-      value: 
-      objectReference: {fileID: 1184606327916650432, guid: c348712bda248c246b8c49b3db54643f, type: 3}
     - target: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       propertyPath: m_Name
       value: XR Origin (XR Rig)
@@ -7172,8 +7190,22 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1875125756093277201, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 373398954}
   m_SourcePrefab: {fileID: 100100000, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+--- !u!114 &8338603742182400826 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2407624353111627174, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+  m_PrefabInstance: {fileID: 8338603742182400825}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b1e8c997df241c1a67045eeac79b41b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &8606320340095491648
 PrefabInstance:
   m_ObjectHideFlags: 0
