@@ -12,6 +12,15 @@ public class EchoPuzzleController : PuzzleBase
         _targets.AddRange(GetComponentsInChildren<IPuzzleElement>());
         Log($"Found {_targets.Count} targets.");
     }
+    private void OnEnable()
+    {
+        EchoButtonInteractable.OnAnyButtonPressed += HandleButtonPressed;
+    }
+
+    private void OnDisable()
+    {
+        EchoButtonInteractable.OnAnyButtonPressed -= HandleButtonPressed;
+    }
 
     /// <summary>
     /// Called by an EchoTarget when it is hit by a ping.
@@ -32,7 +41,14 @@ public class EchoPuzzleController : PuzzleBase
             MarkSolved();
         }
     }
+    
+    private void HandleButtonPressed(EchoButtonInteractable button)
+    {
+        if (IsSolved) return;
+        if (!button.transform.IsChildOf(transform)) return; // filter
 
+        RegisterHit(button); // this is still IPuzzleElement
+    }
     public override void ResetPuzzle()
     {
         IsSolved = false;
