@@ -16,4 +16,6 @@ public interface IPlayerInputSource
     /// Returns true only on the frame ping input is triggered.
     /// </summary>
     bool GetPingInput();
+    
+    bool GetGripInput();
 }

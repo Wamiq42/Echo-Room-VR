@@ -26,6 +26,12 @@ public class PlayerInputManager : MonoBehaviour
     public Vector2 ReadMove() => _currentSource != null ? _currentSource.GetMoveInput() : Vector2.zero;
     public bool ReadSprint() => _currentSource != null && _currentSource.GetSprintInput();
     public bool ReadPing() => _currentSource != null && _currentSource.GetPingInput();
+    public bool ReadGrip()
+    {
+        // For now, reuse your Sprint action if that’s mapped to grip,
+        // or assign a specific grip InputActionProperty in ControllerInputSource and expose it.
+        return _currentSource != null && _currentSource.GetGripInput();
+    }
 
     private void Update()
     {

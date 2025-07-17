@@ -8,7 +8,7 @@ public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
     [SerializeField] private Transform buttonTop;       // The part of the button that moves
     [SerializeField] private float pressDepth = 0.02f; // How far it moves down
     [SerializeField] private float pressSpeed = 10f;   // How fast it animates
-    [SerializeField] private InputActionProperty gripAction; // Grip input to press
+    [SerializeField] private PlayerInputManager inputManager;
     [SerializeField] private UnityEvent onButtonPressed;
 
     
@@ -25,23 +25,13 @@ public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
         base.Awake();
         if (buttonTop != null)
             _initialLocalPos = buttonTop.localPosition;
-    }
 
-    private void OnEnable()
-    {
-        if (gripAction != null)
-            gripAction.action.Enable();
-    }
-
-    private void OnDisable()
-    {
-        if (gripAction != null)
-            gripAction.action.Disable();
+        inputManager = GameManager.Instance.PlayerInputManager;
     }
 
     private void Update()
     {
-        _gripHeld = gripAction.action != null && gripAction.action.IsPressed();
+        _gripHeld = inputManager != null && inputManager.ReadGrip();
         AnimateButton();
     }
 

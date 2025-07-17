@@ -7,13 +7,17 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Transform levelRoot;            // Empty parent in scene where levels will spawn
     [SerializeField] private LevelData levelData;            // ✅ single asset that holds all level info
     [SerializeField] private PlayerController playerController;
-    
+    [SerializeField] private PlayerInputManager playerInputManager;
+  
     private int _currentLevelIndex = -1;
     private GameObject _currentLevelInstance;
 
     // ✅ Singleton
     public static GameManager Instance { get; private set; }
-
+    
+    //properties.
+    public PlayerInputManager PlayerInputManager => playerInputManager;
+    
     // Events
     public event Action<Level> OnLevelLoaded;
     public event Action<Level> OnLevelCompleted;

@@ -14,6 +14,7 @@ public class ControllerInputSource : MonoBehaviour, IPlayerInputSource
     [SerializeField] private InputActionProperty rightHandMoveAction;
     [SerializeField] private InputActionProperty sprintAction;
     [SerializeField] private InputActionProperty pingAction;
+    [SerializeField] private InputActionProperty gripAction; // assign in inspector
 
     private void OnEnable()
     {
@@ -55,10 +56,16 @@ public class ControllerInputSource : MonoBehaviour, IPlayerInputSource
         if (performed) Log("Ping triggered");
         return performed;
     }
-
+    public bool GetGripInput()
+    {
+        return gripAction.action != null && gripAction.action.IsPressed();
+    }
     private void Log(string message)
     {
         if (!enableDebugging || string.IsNullOrEmpty(message)) return;
         Debug.Log($"[ControllerInputSource] {message}");
     }
+  
+   
+
 }
