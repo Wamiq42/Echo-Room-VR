@@ -13,8 +13,8 @@ public class PingEmitter : MonoBehaviour
     [SerializeField] private LayerMask pingLayers;
 
     [Header("Input")]
-    [SerializeField] private InputActionProperty pingAction;
-
+    [SerializeField] private PlayerInputManager inputManager;
+    
     [Header("Feedback")]
     [SerializeField] private AudioSource pingSound;
     [SerializeField] private GameObject echoSoundPrefab;
@@ -56,38 +56,35 @@ public class PingEmitter : MonoBehaviour
 
         SetLightDefaultValues();
     }
-
-   
-
+    
     private void OnEnable()
     {
-        pingAction.action.performed += OnPingPerformed;
         PlayPingSound += PingSound;
         RequestPing += TryEmitFromExternal;
     }
 
     private void OnDisable()
     {
-        pingAction.action.performed -= OnPingPerformed;
         PlayPingSound -= PingSound;
         RequestPing -= TryEmitFromExternal;
     }
 
-    private void OnPingPerformed(InputAction.CallbackContext ctx)
-    {
-        EmitPing();
-    }
 
-#if UNITY_EDITOR
     private void Update()
     {
+        if (inputManager != null && inputManager.ReadPing())
+        {
+            EmitPing();
+        }
+#if UNITY_EDITOR    
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             LogDebug("Editor test key pressed (SPACE)");
             EmitPing();
         }
-    }
 #endif
+    }
+
 
     /// <summary>
     /// Called externally by other systems (e.g. mic trigger) to attempt a ping.

@@ -9,23 +9,13 @@ public class DynamicSprintController : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private DynamicMoveProvider moveProvider;
-    [SerializeField] private InputActionProperty sprintAction;
+    [SerializeField] private PlayerInputManager inputManager;
+
 
     [Header("Settings")]
     [SerializeField] private float normalSpeed = 1.5f;
     [SerializeField] private float sprintSpeed = 3f;
-
-    private void OnEnable()
-    {
-        if (sprintAction != null)
-            sprintAction.action.Enable();
-    }
-
-    private void OnDisable()
-    {
-        if (sprintAction != null)
-            sprintAction.action.Disable();
-    }
+    
 
     private void Update()
     {
@@ -37,10 +27,10 @@ public class DynamicSprintController : MonoBehaviour
     /// </summary>
     private void HandleSprint()
     {
-        if (moveProvider == null || sprintAction.action == null)
+        if (moveProvider == null || inputManager == null)
             return;
 
-        bool isSprinting = sprintAction.action.IsPressed();
+        bool isSprinting = inputManager != null && inputManager.ReadSprint();
         moveProvider.moveSpeed = isSprinting ? sprintSpeed : normalSpeed;
 
         Log(isSprinting ? "Sprinting" : "Walking");
