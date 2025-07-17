@@ -3,20 +3,20 @@ using System.Collections.Generic;
 
 public class EchoPuzzleController : PuzzleBase
 {
-    private List<EchoTarget> _targets = new List<EchoTarget>();
-    private HashSet<EchoTarget> _countedTargets = new HashSet<EchoTarget>();
+    private List<IPuzzleElement> _targets = new List<IPuzzleElement>();
+    private HashSet<IPuzzleElement> _countedTargets = new HashSet<IPuzzleElement>();
     private int _hitCount = 0;
 
     void Awake()
     {
-        _targets.AddRange(GetComponentsInChildren<EchoTarget>());
+        _targets.AddRange(GetComponentsInChildren<IPuzzleElement>());
         Log($"Found {_targets.Count} targets.");
     }
 
     /// <summary>
     /// Called by an EchoTarget when it is hit by a ping.
     /// </summary>
-    public void RegisterHit(EchoTarget target)
+    public void RegisterHit(IPuzzleElement target)
     {
         if (IsSolved) return;
         if (!_targets.Contains(target)) return;
@@ -40,7 +40,7 @@ public class EchoPuzzleController : PuzzleBase
         _countedTargets.Clear();
         foreach (var t in _targets)
         {
-            t.ResetTarget();
+            t.ResetElement();
         }
     }
 }
