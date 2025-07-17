@@ -96,7 +96,8 @@ public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
     /// </summary>
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("PlayerHand"))
+        if (other.GetComponent<HandPressCollider>() != null)
+
         {
             _handInRange = true;
             Log("Hand in range.");
@@ -105,7 +106,7 @@ public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("PlayerHand"))
+        if (other.GetComponent<HandPressCollider>() != null)
         {
             _handInRange = false;
             Log("Hand left range.");
