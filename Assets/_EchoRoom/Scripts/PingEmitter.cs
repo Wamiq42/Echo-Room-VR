@@ -120,9 +120,12 @@ public class PingEmitter : MonoBehaviour
             }
             
             LogDebug("Ping detected: " + hit.name);
-            OnPingEmitted?.Invoke(origin);
         }
-        
+
+        // Fire once per ping (not once per overlapped collider) so the sonar buffer
+        // gets a single shell per ping.
+        OnPingEmitted?.Invoke(origin);
+
         float echoDelay = EmitDirectionalEcho();
 
         if (pingSound != null && pingSound.clip != null)
