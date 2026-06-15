@@ -3863,6 +3863,50 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!1 &804398065 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+  m_PrefabInstance: {fileID: 8338603742182400825}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &804398067 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 178819243864471633, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+  m_PrefabInstance: {fileID: 8338603742182400825}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 804398065}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0cb9aa70a22847b5925ee5f067c10a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &804398071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 804398065}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6fa7b4195685c3846be746c74f0ab2f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionMediator
+--- !u!114 &804398072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 804398065}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a26c941eb8a46f7b6d00416227ab8c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Locomotion.XRBodyTransformer
+  m_XROrigin: {fileID: 804398067}
+  m_BodyPositionEvaluatorObject: {fileID: 0}
+  m_ConstrainedBodyManipulatorObject: {fileID: 0}
+  m_UseCharacterControllerIfExists: 1
 --- !u!43 &906744487
 Mesh:
   m_ObjectHideFlags: 0
@@ -8228,7 +8272,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 856360250439717618, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -1.193
       objectReference: {fileID: 0}
     - target: {fileID: 856360250439717618, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       propertyPath: m_LocalPosition.y
@@ -8316,6 +8360,12 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1081395075}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 804398072}
+    - targetCorrespondingSourceObject: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 804398071}
     - targetCorrespondingSourceObject: {fileID: 904846099986041981, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1783152938}
