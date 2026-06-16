@@ -18,7 +18,7 @@ Shader "EchoRoom/EchoSonarReveal"
     Properties
     {
         _BaseMap ("Base Texture", 2D) = "white" {}
-        [HDR]_BaseColor ("Base Color (dark ambient)", Color) = (0.03, 0.04, 0.05, 1)
+        [HDR]_BaseColor ("Base Color (dark ambient)", Color) = (0.004, 0.0045, 0.006, 1)
 
         [Header(Surface Detail)]
         [Enum(Flat,0,Normals,1,PBR,2)] _RevealQuality ("Reveal Quality", Float) = 0

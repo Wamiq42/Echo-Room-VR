@@ -20,7 +20,9 @@ public class SonarRevealTools : EditorWindow
     private const string ShaderName = "EchoRoom/EchoSonarReveal";
 
     private readonly List<GameObject> _targets = new List<GameObject>();
-    private Color _darkBase = new Color(0.04f, 0.045f, 0.05f, 1f);
+    // Tuned dark base: walls read as faint silhouettes between pings, so the sonar is
+    // actually needed to navigate. Anything brighter and the room is readable without pinging.
+    private Color _darkBase = new Color(0.004f, 0.0045f, 0.006f, 1f);
     private bool _autoQuality = true;
     private int _forcedQuality = 1;
     private Vector2 _scroll;
