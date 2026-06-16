@@ -1264,6 +1264,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Maze_5x5_A
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 1ccafa79d065eac4db380243bb2c62aa, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7249,6 +7253,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Maze_5x5_C
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 840dbf99b5304c145ac6aabf4bce6da4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8088,6 +8096,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 13ba14e3e0402e54a88a41e3d97fcd44, type: 3}
       propertyPath: m_Name
       value: Maze_5x5_B
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 13ba14e3e0402e54a88a41e3d97fcd44, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -8955,7 +8967,7 @@ PrefabInstance:
       objectReference: {fileID: 793614862}
     - target: {fileID: 4071602304494193901, guid: fa2cddf0fab12b24fa3a7412353c8557, type: 3}
       propertyPath: m_VersionIndex
-      value: 100
+      value: 109
       objectReference: {fileID: 0}
     - target: {fileID: 4144150682051864469, guid: fa2cddf0fab12b24fa3a7412353c8557, type: 3}
       propertyPath: m_Mesh
