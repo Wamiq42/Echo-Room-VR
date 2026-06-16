@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: c3b24329b6a217440be995273b220b47
+guid: 1ccafa79d065eac4db380243bb2c62aa
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -7,28 +7,38 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Iron
-    second: {fileID: 2100000, guid: 3c37a30643152564bba34c1e4fdbb789, type: 2}
+      name: Door_FrameIron
+    second: {fileID: 2100000, guid: d414187df9214924b930ecd5d4fb193e, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: castle_wall_slates
-    second: {fileID: 2100000, guid: fb664d891cc567543876b2538d651a7c, type: 2}
+      name: Door_FrameStone
+    second: {fileID: 2100000, guid: 8fca502c33fc5d84891fe1de2c6130e2, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: cobblestone_floor_04
-    second: {fileID: 2100000, guid: c2b2eb127b305964ea0b3a05d9f3998d, type: 2}
+      name: Door_Wood
+    second: {fileID: 2100000, guid: bed1810f67bffaf48909f97aa9150305, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: dark_wooden_planks
-    second: {fileID: 2100000, guid: 51f71bcf7ec5cea42aacb7a7e4261f0c, type: 2}
+      name: Maze_FloorStone
+    second: {fileID: 2100000, guid: d4a325f460de6a345bbe12813ba16c10, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Maze_RoofStone
+    second: {fileID: 2100000, guid: 3ff417f594f5e8a4e979cf7ec1327111, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Maze_Stone
+    second: {fileID: 2100000, guid: e3253d5c1a51d78468d182de566fd911, type: 2}
   materials:
-    materialImportMode: 2
+    materialImportMode: 1
     materialName: 0
     materialSearch: 1
-    materialLocation: 0
+    materialLocation: 1
   animations:
     legacyGenerateAnimations: 4
     bakeSimulation: 0

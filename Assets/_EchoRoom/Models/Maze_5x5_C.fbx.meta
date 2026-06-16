@@ -3,9 +3,34 @@ guid: 840dbf99b5304c145ac6aabf4bce6da4
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Door_FrameIron
+    second: {fileID: 2100000, guid: 524013f00990b614a8a23d7585e1039a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Door_Wood
+    second: {fileID: 2100000, guid: f4421644d0f164e4e8b552185e585a3b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Maze_FloorStone
+    second: {fileID: 2100000, guid: c7a509e9e02fa0f42a903d09a3b7368f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Maze_RoofStone
+    second: {fileID: 2100000, guid: 80c6965e8fe3c714c958f8e215a41178, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Maze_Stone
+    second: {fileID: 2100000, guid: 2dc4f07587f7c7d49b8b613d4c556543, type: 2}
   materials:
-    materialImportMode: 2
+    materialImportMode: 1
     materialName: 0
     materialSearch: 1
     materialLocation: 1
