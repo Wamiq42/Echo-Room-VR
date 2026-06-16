@@ -157,6 +157,8 @@ All knobs live on the **material** (Inspector) so each surface can differ. Defau
 | Property | Default | Effect |
 |---|---|---|
 | `_BaseColor` | ~`(0.03–0.05)` grey | The dark ambient between pings. Keep low for a dark room. |
+| `_RevealQuality` | Flat (0) | Shading of revealed surfaces: **Flat** (albedo), **Normals** (relief, pulse‑lit), **PBR** (relief + sheen + AO). |
+| `_RevealAmbient` | 0.35 | (Normals/PBR) brightness for surfaces not facing the pulse, so they aren't pure black. |
 | `_RevealSpeed` | 8 (m/s) | How fast the ring travels outward. Lower = slower, more readable sweep. |
 | `_RevealRadius` | 8 (m) | How far the pulse reaches; reveal/ring fade out here. |
 | `_RevealLinger` | 1.5 (s) | How long a revealed surface stays lit after the wave passes (the "remember" window). |
@@ -172,13 +174,25 @@ Global glow lives in `DefaultVolumeProfile` (Bloom intensity/threshold).
 
 ## 7. Making new geometry sonar‑revealable  ← important for new rooms
 
-A surface only reveals if its material uses **`EchoRoom/EchoSonarReveal`**. To convert a
-material:
+A surface only reveals if its material uses **`EchoRoom/EchoSonarReveal`**.
 
-1. Set its **Shader** to `EchoRoom/EchoSonarReveal`.
-2. Set **`_BaseColor`** dark (≈ `(0.04, 0.045, 0.05)`) so it's black until pinged.
-3. The material's existing **`_BaseMap`** (albedo/texture) carries over and is what gets
-   revealed. (The shader is unlit — normal/metallic maps are ignored by design.)
+**Easiest way — the Reveal Converter window:** open **`Tools ▸ Sonar ▸ Reveal Converter`**,
+drag your **FBX model(s) or prefab(s)** into the drop area, and click **Convert**. For each
+asset it finds every material, **auto-detects** the best quality from that material's maps
+(normal map → Normals; metallic/AO → PBR; base only → Flat), switches it to the reveal shader
+carrying its maps over (base, normal, metallic/smoothness, AO + tiling), and darkens the base.
+**FBX-embedded materials are extracted automatically** (to a sibling `Materials/` folder) so
+they can be edited. Undoable. (Source: `Assets/_EchoRoom/Editor/SonarRevealTools.cs`.)
+
+**Reveal Quality** is a dropdown on the material — flip it to compare the three modes live:
+- **Flat** — albedo only. Cheapest; flat look.
+- **Normals** — reads the Normal map and treats the expanding pulse as a moving light, so
+  surface relief pops as the ring sweeps past.
+- **PBR** — Normals + metallic/smoothness + AO, lit by the pulse (relief + sheen). Richest,
+  highest cost on Quest.
+
+Manual fallback: set the material's Shader to `EchoRoom/EchoSonarReveal`, set `_BaseColor`
+dark, and assign maps to `_BaseMap` / `_BumpMap` / `_MetallicGlossMap` / `_OcclusionMap`.
 
 The room geometry already converted: `Wall`, `Floor` (`Enviornment/`), `Carpet_Metallic`
 (Billion Mucks), `Outdoor_Wall_T02` (Phoenix3D, the roof), plus the `_EchoRoom` custom
@@ -223,10 +237,10 @@ Already deleted (the truly old sonar): `EchoPulseShader.shadergraph`, its orphan
 ## 10. Next steps / open items
 
 - [ ] **Apply the reveal shader to the new maze rooms.** `Maze_5x5_A/B/C.fbx`
-  (`Assets/_EchoRoom/Models/`) were just imported and use their **own embedded materials**,
-  which are **not** `EchoSonarReveal` yet — so those rooms will **not** reveal until their
-  materials are converted per §7. This is the most likely "why doesn't the new room light
-  up" question.
+  (`Assets/_EchoRoom/Models/`) use their **own embedded materials**, which are **not**
+  `EchoSonarReveal` yet — those rooms will **not** reveal until converted. One‑click fix:
+  drag the maze FBX into **`Tools ▸ Sonar ▸ Reveal Converter`** and click Convert (§7). This
+  is the most likely "why doesn't the new room light up" question.
 - [ ] Tuning pass per room scale (`_RevealSpeed`, `_RevealRadius`, `_RevealLinger`).
 - [ ] Decide which props stay **landmarks** (lit) vs go dark‑reveal.
 - [ ] (Optional) Rename the host GameObject from `EchoPulseController` →
@@ -241,8 +255,10 @@ Already deleted (the truly old sonar): `EchoPulseShader.shadergraph`, its orphan
 ```
 Assets/_EchoRoom/
   Shaders/
-    EchoSonarReveal.shader      ← ACTIVE sonar visual
+    EchoSonarReveal.shader      ← ACTIVE sonar visual (Flat / Normals / PBR quality)
     EchoPulseSonar.shader       ← disabled legacy (DL2‑style shell)
+  Editor/
+    SonarRevealTools.cs         ← Tools ▸ Sonar ▸ Reveal Converter window (auto-converts FBX/prefab materials)
   Scripts/
     PingEmitter.cs              ← ping input + echo audio/flash (FX rings disabled)
     MicPingTrigger.cs           ← mic → ping
