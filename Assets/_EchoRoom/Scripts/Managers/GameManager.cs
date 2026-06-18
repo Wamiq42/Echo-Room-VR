@@ -81,6 +81,16 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Called by a <see cref="LevelExitTrigger"/> when the player walks through a completed
+    /// level's exit. Marks the level complete and advances to the next one.
+    /// </summary>
+    public void NotifyLevelExitReached()
+    {
+        CompleteLevel();
+        LoadNextLevel();
+    }
+
+    /// <summary>
     /// Call when current level is completed.
     /// </summary>
     public void CompleteLevel()

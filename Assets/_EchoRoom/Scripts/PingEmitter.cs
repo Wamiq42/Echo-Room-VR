@@ -36,6 +36,7 @@ public class PingEmitter : MonoBehaviour
     private float _echoClipLength = 0f;
     private float _defaultIntensity;
     private float _defaultRange;
+    private Camera _mainCamera;
 
     public static Func<float> RequestPing;
     public static Action PlayPingSound;
@@ -49,11 +50,14 @@ public class PingEmitter : MonoBehaviour
 
     private void Awake()
     {
-        if(echoSoundPrefab.TryGetComponent(out AudioSource audioSource))
+        if (echoSoundPrefab != null
+            && echoSoundPrefab.TryGetComponent(out AudioSource audioSource)
+            && audioSource.clip != null)
         {
             _echoClipLength = audioSource.clip.length;
         }
 
+        _mainCamera = Camera.main;
         SetLightDefaultValues();
     }
     
@@ -76,8 +80,8 @@ public class PingEmitter : MonoBehaviour
         {
             EmitPing();
         }
-#if UNITY_EDITOR    
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+#if UNITY_EDITOR
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             LogDebug("Editor test key pressed (SPACE)");
             EmitPing();
@@ -149,7 +153,8 @@ public class PingEmitter : MonoBehaviour
     /// </summary>
     private float EmitDirectionalEcho()
     {
-        Vector3 origin = Camera.main.transform.position;
+        if (_mainCamera == null) _mainCamera = Camera.main;
+        Vector3 origin = _mainCamera != null ? _mainCamera.transform.position : transform.position;
         Vector3 direction = transform.forward;
 
         Ray ray = new Ray(origin, direction);

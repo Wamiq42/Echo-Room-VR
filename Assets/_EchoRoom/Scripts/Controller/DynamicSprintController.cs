@@ -30,7 +30,7 @@ public class DynamicSprintController : MonoBehaviour
         if (moveProvider == null || inputManager == null)
             return;
 
-        bool isSprinting = inputManager != null && inputManager.ReadSprint();
+        bool isSprinting = inputManager.ReadSprint();
         moveProvider.moveSpeed = isSprinting ? sprintSpeed : normalSpeed;
 
         Log(isSprinting ? "Sprinting" : "Walking");

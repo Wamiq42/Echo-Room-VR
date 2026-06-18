@@ -13,7 +13,6 @@ public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
 
     
     private Vector3 _initialLocalPos;
-    private bool _isPressed;
     private bool _handInRange;
     private bool _gripHeld;
     private bool _hasTriggered; // to ensure we only notify once
@@ -26,7 +25,10 @@ public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
         if (buttonTop != null)
             _initialLocalPos = buttonTop.localPosition;
 
-        inputManager = GameManager.Instance.PlayerInputManager;
+        // Prefer the central input manager, but don't NRE if no GameManager exists yet
+        // (e.g. testing a button in isolation). Falls back to the serialized reference.
+        if (GameManager.Instance != null)
+            inputManager = GameManager.Instance.PlayerInputManager;
     }
 
     private void Update()
@@ -61,7 +63,6 @@ public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
                 if (Vector3.Distance(buttonTop.localPosition, _initialLocalPos - Vector3.up * pressDepth) < 0.001f)
                 {
                     _hasTriggered = true;
-                    _isPressed = true;
 
                     Log("Button fully pressed!");
                     onButtonPressed?.Invoke();                 // UnityEvent for custom logic
@@ -85,12 +86,6 @@ public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
 
 
 
-    private void ResetButton()
-    {
-        _isPressed = false;
-        Log("Button reset.");
-    }
-
     /// <summary>
     /// Trigger detection for hand/controller proximity.
     /// </summary>
@@ -113,8 +108,21 @@ public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
         }
     }
 
+    /// <summary>
+    /// Restores the button to its un-pressed state so the puzzle can be replayed:
+    /// lifts the top back up, clears the press latches, and restores the idle material.
+    /// </summary>
     public void ResetElement()
     {
-        // Reset button state here (like lifting it back up, resetting visuals)
+        _hasTriggered = false;
+        _handInRange = false;
+
+        if (buttonTop != null)
+            buttonTop.localPosition = _initialLocalPos;
+
+        if (_renderer != null && idleMat != null)
+            _renderer.material = idleMat;
+
+        Log("Button reset.");
     }
 }
