@@ -1,0 +1,64 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:VisualElement name="menu-root" class="menu-root">
+    <ui:VisualElement class="ambient-glow" picking-mode="Ignore" />
+    <ui:VisualElement class="frame" picking-mode="Ignore" />
+    <ui:VisualElement name="start-screen" class="screen">
+      <ui:Label text="ECHO ROOM" class="title" />
+      <ui:Label text="NEW GAME / LOAD GAME" class="subtitle" />
+      <ui:VisualElement class="signal-line" />
+      <ui:Label text="Begin a new signal or return to an unlocked level." class="body" />
+      <ui:VisualElement class="button-row">
+        <ui:Button name="new-game-button" text="NEW GAME" class="menu-button primary" />
+        <ui:Button name="load-game-button" text="LOAD GAME" class="menu-button" />
+      </ui:VisualElement>
+      <ui:Button name="tutorial-replay-button" text="PLAY TUTORIAL" class="menu-button secondary tutorial-button" />
+      <ui:Label text="POINT WITH A CONTROLLER AND PRESS TRIGGER" class="hint" />
+    </ui:VisualElement>
+    <ui:VisualElement name="level-screen" class="screen hidden">
+      <ui:Label text="LOAD GAME" class="title" />
+      <ui:Label text="SELECT AN UNLOCKED LEVEL" class="subtitle" />
+      <ui:VisualElement class="signal-line" />
+      <ui:Label text="Completing a level unlocks the next one." class="body compact" />
+      <ui:VisualElement class="level-grid">
+        <ui:Button name="level-1-button" text="LEVEL 1" class="menu-button level-button" />
+        <ui:Button name="level-2-button" text="LEVEL 2" class="menu-button level-button" />
+        <ui:Button name="level-3-button" text="LEVEL 3" class="menu-button level-button" />
+        <ui:Button name="level-4-button" text="LEVEL 4" class="menu-button level-button" />
+        <ui:Button name="level-5-button" text="LEVEL 5" class="menu-button level-button" />
+      </ui:VisualElement>
+      <ui:Button name="level-back-button" text="BACK" class="menu-button small back-button" />
+    </ui:VisualElement>
+    <ui:VisualElement name="warning-screen" class="screen hidden">
+      <ui:Label text="OVERWRITE SAVE?" class="title warning-text" />
+      <ui:Label text="NEW GAME WILL RESET PROGRESS" class="subtitle warning-text" />
+      <ui:VisualElement class="signal-line danger-line" />
+      <ui:Label text="All unlocked levels and completed-level progress will be erased." class="body" />
+      <ui:VisualElement class="button-row">
+        <ui:Button name="confirm-new-game-button" text="START NEW GAME" class="menu-button danger" />
+        <ui:Button name="cancel-new-game-button" text="CANCEL" class="menu-button secondary" />
+      </ui:VisualElement>
+      <ui:Label text="THIS CANNOT BE UNDONE" class="hint warning-text" />
+    </ui:VisualElement>
+    <ui:VisualElement name="pause-screen" class="screen hidden">
+      <ui:Label text="SIGNAL PAUSED" class="title" />
+      <ui:Label text="ECHO LINK SUSPENDED" class="subtitle" />
+      <ui:VisualElement class="signal-line" />
+      <ui:Label text="The room is holding its breath." class="body" />
+      <ui:Button name="continue-button" text="CONTINUE" class="menu-button primary single-button" />
+      <ui:Label text="PRESS THE MENU BUTTON TO RESUME" class="hint" />
+    </ui:VisualElement>
+    <ui:VisualElement name="captured-screen" class="screen hidden">
+      <ui:Label text="SIGNAL LOST" class="title danger-text" />
+      <ui:Label text="YOU HAVE BEEN CAPTURED" class="subtitle danger-text" />
+      <ui:VisualElement class="signal-line danger-line" />
+      <ui:Label text="The room has gone silent. Re-enter the signal or return to the beginning." class="body" />
+      <ui:VisualElement class="button-row">
+        <ui:Button name="restart-button" text="RESTART" class="menu-button danger" />
+        <ui:Button name="return-button" text="RETURN TO MENU" class="menu-button secondary compact-label" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement class="scanline scanline-one" picking-mode="Ignore" />
+    <ui:VisualElement class="scanline scanline-two" picking-mode="Ignore" />
+    <ui:Label text="ECHO NETWORK // LOCAL" class="status" picking-mode="Ignore" />
+  </ui:VisualElement>
+</ui:UXML>

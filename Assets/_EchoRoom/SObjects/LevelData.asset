@@ -13,7 +13,32 @@ MonoBehaviour:
   m_Name: LevelData
   m_EditorClassIdentifier: 
   levels:
-  - levelName: Level 1
-    levelPrefab: {fileID: 361475908990514205, guid: fa2cddf0fab12b24fa3a7412353c8557, type: 3}
+  - puzzleId: Maze_A
+    levelName: Maze A
+    levelPrefab: {fileID: 5545046285265823969, guid: cd6b83c380b2ab547824d948e3cc5cc8, type: 3}
     previewImage: {fileID: 0}
-    description: Find all the boxes in the maze, to open the exit door.
+    description: Complete the puzzle and pass through the exit checkpoint to load
+      the next maze.
+  - puzzleId: Maze_B
+    levelName: Maze B
+    levelPrefab: {fileID: 2961158250037908165, guid: a01c3f2f38fe02842b214c740d4640ec, type: 3}
+    previewImage: {fileID: 0}
+    description: Complete the puzzle and pass through the exit checkpoint to load
+      the next maze.
+  - puzzleId: Maze_C
+    levelName: Maze C
+    levelPrefab: {fileID: 260162800454872558, guid: 25b65dbfc2eb6ef40a4dcaf8de2126a1, type: 3}
+    previewImage: {fileID: 0}
+    description: Complete the puzzle and pass through the exit checkpoint to load
+      the next maze.
+  - puzzleId: Maze_D
+    levelName: Maze D
+    levelPrefab: {fileID: 818937718582769101, guid: d672f0ae83d478d4eac673689d1f988e, type: 3}
+    previewImage: {fileID: 0}
+    description: Complete the puzzle and pass through the exit checkpoint to load
+      the next maze.
+  - puzzleId: Maze_E
+    levelName: Maze E
+    levelPrefab: {fileID: 5314132205022506278, guid: c4266fe9725d88846a0e633d7edbef17, type: 3}
+    previewImage: {fileID: 0}
+    description: Final configured maze.

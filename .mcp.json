@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "unity-mcp": {
-      "command": "Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "Library/mcp-server/win-x64/gamedev-mcp-server.exe",
       "args": [
         "port=8080",
         "client-transport=stdio"

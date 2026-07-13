@@ -7,7 +7,8 @@ using UnityEngine;
 /// so there is no per-frame CPU work and surfaces spawned after start are covered too.
 ///
 /// Subscribes directly to <see cref="PingEmitter.OnPingEmitted"/> — independent of the
-/// legacy EchoPulseController.
+/// legacy EchoPulseController. PingEmitter also calls RevealGlobal directly so reveal still
+/// works if this scene component is inactive or not yet subscribed.
 /// </summary>
 public class SonarRevealController : MonoBehaviour
 {
@@ -15,26 +16,32 @@ public class SonarRevealController : MonoBehaviour
     private const int MaxPulses = 16;
 
     private static readonly int PulsesId = Shader.PropertyToID("_SonarPulses");
+    private static readonly int RevealLingerOverrideId = Shader.PropertyToID("_EchoRevealLingerOverride");
+    private static readonly Vector4[] SharedPulses = new Vector4[MaxPulses];
+    private static int sharedNextIndex;
+    private static int lastRevealFrame = -1;
+    private static Vector3 lastRevealOrigin;
+    private static bool sharedBufferInitialized;
 
     [Tooltip("The PingEmitter that fires OnPingEmitted. Each ping triggers a reveal pulse.")]
     [SerializeField] private PingEmitter pingEmitter;
 
-    // xyz = world origin, w = start time (seconds). w <= 0 marks an empty slot.
-    private readonly Vector4[] _pulses = new Vector4[MaxPulses];
-    private int _nextIndex;
+    [Header("Reveal Timing")]
+    [Tooltip("How long revealed environment surfaces linger after the ping wave passes them. This overrides individual material linger values.")]
+    [SerializeField, Min(0.05f)] private float revealLingerSeconds = 2.25f;
 
     private void Awake()
     {
         // Clear the global buffer before the first frame renders so no phantom reveal
         // appears at world origin while every slot is still zero.
-        for (int i = 0; i < MaxPulses; i++)
-            _pulses[i] = Vector4.zero;
-
-        Shader.SetGlobalVectorArray(PulsesId, _pulses);
+        ResetGlobalPulses();
+        ApplyRevealSettings();
     }
 
     private void OnEnable()
     {
+        ApplyRevealSettings();
+
         if (pingEmitter != null)
             pingEmitter.OnPingEmitted += HandlePing;
     }
@@ -47,20 +54,61 @@ public class SonarRevealController : MonoBehaviour
 
     private void HandlePing(Vector3 origin) => Reveal(origin);
 
+    public void ApplyRevealSettings()
+    {
+        Shader.SetGlobalFloat(RevealLingerOverrideId, Mathf.Max(0.05f, revealLingerSeconds));
+    }
+
+    private void OnValidate()
+    {
+        revealLingerSeconds = Mathf.Max(0.05f, revealLingerSeconds);
+        ApplyRevealSettings();
+    }
+
     /// <summary>
     /// Triggers a soft radial reveal centered on the given world-space origin.
     /// Overwrites the oldest pulse once all slots are in use.
     /// </summary>
     /// <param name="origin">World position of the reveal center (the player's body).</param>
-    public void Reveal(Vector3 origin)
+    public void Reveal(Vector3 origin) => RevealGlobal(origin);
+
+    public static void RevealGlobal(Vector3 origin)
     {
-        // timeSinceLevelLoad matches the shader's _Time.y; clamp above 0 so the slot
-        // never reads as empty on the very first frame.
-        float startTime = Mathf.Max(Time.timeSinceLevelLoad, 0.0001f);
+        EnsureGlobalBuffer();
 
-        _pulses[_nextIndex] = new Vector4(origin.x, origin.y, origin.z, startTime);
-        _nextIndex = (_nextIndex + 1) % MaxPulses;
+        if (lastRevealFrame == Time.frameCount && Vector3.SqrMagnitude(lastRevealOrigin - origin) < 0.0001f)
+            return;
 
-        Shader.SetGlobalVectorArray(PulsesId, _pulses);
+        // Shader _Time.y follows Time.time and does not reset when scenes change.
+        // Using timeSinceLevelLoad makes pulses appear already expired after returning
+        // from another scene (for example Maze -> Main Menu -> Tutorial).
+        float startTime = Mathf.Max(Time.time, 0.0001f);
+
+        SharedPulses[sharedNextIndex] = new Vector4(origin.x, origin.y, origin.z, startTime);
+        sharedNextIndex = (sharedNextIndex + 1) % MaxPulses;
+        lastRevealFrame = Time.frameCount;
+        lastRevealOrigin = origin;
+
+        Shader.SetGlobalVectorArray(PulsesId, SharedPulses);
+    }
+
+    private static void EnsureGlobalBuffer()
+    {
+        if (sharedBufferInitialized)
+            return;
+
+        ResetGlobalPulses();
+    }
+
+    private static void ResetGlobalPulses()
+    {
+        for (int i = 0; i < MaxPulses; i++)
+            SharedPulses[i] = Vector4.zero;
+
+        sharedNextIndex = 0;
+        lastRevealFrame = -1;
+        lastRevealOrigin = Vector3.zero;
+        sharedBufferInitialized = true;
+        Shader.SetGlobalVectorArray(PulsesId, SharedPulses);
     }
 }

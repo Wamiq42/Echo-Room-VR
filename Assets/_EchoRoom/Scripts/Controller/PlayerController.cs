@@ -36,14 +36,40 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Moves the player rig (XR Origin) to the given spawn location and rotation.
+    /// <summary>
+    /// Moves the player rig so the tracked headset/camera lands on the spawn point.
     /// </summary>
     public void MovePlayerToSpawn(Vector3 position, Quaternion rotation)
     {
         if (xrOrigin != null)
         {
-            xrOrigin.SetPositionAndRotation(position, rotation);
-            Log("Moved player to spawn point.");
+            CharacterController[] controllers = xrOrigin.GetComponentsInChildren<CharacterController>();
+            foreach (CharacterController controller in controllers)
+                controller.enabled = false;
+
+            Transform headTransform = Camera.main != null && Camera.main.transform.IsChildOf(xrOrigin)
+                ? Camera.main.transform
+                : xrOrigin;
+
+            Quaternion targetRotation = Quaternion.Euler(0f, rotation.eulerAngles.y, 0f);
+            float headYaw = headTransform != null ? headTransform.eulerAngles.y : xrOrigin.eulerAngles.y;
+            float yawDelta = Mathf.DeltaAngle(headYaw, targetRotation.eulerAngles.y);
+            xrOrigin.RotateAround(headTransform.position, Vector3.up, yawDelta);
+            Physics.SyncTransforms();
+
+            Vector3 trackedPoint = headTransform != null ? headTransform.position : xrOrigin.position;
+            Vector3 offset = trackedPoint - xrOrigin.position;
+            offset.y = 0f;
+
+            Vector3 rigPosition = position - offset;
+            rigPosition.y = position.y;
+            xrOrigin.position = rigPosition;
+            Physics.SyncTransforms();
+
+            foreach (CharacterController controller in controllers)
+                controller.enabled = true;
+
+            Log("Moved player headset to spawn point.");
         }
         else
         {

@@ -1,0 +1,30 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:VisualElement name="menu-root" class="menu-root">
+    <ui:VisualElement class="ambient-glow" picking-mode="Ignore" />
+    <ui:VisualElement class="frame" picking-mode="Ignore" />
+    <ui:VisualElement name="pause-screen" class="screen">
+      <ui:Label text="SIGNAL PAUSED" class="title" />
+      <ui:Label text="ECHO LINK SUSPENDED" class="subtitle" />
+      <ui:VisualElement class="signal-line" />
+      <ui:Label text="The room is holding its breath." class="body" />
+      <ui:VisualElement class="button-row">
+        <ui:Button name="continue-button" text="CONTINUE" class="menu-button primary" />
+        <ui:Button name="pause-return-button" text="RETURN TO MAIN MENU" class="menu-button secondary compact-label" />
+      </ui:VisualElement>
+      <ui:Label text="PRESS THE MENU BUTTON TO RESUME" class="hint" />
+    </ui:VisualElement>
+    <ui:VisualElement name="captured-screen" class="screen hidden">
+      <ui:Label text="SIGNAL LOST" class="title danger-text" />
+      <ui:Label text="YOU HAVE BEEN CAPTURED" class="subtitle danger-text" />
+      <ui:VisualElement class="signal-line danger-line" />
+      <ui:Label text="The room has gone silent. Re-enter the signal or return to the beginning." class="body" />
+      <ui:VisualElement class="button-row">
+        <ui:Button name="restart-button" text="RESTART" class="menu-button danger" />
+        <ui:Button name="return-button" text="RETURN TO MENU" class="menu-button secondary compact-label" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement class="scanline scanline-one" picking-mode="Ignore" />
+    <ui:VisualElement class="scanline scanline-two" picking-mode="Ignore" />
+    <ui:Label text="ECHO NETWORK // LOCAL" class="status" picking-mode="Ignore" />
+  </ui:VisualElement>
+</ui:UXML>

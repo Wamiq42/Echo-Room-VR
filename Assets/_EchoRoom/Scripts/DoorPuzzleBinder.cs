@@ -21,10 +21,28 @@ public class DoorPuzzleBinder : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (puzzle != null && puzzle.IsSolved)
+            OpenDoorIfNeeded();
+    }
+
+    private void OnDestroy()
+    {
+        if (puzzle != null)
+            puzzle.OnPuzzleSolved -= OnPuzzleSolved;
+    }
+
     private void OnPuzzleSolved(PuzzleBase p)
     {
         Log($"Puzzle solved! Opening {name}");
-        _door.OpenDoor();
+        OpenDoorIfNeeded();
+    }
+
+    private void OpenDoorIfNeeded()
+    {
+        if (_door != null && !_door.open)
+            _door.Open();
     }
 
     // ---------- Debugging ----------

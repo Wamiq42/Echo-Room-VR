@@ -35,9 +35,9 @@ public class EchoPulseController : MonoBehaviour
     /// <param name="origin">World position of the ping center (the player's body).</param>
     public void TriggerPing(Vector3 origin)
     {
-        // timeSinceLevelLoad matches the shader's _Time.y; clamp above 0 so the slot
-        // never reads as empty on the very first frame.
-        float startTime = Mathf.Max(Time.timeSinceLevelLoad, 0.0001f);
+        // Shader _Time.y follows Time.time and does not reset when scenes change.
+        // Keep both clocks aligned so a pulse is not immediately treated as expired.
+        float startTime = Mathf.Max(Time.time, 0.0001f);
 
         _pings[_nextIndex] = new Vector4(origin.x, origin.y, origin.z, startTime);
         _nextIndex = (_nextIndex + 1) % MaxPings;

@@ -1,5 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class EchoPuzzleController : PuzzleBase
 {
@@ -9,17 +10,32 @@ public class EchoPuzzleController : PuzzleBase
 
     void Awake()
     {
-        _targets.AddRange(GetComponentsInChildren<IPuzzleElement>());
-        Log($"Found {_targets.Count} targets.");
+        RefreshTargets();
     }
+
+    private void Update()
+    {
+        if (IsSolved) return;
+
+        RefreshTargets();
+        if (!_targets.Any(target => target is LeverInteractable || target is EchoButtonInteractable))
+            return;
+
+        RecountActiveTargets();
+        if (_targets.Count > 0 && _hitCount >= _targets.Count)
+            MarkSolved();
+    }
+
     private void OnEnable()
     {
         EchoButtonInteractable.OnAnyButtonPressed += HandleButtonPressed;
+        LeverInteractable.OnAnyLeverStateChanged += HandleLeverStateChanged;
     }
 
     private void OnDisable()
     {
         EchoButtonInteractable.OnAnyButtonPressed -= HandleButtonPressed;
+        LeverInteractable.OnAnyLeverStateChanged -= HandleLeverStateChanged;
     }
 
     /// <summary>
@@ -29,7 +45,7 @@ public class EchoPuzzleController : PuzzleBase
     {
         if (IsSolved) return;
         if (!_targets.Contains(target)) return;
-        if (_countedTargets.Contains(target)) return; // ✅ prevents double counting
+        if (_countedTargets.Contains(target)) return; // prevents double counting
 
         _countedTargets.Add(target);
         _hitCount++;
@@ -47,10 +63,29 @@ public class EchoPuzzleController : PuzzleBase
         if (IsSolved) return;
         if (!button.transform.IsChildOf(transform)) return; // filter
 
+        RefreshTargets();
         RegisterHit(button); // this is still IPuzzleElement
     }
+
+    private void HandleLeverStateChanged(LeverInteractable lever)
+    {
+        if (IsSolved) return;
+        if (!lever.transform.IsChildOf(transform)) return;
+        RefreshTargets();
+        if (!_targets.Contains(lever)) return;
+
+        RecountActiveTargets();
+        Log($"Progress: {_hitCount}/{_targets.Count}");
+
+        if (_targets.Count > 0 && _hitCount >= _targets.Count)
+        {
+            MarkSolved();
+        }
+    }
+
     public override void ResetPuzzle()
     {
+        RefreshTargets();
         IsSolved = false;
         _hitCount = 0;
         _countedTargets.Clear();
@@ -59,4 +94,40 @@ public class EchoPuzzleController : PuzzleBase
             t.ResetElement();
         }
     }
+
+    private void RefreshTargets()
+    {
+        List<IPuzzleElement> foundTargets = new List<IPuzzleElement>();
+        foreach (var behaviour in GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            if (behaviour is IPuzzleElement target)
+                foundTargets.Add(target);
+        }
+
+        List<IPuzzleElement> buttonTargets = foundTargets
+            .Where(target => target is EchoButtonInteractable)
+            .ToList();
+
+        _targets = buttonTargets.Count > 0
+            ? buttonTargets
+            : foundTargets;
+
+        Log($"Found {_targets.Count} targets.");
+    }
+
+    private void RecountActiveTargets()
+    {
+        _countedTargets.Clear();
+
+        foreach (IPuzzleElement target in _targets)
+        {
+            if (target is LeverInteractable lever && lever.IsOn)
+                _countedTargets.Add(target);
+            else if (target is EchoButtonInteractable button && button.IsOn)
+                _countedTargets.Add(target);
+        }
+
+        _hitCount = _countedTargets.Count;
+    }
 }
+

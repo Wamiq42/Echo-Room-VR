@@ -1,0 +1,258 @@
+# Echo Room VR — Unity Object Path Index
+
+This is a verified snapshot of Unity object paths. The canonical change journal is `Docs/PROJECT_MEMORY.md`.
+
+- **Captured:** 2026-07-05
+- **Source:** Direct Unity Editor inspection
+- **Scene:** `Assets/_EchoRoom/Scenes/MainScene.unity`
+- **Scene state at capture:** Loaded, valid, and clean
+- **Root objects:** 24
+- **Total objects:** 242
+
+Refresh this index after hierarchy changes. Do not edit paths by guesswork.
+
+## MainScene objects
+
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: _Lightining`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Directional Light`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: _XR Origin`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Main Camera`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Main Camera/Point Light`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/PingEmiiter`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/PingEmiiter/Signal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/EchoPulseController`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_IndexMetacarpal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_IndexMetacarpal/L_IndexProximal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_IndexMetacarpal/L_IndexProximal/L_IndexIntermediate`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_IndexMetacarpal/L_IndexProximal/L_IndexIntermediate/L_IndexDistal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_IndexMetacarpal/L_IndexProximal/L_IndexIntermediate/L_IndexDistal/L_IndexTip`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_IndexMetacarpal/L_IndexProximal/L_IndexIntermediate/L_IndexDistal/L_IndexTip/Collider`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_LittleMetacarpal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_LittleMetacarpal/L_LittleProximal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_LittleMetacarpal/L_LittleProximal/L_LittleIntermediate`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_LittleMetacarpal/L_LittleProximal/L_LittleIntermediate/L_LittleDistal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_LittleMetacarpal/L_LittleProximal/L_LittleIntermediate/L_LittleDistal/L_LittleTip`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_MiddleMetacarpal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_MiddleMetacarpal/L_MiddleProximal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_MiddleMetacarpal/L_MiddleProximal/L_MiddleIntermediate`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_MiddleMetacarpal/L_MiddleProximal/L_MiddleIntermediate/L_MiddleDistal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_MiddleMetacarpal/L_MiddleProximal/L_MiddleIntermediate/L_MiddleDistal/L_MiddleTip`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_Palm`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_Palm/Collider`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_RingMetacarpal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_RingMetacarpal/L_RingProximal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_RingMetacarpal/L_RingProximal/L_RingIntermediate`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_RingMetacarpal/L_RingProximal/L_RingIntermediate/L_RingDistal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_RingMetacarpal/L_RingProximal/L_RingIntermediate/L_RingDistal/L_RingTip`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_ThumbMetacarpal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_ThumbMetacarpal/L_ThumbProximal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_ThumbMetacarpal/L_ThumbProximal/L_ThumbDistal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_ThumbMetacarpal/L_ThumbProximal/L_ThumbDistal/L_ThumbTip`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/LeftHand`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_IndexMetacarpal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_IndexMetacarpal/R_IndexProximal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_IndexMetacarpal/R_IndexProximal/R_IndexIntermediate`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_IndexMetacarpal/R_IndexProximal/R_IndexIntermediate/R_IndexDistal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_IndexMetacarpal/R_IndexProximal/R_IndexIntermediate/R_IndexDistal/R_IndexTip`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_IndexMetacarpal/R_IndexProximal/R_IndexIntermediate/R_IndexDistal/R_IndexTip/Collider`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_LittleMetacarpal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_LittleMetacarpal/R_LittleProximal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_LittleMetacarpal/R_LittleProximal/R_LittleIntermediate`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_LittleMetacarpal/R_LittleProximal/R_LittleIntermediate/R_LittleDistal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_LittleMetacarpal/R_LittleProximal/R_LittleIntermediate/R_LittleDistal/R_LittleTip`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_MiddleMetacarpal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_MiddleMetacarpal/R_MiddleProximal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_MiddleMetacarpal/R_MiddleProximal/R_MiddleIntermediate`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_MiddleMetacarpal/R_MiddleProximal/R_MiddleIntermediate/R_MiddleDistal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_MiddleMetacarpal/R_MiddleProximal/R_MiddleIntermediate/R_MiddleDistal/R_MiddleTip`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_Palm`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_Palm/Collider`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_RingMetacarpal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_RingMetacarpal/R_RingProximal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_RingMetacarpal/R_RingProximal/R_RingIntermediate`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_RingMetacarpal/R_RingProximal/R_RingIntermediate/R_RingDistal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_RingMetacarpal/R_RingProximal/R_RingIntermediate/R_RingDistal/R_RingTip`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_ThumbMetacarpal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_ThumbMetacarpal/R_ThumbProximal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_ThumbMetacarpal/R_ThumbProximal/R_ThumbDistal`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_ThumbMetacarpal/R_ThumbProximal/R_ThumbDistal/R_ThumbTip`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/RightHand`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Locomotion System`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Locomotion System/Turn`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Locomotion System/Move`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/PlayerController`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Input Action Manager`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Interaction Manager`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: _Environment`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/EchoPuzzleController`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Player Spawn Position`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Door_Frame`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Door_Leaf`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Maze_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Maze_Roof`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Maze_Walls`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P1_D1`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P1_D1/Lever_Body`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P1_D1/Lever_Handle`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P2_A4`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P2_A4/Lever_Body`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P2_A4/Lever_Handle`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P3_E5`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P3_E5/Lever_Body`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P3_E5/Lever_Handle`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Level Spawn Position`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: _Game Management`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: GameManager`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Button_Prefab`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Button_Prefab/Button_Object`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Rub`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Rub/Cylinder003`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Rub/Cylinder005`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Door_Frame`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Door_Leaf`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Maze_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Maze_Roof`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Maze_Walls`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P1_D1`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P1_D1/Lever_Body`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P1_D1/GameObject`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P1_D1/Lever_Pivot`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P1_D1/Lever_Pivot/Lever_Handle`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P2_A4`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P2_A4/Lever_Body`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P2_A4/GameObject`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P2_A4/Lever_Pivot`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P2_A4/Lever_Pivot/Lever_Handle`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P3_E5`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P3_E5/Lever_Body`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P3_E5/GameObject`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P3_E5/Lever_Pivot`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P3_E5/Lever_Pivot/Lever_Handle`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Exit_Hallway`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Exit_Hallway/Hallway_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Exit_Hallway/Hallway_NorthWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Exit_Hallway/Hallway_SouthWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Exit_Hallway/Hallway_Ceiling`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Exit_Hallway/Door_Entry_Threshold`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Exit_Hallway/Hallway_End`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Exit_Hallway/Hallway_EndWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Exit_Hallway/ExitCheckpoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/StartCheckpoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Door_Frame`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Door_Leaf`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Maze_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Maze_Roof`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Maze_Walls`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/DoorAnchor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/SpawnAchor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P1_Lever`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P1_Lever/Lever_Body`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P1_Lever/GameObject`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P1_Lever/Lever_Pivot`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P1_Lever/Lever_Pivot/Lever_Handle`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P2_Lever`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P2_Lever/Lever_Body`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P2_Lever/GameObject`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P2_Lever/Lever_Pivot`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P2_Lever/Lever_Pivot/Lever_Handle`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P3_Lever`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P3_Lever/Lever_Body`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P3_Lever/GameObject`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P3_Lever/Lever_Pivot`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Auto_P3_Lever/Lever_Pivot/Lever_Handle`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Exit_Hallway`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Exit_Hallway/Hallway_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Exit_Hallway/Hallway_NorthWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Exit_Hallway/Hallway_SouthWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Exit_Hallway/Hallway_Ceiling`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Exit_Hallway/Door_Entry_Threshold`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Exit_Hallway/Hallway_End`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Exit_Hallway/Hallway_EndWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Exit_Hallway/ExitCheckpoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/StartCheckpoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Door_Frame`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Door_Leaf`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Maze_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Maze_Roof`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Maze_Walls`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/SpawnAnchor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/DoorAnchor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Auto_P1_Button`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Auto_P1_Button/Button_Object`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Auto_P2_Button`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Auto_P2_Button/Button_Object`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Auto_P3_Button`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Auto_P3_Button/Button_Object`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Exit_Hallway`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Exit_Hallway/Hallway_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Exit_Hallway/Hallway_NorthWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Exit_Hallway/Hallway_SouthWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Exit_Hallway/Hallway_SouthWall (1)`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Exit_Hallway/Hallway_Ceiling`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Exit_Hallway/Door_Entry_Threshold`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Exit_Hallway/Hallway_End`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/Exit_Hallway/ExitCheckpoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_C/StartCheckpoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Door_Frame`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Door_Leaf`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Maze_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Maze_Roof`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Maze_Walls`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Auto_P1_Button`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Auto_P1_Button/Button_Object`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Auto_P2_Button`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Auto_P2_Button/Button_Object`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Auto_P3_Button`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Auto_P3_Button/Button_Object`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Exit_Hallway`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Exit_Hallway/Hallway_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Exit_Hallway/Hallway_NorthWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Exit_Hallway/Hallway_NorthWall (1)`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Exit_Hallway/Hallway_SouthWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Exit_Hallway/Hallway_Ceiling`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Exit_Hallway/Door_Entry_Threshold`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Exit_Hallway/Hallway_End`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/Exit_Hallway/ExitCheckpoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_D/StartCheckpoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Maze_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Maze_Floor (1)`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Maze_Roof`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Maze_Walls`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Entity`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/waypoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/waypoint (1)`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/MazeE_PlayerSpawn`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Exit_Hallway`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Exit_Hallway/Hallway_Floor`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Exit_Hallway/Hallway_NorthWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Exit_Hallway/Hallway_SouthWall`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Exit_Hallway/Hallway_Ceiling`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Exit_Hallway/Exit_Door`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Exit_Hallway/Hallway_Entry`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Exit_Hallway/ExitCheckpoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/StartCheckpoint`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: EventSystem`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze Runtime Root`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Measure`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System`
+

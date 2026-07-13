@@ -1,0 +1,33 @@
+.loading-root { width: 900px; height: 560px; flex-grow: 0; }
+.hidden { display: none; }
+.veil { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgba(0, 3, 5, 0.98); }
+.loading-card {
+  position: absolute; left: 55px; right: 55px; top: 48px; bottom: 48px;
+  align-items: center; justify-content: center;
+  background-color: rgba(4, 17, 23, 0.99);
+  border-left-width: 2px; border-right-width: 2px; border-top-width: 2px; border-bottom-width: 2px;
+  border-left-color: rgb(70, 221, 226); border-right-color: rgb(70, 221, 226);
+  border-top-color: rgb(70, 221, 226); border-bottom-color: rgb(70, 221, 226);
+  border-top-left-radius: 18px; border-top-right-radius: 18px;
+  border-bottom-left-radius: 18px; border-bottom-right-radius: 18px;
+}
+.loading-screen, .thank-you-screen { width: 100%; height: 100%; align-items: center; justify-content: center; }
+.loading-title { color: rgb(87, 239, 239); font-size: 42px; -unity-font-style: bold; letter-spacing: 8px; -unity-text-align: middle-center; }
+.signal-glyph { width: 110px; height: 110px; margin-top: 25px; margin-bottom: 24px; align-items: center; justify-content: center; }
+.signal-ring {
+  position: absolute; width: 96px; height: 96px; border-left-width: 2px; border-right-width: 2px;
+  border-top-width: 2px; border-bottom-width: 2px; border-left-color: rgba(87,239,239,0.72);
+  border-right-color: rgba(87,239,239,0.25); border-top-color: rgba(87,239,239,0.72);
+  border-bottom-color: rgba(87,239,239,0.25); border-top-left-radius: 48px; border-top-right-radius: 48px;
+  border-bottom-left-radius: 48px; border-bottom-right-radius: 48px;
+}
+.ring-two { width: 68px; height: 68px; border-top-left-radius: 34px; border-top-right-radius: 34px; border-bottom-left-radius: 34px; border-bottom-right-radius: 34px; }
+.signal-core { width: 18px; height: 18px; background-color: rgb(87,239,239); border-top-left-radius: 9px; border-top-right-radius: 9px; border-bottom-left-radius: 9px; border-bottom-right-radius: 9px; }
+.loading-message { color: rgb(205, 239, 241); font-size: 21px; -unity-font-style: bold; letter-spacing: 3px; -unity-text-align: middle-center; }
+.progress-track { width: 570px; height: 8px; margin-top: 28px; background-color: rgba(66,96,101,0.45); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
+.progress-fill { width: 0%; height: 100%; background-color: rgb(87,239,239); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
+.progress-label { margin-top: 12px; color: rgb(132,181,186); font-size: 15px; letter-spacing: 2px; -unity-text-align: middle-center; }
+.thank-title { color: rgb(115, 255, 223); }
+.signal-line { width: 590px; height: 2px; margin-top: 26px; margin-bottom: 34px; background-color: rgba(87,239,239,0.65); }
+.thank-message { color: white; font-size: 38px; -unity-font-style: bold; letter-spacing: 5px; -unity-text-align: middle-center; }
+.thank-subtitle { margin-top: 18px; color: rgb(151,198,202); font-size: 18px; letter-spacing: 2px; -unity-text-align: middle-center; }

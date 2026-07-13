@@ -1,0 +1,27 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:VisualElement name="loading-root" class="loading-root hidden">
+    <ui:VisualElement class="veil" />
+    <ui:VisualElement class="loading-card">
+      <ui:VisualElement name="loading-screen" class="loading-screen">
+        <ui:Label text="TUNING SIGNAL" class="loading-title" />
+        <ui:VisualElement class="signal-glyph">
+          <ui:VisualElement class="signal-ring ring-one" />
+          <ui:VisualElement class="signal-ring ring-two" />
+          <ui:VisualElement class="signal-core" />
+        </ui:VisualElement>
+        <ui:Label name="loading-message" text="PREPARING ECHO CHAMBER" class="loading-message" />
+        <ui:VisualElement class="progress-track">
+          <ui:VisualElement name="progress-fill" class="progress-fill" />
+        </ui:VisualElement>
+        <ui:Label name="progress-label" text="0%" class="progress-label" />
+      </ui:VisualElement>
+      <ui:VisualElement name="thank-you-screen" class="thank-you-screen hidden">
+        <ui:Label text="SIGNAL COMPLETE" class="loading-title thank-title" />
+        <ui:VisualElement class="signal-line" />
+        <ui:Label text="THANK YOU FOR PLAYING" class="thank-message" />
+        <ui:Label text="YOUR ECHO WILL REMAIN IN THE ROOM" class="thank-subtitle" />
+        <ui:Label name="return-countdown" text="RETURNING TO MAIN MENU..." class="progress-label" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

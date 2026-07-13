@@ -5,6 +5,19 @@ using UnityEngine.InputSystem;
 
 public class PingEmitter : MonoBehaviour
 {
+    public enum PingAudioOption
+    {
+        CurrentSonar,
+        Pulse
+    }
+
+    public enum PingInputSource
+    {
+        SonarControl,
+        Microphone
+    }
+
+    public PingInputSource LastPingInputSource { get; private set; } = PingInputSource.SonarControl;
     [Header("Debug")]
     [SerializeField] private bool isDebugging = false;
 
@@ -17,6 +30,8 @@ public class PingEmitter : MonoBehaviour
     
     [Header("Feedback")]
     [SerializeField] private AudioSource pingSound;
+    [SerializeField] private PingAudioOption pingAudioOption = PingAudioOption.CurrentSonar;
+    [SerializeField] private AudioClip pulseClip;
     [SerializeField] private GameObject echoSoundPrefab;
     [SerializeField] private ParticleSystem pingRippleFX;
     [SerializeField] private GameObject echoRippleFX;
@@ -37,6 +52,7 @@ public class PingEmitter : MonoBehaviour
     private float _defaultIntensity;
     private float _defaultRange;
     private Camera _mainCamera;
+    private AudioClip _currentSonarClip;
 
     public static Func<float> RequestPing;
     public static Action PlayPingSound;
@@ -50,6 +66,9 @@ public class PingEmitter : MonoBehaviour
 
     private void Awake()
     {
+        if (pingSound != null)
+            _currentSonarClip = pingSound.clip;
+
         if (echoSoundPrefab != null
             && echoSoundPrefab.TryGetComponent(out AudioSource audioSource)
             && audioSource.clip != null)
@@ -99,7 +118,7 @@ public class PingEmitter : MonoBehaviour
         if (Time.time < _nextPingTime)
             return 0f;
 
-        EmitPing();
+        EmitPing(PingInputSource.Microphone);
         return Mathf.Max(0f, _nextPingTime - Time.time);
     }
 
@@ -109,9 +128,15 @@ public class PingEmitter : MonoBehaviour
     /// </summary>
     private void EmitPing()
     {
+        EmitPing(PingInputSource.SonarControl);
+    }
+
+    private void EmitPing(PingInputSource source)
+    {
         if (Time.time < _nextPingTime)
             return;
 
+        LastPingInputSource = source;
         Vector3 origin = transform.position;
 
         Collider[] hits = Physics.OverlapSphere(origin, pingRadius, pingLayers);
@@ -129,11 +154,11 @@ public class PingEmitter : MonoBehaviour
         // Fire once per ping (not once per overlapped collider) so the sonar buffer
         // gets a single shell per ping.
         OnPingEmitted?.Invoke(origin);
+        SonarRevealController.RevealGlobal(origin);
 
         float echoDelay = EmitDirectionalEcho();
 
-        if (pingSound != null && pingSound.clip != null)
-            pingSound.Play();
+        PlaySelectedPingSound();
 
         if (pingFlashLight != null)
             StartCoroutine(FlashLight());
@@ -252,8 +277,20 @@ public class PingEmitter : MonoBehaviour
     /// </summary>
     private void PingSound()
     {
-        if (pingSound != null)
-            pingSound.Play();
+        PlaySelectedPingSound();
+    }
+
+    private void PlaySelectedPingSound()
+    {
+        if (pingSound == null)
+            return;
+
+        AudioClip selectedClip = pingAudioOption == PingAudioOption.Pulse && pulseClip != null
+            ? pulseClip
+            : (_currentSonarClip != null ? _currentSonarClip : pingSound.clip);
+
+        if (selectedClip != null)
+            pingSound.PlayOneShot(selectedClip);
     }
 
     /// <summary>

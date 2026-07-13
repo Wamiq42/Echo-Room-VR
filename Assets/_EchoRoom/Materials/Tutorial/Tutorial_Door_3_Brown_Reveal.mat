@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Tutorial_Door_3_Brown_Reveal
+  m_Shader: {fileID: 4800000, guid: b8e4f0c2a1d34f7b9c6e2a51d4b7f3e2, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2000
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: c246fff15467ae046b4f2f06695182a6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: 7a7e9bd7ae46883409010795e700d1c4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 2800000, guid: 82d0da0a7261b5f49b79dd27f66fa506, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 2800000, guid: 77c3a04c74beff9438fb489a06543e71, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BumpScale: 1
+    - _EnvironmentAmbientInfluence: 0.12
+    - _EnvironmentLightInfluence: 0.85
+    - _Metallic: 0
+    - _OcclusionStrength: 1
+    - _RevealAmbient: 0.35
+    - _RevealBrightness: 1.2
+    - _RevealLinger: 1.5
+    - _RevealQuality: 1
+    - _RevealRadius: 8
+    - _RevealSpeed: 8
+    - _RingBrightness: 1.5
+    - _RingWidth: 0.6
+    - _SceneViewPreview: 0
+    - _Smoothness: 0.5
+    - _TintAmount: 0.1
+    m_Colors:
+    - _BaseColor: {r: 0.9150943, g: 0.50311893, b: 0.073380165, a: 1}
+    - _RevealTint: {r: 0.5, g: 1, b: 1.05, a: 1}
+    - _RingColor: {r: 0.2, g: 1.4, b: 1.5, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

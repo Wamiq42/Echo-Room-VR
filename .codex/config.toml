@@ -1,0 +1,33 @@
+[mcp_servers.unity-mcp]
+args = ["port=8080", "client-transport=stdio"]
+command = 'H:\Echo room\Echo-Room-VR\Library\mcp-server\win-x64\gamedev-mcp-server.exe'
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 300
+
+[mcp_servers.ai-game-developer]
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 300
+url = "http://localhost:8080"
+
+[mcp_servers.ai-game-developer.tools.assets-refresh]
+approval_mode = "approve"
+
+[mcp_servers.ai-game-developer.tools.script-execute]
+approval_mode = "approve"
+
+[mcp_servers.ai-game-developer.tools.scene-save]
+approval_mode = "approve"
+
+[mcp_servers.ai-game-developer.tools.assets-prefab-open]
+approval_mode = "approve"
+
+[mcp_servers.ai-game-developer.tools.assets-prefab-close]
+approval_mode = "approve"
+
+[mcp_servers.ai-game-developer.tools.gameobject-component-modify]
+approval_mode = "approve"
+
+[mcp_servers.ai-game-developer.tools.gameobject-component-add]
+approval_mode = "approve"

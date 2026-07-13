@@ -2,120 +2,208 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
-public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
+public class EchoButtonInteractable : BaseInteractable, IPuzzleElement
 {
     [Header("Button Settings")]
-    [SerializeField] private Transform buttonTop;       // The part of the button that moves
-    [SerializeField] private float pressDepth = 0.02f; // How far it moves down
-    [SerializeField] private float pressSpeed = 10f;   // How fast it animates
+    [SerializeField] private Transform buttonTop;
+    [SerializeField] private float pressDepth = 0.02f;
+    [SerializeField] private float pressSpeed = 10f;
     [SerializeField] private PlayerInputManager inputManager;
+    [SerializeField] private bool allowKeyboardTesting = true;
+    [SerializeField] private float keyboardTestRange = 2f;
     [SerializeField] private UnityEvent onButtonPressed;
 
-    
+    [Header("Button Audio")]
+    [SerializeField] private AudioClip buttonOnClip;
+    [SerializeField] private AudioClip buttonOffClip;
+    [SerializeField, Range(0f, 1f)] private float buttonAudioVolume = 1f;
+
     private Vector3 _initialLocalPos;
     private bool _handInRange;
-    private bool _gripHeld;
-    private bool _hasTriggered; // to ensure we only notify once
-    
+    private bool _wasGripHeld;
+    private bool _isPressing;
+    private bool _isOn;
+    private Animator _animator;
+
+    public bool IsOn => _isOn;
+
     public static event System.Action<EchoButtonInteractable> OnAnyButtonPressed;
 
     protected override void Awake()
     {
         base.Awake();
+        _animator = GetComponent<Animator>();
+        ResolveButtonTop();
+
+        Renderer buttonRenderer = buttonTop != null ? buttonTop.GetComponent<Renderer>() : null;
+        if (buttonRenderer == null && buttonTop != null)
+            buttonRenderer = buttonTop.GetComponentInChildren<Renderer>(true);
+        ConfigureOnStateVisual(buttonRenderer, 0);
+        SetOnStateVisual(false, false);
+
         if (buttonTop != null)
             _initialLocalPos = buttonTop.localPosition;
 
-        // Prefer the central input manager, but don't NRE if no GameManager exists yet
-        // (e.g. testing a button in isolation). Falls back to the serialized reference.
-        if (GameManager.Instance != null)
-            inputManager = GameManager.Instance.PlayerInputManager;
+        ResolveInputManager();
+        SetAnimatorOn(false);
     }
 
     private void Update()
     {
-        _gripHeld = inputManager != null && inputManager.ReadGrip();
-        AnimateButton();
+        ResolveInputManager();
+
+        bool gripHeld = inputManager != null && inputManager.ReadGrip();
+        bool gripPressed = _handInRange && gripHeld && !_wasGripHeld;
+        bool keyboardPressed = allowKeyboardTesting && Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+
+        if (!_isOn && gripPressed)
+            TurnOn(false);
+
+        if (!_isOn && keyboardPressed && IsPlayerCloseEnoughForKeyboardTest())
+        {
+            Debug.Log($"[EchoButtonInteractable] E pressed on {name}; button is on.");
+            TurnOn(true);
+        }
+
+        AnimateFallbackPress();
+        _wasGripHeld = gripHeld;
     }
 
- 
-    /// <summary>
-    /// Animates the button top smoothly between pressed and idle positions,
-    /// and fires events once fully pressed.
-    /// </summary>
-    private void AnimateButton()
+    public void TurnOn(bool fromKeyboard = false)
     {
-        if (buttonTop == null) return;
+        if (_isOn) return;
 
-        Vector3 currentPos = buttonTop.localPosition;
+        _isOn = true;
+        _isPressing = !CanUseAnimatorBool();
+        SetAnimatorOn(true);
+        SetOnStateVisual(true, true);
 
-        if (!_hasTriggered)
+        if (!_isPressing)
+            CompletePress(fromKeyboard);
+    }
+
+    private void AnimateFallbackPress()
+    {
+        if (!_isPressing || buttonTop == null) return;
+
+        Vector3 pressedPos = _initialLocalPos - Vector3.up * pressDepth;
+        buttonTop.localPosition = Vector3.MoveTowards(buttonTop.localPosition, pressedPos, pressSpeed * Time.deltaTime);
+
+        if (Vector3.Distance(buttonTop.localPosition, pressedPos) < 0.001f)
+            CompletePress(false);
+    }
+
+    private void CompletePress(bool fromKeyboard)
+    {
+        _isPressing = false;
+
+        if (fromKeyboard)
+            Debug.Log($"[EchoButtonInteractable] {name} is on from E input.");
+
+        Log("Button turned on.");
+        onButtonPressed?.Invoke();
+        PlayButtonClip(buttonOnClip);
+
+        OnAnyButtonPressed?.Invoke(this);
+    }
+
+    private void PlayButtonClip(AudioClip clip)
+    {
+        if (audioSource == null) return;
+
+        if (clip != null)
+            audioSource.PlayOneShot(clip, buttonAudioVolume);
+        else if (audioSource.clip != null)
+            audioSource.Play();
+    }
+
+    private void ResolveInputManager()
+    {
+        if (inputManager != null) return;
+
+        if (GameManager.Instance != null)
+            inputManager = GameManager.Instance.PlayerInputManager;
+
+        if (inputManager == null)
+            inputManager = FindObjectOfType<PlayerInputManager>();
+    }
+
+    private void ResolveButtonTop()
+    {
+        if (buttonTop != null) return;
+
+        Transform namedTop = transform.Find("Button_Object");
+        if (namedTop != null)
         {
-            if (_handInRange && _gripHeld)
-            {
-                // Move the button down toward its press depth
-                buttonTop.localPosition = Vector3.MoveTowards(
-                    currentPos,
-                    _initialLocalPos - Vector3.up * pressDepth,
-                    pressSpeed * Time.deltaTime
-                );
+            buttonTop = namedTop;
+            return;
+        }
 
-                // Check if it has reached full press depth
-                if (Vector3.Distance(buttonTop.localPosition, _initialLocalPos - Vector3.up * pressDepth) < 0.001f)
-                {
-                    _hasTriggered = true;
+        if (transform.childCount > 0)
+            buttonTop = transform.GetChild(0);
+    }
 
-                    Log("Button fully pressed!");
-                    onButtonPressed?.Invoke();                 // UnityEvent for custom logic
-                    if (audioSource != null) audioSource.Play();
-                    OnAnyButtonPressed?.Invoke(this);          // Static event broadcast to puzzle controller(s)
+    private bool IsPlayerCloseEnoughForKeyboardTest()
+    {
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null) return false;
 
-                    // TODO: Play particle effect or special visual feedback here
-                }
-            }
-            else
-            {
-                // Grip released early before full press depth: reset toward idle position
-                buttonTop.localPosition = Vector3.MoveTowards(
-                    currentPos,
-                    _initialLocalPos,
-                    pressSpeed * Time.deltaTime
-                );
-            }
+        return Vector3.Distance(mainCamera.transform.position, transform.position) <= keyboardTestRange;
+    }
+
+    private bool CanUseAnimatorBool()
+    {
+        if (_animator == null)
+            _animator = GetComponent<Animator>();
+
+        if (_animator == null)
+            return false;
+
+        foreach (AnimatorControllerParameter parameter in _animator.parameters)
+        {
+            if (parameter.type == AnimatorControllerParameterType.Bool && (parameter.name == "Pressed" || parameter.name == "On"))
+                return true;
+        }
+
+        return false;
+    }
+
+    private void SetAnimatorOn(bool isOn)
+    {
+        if (_animator == null)
+            _animator = GetComponent<Animator>();
+
+        if (_animator == null) return;
+
+        foreach (AnimatorControllerParameter parameter in _animator.parameters)
+        {
+            if (parameter.type != AnimatorControllerParameterType.Bool) continue;
+            if (parameter.name == "Pressed" || parameter.name == "On")
+                _animator.SetBool(parameter.name, isOn);
         }
     }
 
-
-
-    /// <summary>
-    /// Trigger detection for hand/controller proximity.
-    /// </summary>
     private void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponent<HandPressCollider>() != null)
-
-        {
-            _handInRange = true;
-            Log("Hand in range.");
-        }
+        if (other.GetComponent<HandPressCollider>() == null) return;
+        _handInRange = true;
+        Log("Hand in range.");
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.GetComponent<HandPressCollider>() != null)
-        {
-            _handInRange = false;
-            Log("Hand left range.");
-        }
+        if (other.GetComponent<HandPressCollider>() == null) return;
+        _handInRange = false;
+        Log("Hand left range.");
     }
 
-    /// <summary>
-    /// Restores the button to its un-pressed state so the puzzle can be replayed:
-    /// lifts the top back up, clears the press latches, and restores the idle material.
-    /// </summary>
     public void ResetElement()
     {
-        _hasTriggered = false;
+        _isOn = false;
         _handInRange = false;
+        _wasGripHeld = false;
+        _isPressing = false;
+        SetAnimatorOn(false);
 
         if (buttonTop != null)
             buttonTop.localPosition = _initialLocalPos;
@@ -123,6 +211,8 @@ public class EchoButtonInteractable : BaseInteractable , IPuzzleElement
         if (_renderer != null && idleMat != null)
             _renderer.material = idleMat;
 
+        SetOnStateVisual(false, false);
+        PlayButtonClip(buttonOffClip);
         Log("Button reset.");
     }
 }
