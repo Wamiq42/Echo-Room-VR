@@ -562,6 +562,7 @@ GameObject:
   - component: {fileID: 13074455306093948}
   - component: {fileID: 871909904419751965}
   - component: {fileID: 3625798202993824338}
+  - component: {fileID: 3724113946636704820}
   m_Layer: 0
   m_Name: Hallway_Floor
   m_TagString: Untagged
@@ -662,6 +663,95 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &3724113946636704820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4897848404155410090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b97cb2a4b5693904ea2dcb7f4c16c52f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EchoRoom.Controller.EchoTeleportationArea
+  m_InteractionManager: {fileID: 0}
+  m_Colliders: []
+  m_InteractionLayers:
+    m_Bits: 2147483648
+  m_DistanceCalculationMode: 1
+  m_SelectMode: 1
+  m_FocusMode: 1
+  m_CustomReticle: {fileID: 0}
+  m_AllowGazeInteraction: 0
+  m_AllowGazeSelect: 0
+  m_OverrideGazeTimeToSelect: 0
+  m_GazeTimeToSelect: 0.5
+  m_OverrideTimeToAutoDeselectGaze: 0
+  m_TimeToAutoDeselectGaze: 3
+  m_AllowGazeAssistance: 0
+  m_FirstHoverEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_LastHoverExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_HoverEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_HoverExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FirstSelectEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_LastSelectExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_SelectEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_SelectExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FirstFocusEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_LastFocusExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FocusEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FocusExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Activated:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Deactivated:
+    m_PersistentCalls:
+      m_Calls: []
+  m_StartingHoverFilters: []
+  m_StartingSelectFilters: []
+  m_StartingInteractionStrengthFilters: []
+  m_AutoFindParentInteractableInHierarchy: 0
+  m_ParentInteractableObject: {fileID: 0}
+  m_TeleportationProvider: {fileID: 0}
+  m_MatchOrientation: 3
+  m_MatchDirectionalInput: 0
+  m_TeleportTrigger: 0
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 20
+  m_Teleporting:
+    m_PersistentCalls:
+      m_Calls: []
+  maximumSlopeDegrees: 20
+  playerRadius: 0.3
+  playerHeight: 1.7
+  obstructionMask:
+    serializedVersion: 2
+    m_Bits: 4294967291
 --- !u!1 &5193178181018402075
 GameObject:
   m_ObjectHideFlags: 0
@@ -2330,6 +2420,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -1852585990175165714, guid: 13ba14e3e0402e54a88a41e3d97fcd44, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5045997440254407428}
+    - targetCorrespondingSourceObject: {fileID: 7606838036475513911, guid: 13ba14e3e0402e54a88a41e3d97fcd44, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4117431686801429895}
   m_SourcePrefab: {fileID: 100100000, guid: 13ba14e3e0402e54a88a41e3d97fcd44, type: 3}
 --- !u!4 &376399900673457688 stripped
 Transform:
@@ -2433,17 +2526,17 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
-  m_PlayOnAwake: 1
-  m_Volume: 1
+  m_PlayOnAwake: 0
+  m_Volume: 0.55
   m_Pitch: 1
   Loop: 0
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 1
-  MaxDistance: 500
+  MaxDistance: 12
   Pan2D: 0
   rolloffMode: 0
   BypassEffects: 0
@@ -2478,7 +2571,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2556,8 +2649,8 @@ MonoBehaviour:
   animator: {fileID: 1840460530313607164}
   openParameter: LeversOn
   asource: {fileID: 2148077228569017392}
-  openDoor: {fileID: 0}
-  closeDoor: {fileID: 0}
+  openDoor: {fileID: 8300000, guid: 44b63b0db16ce624b97e45ebde0a0971, type: 3}
+  closeDoor: {fileID: 8300000, guid: bc37ad25465405a428a26ff0facd9a7b, type: 3}
 --- !u!114 &5045997440254407428
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2572,6 +2665,100 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DoorPuzzleBinder
   enableDebugging: 0
   puzzle: {fileID: 2331904473556603022}
+--- !u!1 &5497107925396267939 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7606838036475513911, guid: 13ba14e3e0402e54a88a41e3d97fcd44, type: 3}
+  m_PrefabInstance: {fileID: 2727295079130017684}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4117431686801429895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5497107925396267939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b97cb2a4b5693904ea2dcb7f4c16c52f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EchoRoom.Controller.EchoTeleportationArea
+  m_InteractionManager: {fileID: 0}
+  m_Colliders: []
+  m_InteractionLayers:
+    m_Bits: 2147483648
+  m_DistanceCalculationMode: 1
+  m_SelectMode: 1
+  m_FocusMode: 1
+  m_CustomReticle: {fileID: 0}
+  m_AllowGazeInteraction: 0
+  m_AllowGazeSelect: 0
+  m_OverrideGazeTimeToSelect: 0
+  m_GazeTimeToSelect: 0.5
+  m_OverrideTimeToAutoDeselectGaze: 0
+  m_TimeToAutoDeselectGaze: 3
+  m_AllowGazeAssistance: 0
+  m_FirstHoverEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_LastHoverExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_HoverEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_HoverExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FirstSelectEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_LastSelectExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_SelectEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_SelectExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FirstFocusEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_LastFocusExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FocusEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FocusExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Activated:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Deactivated:
+    m_PersistentCalls:
+      m_Calls: []
+  m_StartingHoverFilters: []
+  m_StartingSelectFilters: []
+  m_StartingInteractionStrengthFilters: []
+  m_AutoFindParentInteractableInHierarchy: 0
+  m_ParentInteractableObject: {fileID: 0}
+  m_TeleportationProvider: {fileID: 0}
+  m_MatchOrientation: 3
+  m_MatchDirectionalInput: 0
+  m_TeleportTrigger: 0
+  m_FilterSelectionByHitNormal: 1
+  m_UpNormalToleranceDegrees: 20
+  m_Teleporting:
+    m_PersistentCalls:
+      m_Calls: []
+  maximumSlopeDegrees: 20
+  playerRadius: 0.3
+  playerHeight: 1.7
+  obstructionMask:
+    serializedVersion: 2
+    m_Bits: 4294967291
 --- !u!1001 &3431175289718435003
 PrefabInstance:
   m_ObjectHideFlags: 0

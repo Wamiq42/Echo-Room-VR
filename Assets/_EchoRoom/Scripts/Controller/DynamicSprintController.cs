@@ -13,8 +13,8 @@ public class DynamicSprintController : MonoBehaviour
 
 
     [Header("Settings")]
-    [SerializeField] private float normalSpeed = 1.5f;
-    [SerializeField] private float sprintSpeed = 3f;
+    [SerializeField] private float normalSpeed = 2f;
+    [SerializeField] private float sprintSpeed = 3.5f;
     
 
     private void Update()

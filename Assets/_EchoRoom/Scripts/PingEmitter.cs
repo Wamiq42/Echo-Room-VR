@@ -5,6 +5,21 @@ using UnityEngine.InputSystem;
 
 public class PingEmitter : MonoBehaviour
 {
+    [Serializable]
+    private struct PingProfile
+    {
+        [Min(0.01f)] public float visualRevealRange;
+        [Min(0.01f)] public float echoCastDistance;
+        [Min(0f)] public float cooldownSeconds;
+
+        public PingProfile(float visualRevealRange, float echoCastDistance, float cooldownSeconds)
+        {
+            this.visualRevealRange = visualRevealRange;
+            this.echoCastDistance = echoCastDistance;
+            this.cooldownSeconds = cooldownSeconds;
+        }
+    }
+
     public enum PingAudioOption
     {
         CurrentSonar,
@@ -21,9 +36,15 @@ public class PingEmitter : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool isDebugging = false;
 
-    [Header("Ping Settings")]
+    [Header("Ping Detection")]
     [SerializeField] private float pingRadius = 0.1f;
     [SerializeField] private LayerMask pingLayers;
+
+    [Header("Ping Profiles")]
+    [Tooltip("Sonar control / editor Space ping: visible range, directional echo cast distance, and shared lockout.")]
+    [SerializeField] private PingProfile basicPingProfile = new PingProfile(10f, 10f, 2.5f);
+    [Tooltip("Microphone shout ping: visible range, directional echo cast distance, and shared lockout.")]
+    [SerializeField] private PingProfile microphonePingProfile = new PingProfile(16f, 16f, 4f);
 
     [Header("Input")]
     [SerializeField] private PlayerInputManager inputManager;
@@ -39,7 +60,6 @@ public class PingEmitter : MonoBehaviour
     [Header("Ray Settings")]
     [SerializeField] private Transform playerOrigin;
     [SerializeField] private float sphereCastRadius = 0.2f;
-    [SerializeField] private float maxEchoDistance = 20f;
 
     [Header("Light Feedback")]
     [SerializeField] private Light pingFlashLight;
@@ -48,7 +68,6 @@ public class PingEmitter : MonoBehaviour
     [SerializeField] private float flashDuration = 0.3f;
 
     private float _nextPingTime = 0f;
-    private float _echoClipLength = 0f;
     private float _defaultIntensity;
     private float _defaultRange;
     private Camera _mainCamera;
@@ -68,13 +87,6 @@ public class PingEmitter : MonoBehaviour
     {
         if (pingSound != null)
             _currentSonarClip = pingSound.clip;
-
-        if (echoSoundPrefab != null
-            && echoSoundPrefab.TryGetComponent(out AudioSource audioSource)
-            && audioSource.clip != null)
-        {
-            _echoClipLength = audioSource.clip.length;
-        }
 
         _mainCamera = Camera.main;
         SetLightDefaultValues();
@@ -115,8 +127,9 @@ public class PingEmitter : MonoBehaviour
     /// </summary>
     private float TryEmitFromExternal()
     {
-        if (Time.time < _nextPingTime)
-            return 0f;
+        float remainingCooldown = Mathf.Max(0f, _nextPingTime - Time.time);
+        if (remainingCooldown > 0f)
+            return remainingCooldown;
 
         EmitPing(PingInputSource.Microphone);
         return Mathf.Max(0f, _nextPingTime - Time.time);
@@ -136,6 +149,13 @@ public class PingEmitter : MonoBehaviour
         if (Time.time < _nextPingTime)
             return;
 
+        PingProfile profile = source == PingInputSource.Microphone
+            ? microphonePingProfile
+            : basicPingProfile;
+        float visualRevealRange = Mathf.Max(0.01f, profile.visualRevealRange);
+        float echoCastDistance = Mathf.Max(0.01f, profile.echoCastDistance);
+        float cooldownSeconds = Mathf.Max(0f, profile.cooldownSeconds);
+
         LastPingInputSource = source;
         Vector3 origin = transform.position;
 
@@ -151,20 +171,23 @@ public class PingEmitter : MonoBehaviour
             LogDebug("Ping detected: " + hit.name);
         }
 
-        // Fire once per ping (not once per overlapped collider) so the sonar buffer
-        // gets a single shell per ping.
+        // Write the range-aware pulse before raising the legacy origin-only event.
+        // SonarRevealController's event subscription sees the same origin/frame and
+        // deliberately deduplicates it without replacing this pulse's profile.
+        SonarRevealController.RevealGlobal(origin, visualRevealRange);
         OnPingEmitted?.Invoke(origin);
-        SonarRevealController.RevealGlobal(origin);
 
-        float echoDelay = EmitDirectionalEcho();
+        EmitDirectionalEcho(echoCastDistance);
 
         PlaySelectedPingSound();
+        EchoHaptics.PlayPing(HapticHand.Right);
 
         if (pingFlashLight != null)
             StartCoroutine(FlashLight());
 
-        float echoDuration = _echoClipLength;
-        _nextPingTime = Time.time + echoDelay + echoDuration;
+        // Both inputs share this timer. The accepted ping's profile owns the full
+        // lockout, so a microphone ping cannot be bypassed by the sonar control.
+        _nextPingTime = Time.time + cooldownSeconds;
         
 #if UNITY_EDITOR
         _debugHitPoint = origin;
@@ -176,7 +199,7 @@ public class PingEmitter : MonoBehaviour
     /// Sends a forward-facing echo pulse using a spherecast.
     /// If it hits, plays echo audio after a delay based on distance.
     /// </summary>
-    private float EmitDirectionalEcho()
+    private void EmitDirectionalEcho(float maxDistance)
     {
         if (_mainCamera == null) _mainCamera = Camera.main;
         Vector3 origin = _mainCamera != null ? _mainCamera.transform.position : transform.position;
@@ -185,13 +208,17 @@ public class PingEmitter : MonoBehaviour
         Ray ray = new Ray(origin, direction);
         //PlayDetachedParticle(ray);
 
-        if (Physics.SphereCast(ray, sphereCastRadius, out RaycastHit hit, maxEchoDistance, pingLayers))
+        if (Physics.SphereCast(ray, sphereCastRadius, out RaycastHit hit, maxDistance, pingLayers))
         {
             float distance = hit.distance;
             float delay = distance / 343f;
+            EchoSurfaceResponse surfaceResponse = EchoSurface.Resolve(hit.collider);
             
-            LogDebug($"Echo hit: {hit.collider.name} at {distance:F2}m (delay: {delay:F2}s)");
-            StartCoroutine(PlayEchoAfterDelay(hit.point, delay));
+            LogDebug(
+                $"Echo hit: {hit.collider.name} at {distance:F2}m (delay: {delay:F2}s, " +
+                $"surface: {surfaceResponse.SurfaceType}, pitch: {surfaceResponse.PitchMultiplier:F2}, " +
+                $"volume x{surfaceResponse.VolumeMultiplier:F2})");
+            StartCoroutine(PlayEchoAfterDelay(hit.point, delay, surfaceResponse));
             StartCoroutine(GenerateEchoParticleEffect(hit, delay));
 
 #if UNITY_EDITOR
@@ -199,28 +226,31 @@ public class PingEmitter : MonoBehaviour
             _debugDirection = transform.forward;
             _debugDistance = distance;
 #endif
-            Debug.DrawRay(ray.origin, ray.direction * maxEchoDistance, Color.cyan, 1.0f);
-            return delay;
+            Debug.DrawRay(ray.origin, ray.direction * maxDistance, Color.cyan, 1.0f);
         }
-
-        return 0f;
     }
 
     /// <summary>
     /// Plays the echo sound prefab at a location after a timed delay.
     /// </summary>
-    private IEnumerator PlayEchoAfterDelay(Vector3 position, float delay)
+    private IEnumerator PlayEchoAfterDelay(Vector3 position, float delay, EchoSurfaceResponse surfaceResponse)
     {
         yield return new WaitForSeconds(delay);
 
         if (echoSoundPrefab != null)
         {
             GameObject echo = Instantiate(echoSoundPrefab, position, Quaternion.identity);
-            AudioSource src = echo.GetComponent<AudioSource>();
-            if (src != null)
-                src.Play();
-
-            Destroy(echo, 5f);
+            if (echo.TryGetComponent(out EchoSoundController controller))
+            {
+                controller.ConfigureAndPlay(
+                    surfaceResponse.PitchMultiplier,
+                    surfaceResponse.VolumeMultiplier);
+            }
+            else
+            {
+                Debug.LogWarning("[PingEmitter] Echo sound prefab is missing EchoSoundController.", echo);
+                Destroy(echo);
+            }
         }
     }
     /// <summary>

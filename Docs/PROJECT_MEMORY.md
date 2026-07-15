@@ -56,6 +56,49 @@ Add verified project paths here as they become relevant to completed changes.
 
 ## Change Journal
 
+### POLISH-INTEGRATION-001 — Complete and audit the coordinated polish wave
+
+- **Date:** 2026-07-15
+- **Goal:** Integrate the nine independently assigned polish packages, confirm their combined Unity state, and close the coordination queue without losing cross-task behavior.
+- **Result:** POLISH-01 through POLISH-09 are complete. Updated the task index to show every package complete. The combined project now includes corrected movement speeds, explicit button/microphone ping profiles, restrained haptics, persistent settings and turn modes, floor-safe teleport, actual-motion comfort vignette, deterministic seated height offset, spatial door audio, and representative surface/size-aware echoes.
+- **Files created/moved/deleted:** None in this integration-only audit.
+- **Files modified:**
+  - `Docs/PolishTasks/README.md`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:** None — this entry records an integration audit and documentation status update only.
+- **Components/assets/settings:** Final live Unity audit loaded the authoritative XR rig and all six shipped level/tutorial prefabs. It found exactly one `DynamicSprintController`, `PingEmitter`, `TurnSettingsController`, `TeleportLocomotionController`, `ComfortVignetteController`, and `HeightOffsetController` on/in the rig; movement remained `2.0/3.5`; ping profiles remained `10/10/2.5` and `16/16/4`; shipped levels contained exactly eleven `EchoTeleportationArea` components, five valid `Door` components, three representative Maze C `EchoSurface` components, and zero missing scripts. `EchoRoom/EchoSonarReveal` remained supported with zero shader messages.
+- **Decisions and assumptions:** Device-only acceptance remains outside Editor automation. The final release gate still requires Quest testing for comfort, stereo vignette coverage, controller arcs, seated reach/recenter, physical microphone input, haptic strength, door/echo loudness, sustained on-device frame rate, permissions/privacy, release configuration, and Meta submission requirements.
+- **Correction/combined serialization note:** POLISH-03 itself did not save a scene, but the later POLISH-04 `MainScene` save serialized the new default proximity-haptic fields on `Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_E/Entity`. This is an intended combined result (`maxHapticDistance=8`, amplitude `0.08–0.55`, duration `0.08`, cadence `0.45–0.12`) and explains why the final `MainScene.unity` diff includes POLISH-03 settings even though its original entry described code-only serialization.
+- **Verification:** Final dynamic Unity audit returned `pass=True; areas=11; doors=5; missing=0; shader=True; issues=[]`. The active scene was clean. A fresh five-minute Console Error query returned zero entries. Repository checks found no merge-conflict markers and no new Unity asset missing its `.meta` file. All nine `POLISH-XX-001` journal entries are present. Unity finished in Edit Mode, unpaused, not compiling, and not updating.
+- **Known limitations:** No physical Quest headset was connected for the final integration audit. The worktree also contains unrelated/pre-existing Unity/package/configuration changes that were deliberately not cleaned or reverted.
+- **Follow-up:** Perform one controlled Quest acceptance pass using the device-only checks from every POLISH task entry, then create a separate launch-gate checklist for on-device performance, permissions/privacy, full campaign regression, release configuration, store assets, and Meta submission.
+
+### POLISH-QUEUE-001 — Split polish checklist into coordinated work packages
+
+- **Date:** 2026-07-15
+- **Goal:** Convert the monolithic polish checklist into corrected, independently assignable task handoffs suitable for coordinated multi-session implementation.
+- **Result:** Added a coordination index and nine task files covering movement speeds, ping profiles, haptics, settings/turning, teleport, comfort vignette, height offset, door audio, and echo surface variation. Corrected the task assumptions for Unity 6000.3.8f1, URP 17.3.0, XRI 3.3.1, current resource paths, serialized XR rig speed overrides, per-material sonar reveal range, existing vignette assets, and existing door clips. Added explicit dependencies and shared-file serialization rules.
+- **Files created:**
+  - `Docs/PolishTasks/README.md`
+  - `Docs/PolishTasks/POLISH-01-MOVEMENT-SPEEDS.md`
+  - `Docs/PolishTasks/POLISH-02-PING-PROFILES.md`
+  - `Docs/PolishTasks/POLISH-03-HAPTICS.md`
+  - `Docs/PolishTasks/POLISH-04-SETTINGS-AND-TURNING.md`
+  - `Docs/PolishTasks/POLISH-05-TELEPORT.md`
+  - `Docs/PolishTasks/POLISH-06-VIGNETTE.md`
+  - `Docs/PolishTasks/POLISH-07-HEIGHT-OFFSET.md`
+  - `Docs/PolishTasks/POLISH-08-DOOR-AUDIO.md`
+  - `Docs/PolishTasks/POLISH-09-ECHO-SURFACE-VARIATION.md`
+- **Files modified:**
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:** None — documentation and coordination change only.
+- **Components/assets/settings:** No runtime component, asset, scene, prefab, package, or project setting was changed.
+- **Decisions and assumptions:** The nine original work areas remain separate task identities, but their technical plans were corrected before assignment. Work touching the same scene, prefab, or script is sequenced instead of run concurrently. Headset-only checks are explicit acceptance steps and cannot be marked complete from Editor-only evidence.
+- **Verification:** Confirmed all ten Markdown files exist under `Docs/PolishTasks/` with non-empty content. The live Unity MCP transport and Editor API were checked immediately before task creation; Unity reported not playing, not paused, not compiling, and not updating.
+- **Known limitations:** These nine packages do not replace launch gates for on-device performance, microphone permissions/privacy, release configuration, full regression, or Meta Store submission.
+- **Follow-up:** Dispatch the first non-overlapping work wave: POLISH-01, POLISH-03, and POLISH-08.
+
 ### MEM-0001 — Establish persistent project memory
 
 - **Date:** 2026-07-05
@@ -1010,3 +1053,378 @@ Copy this section for each completed change:
 - **Verification:** Unity compiled `AOPlaytestLogger` into `Assembly-CSharp` with no script compilation errors. MCP Play Mode smoke testing directly inspected the runtime object as `AO Playtest Logger` in `DontDestroyOnLoad`, read the log concurrently while it was open, and confirmed the log reported the corrected configuration: feature active, `AfterOpaque=False`, `Downsample=True`, `Source=Depth`, `NormalSamples=Low`, pipeline depth enabled, and reveal shader found/supported. The smoke log contained 17 JSONL events and ended cleanly with `session_end` at frame 760. No new logger exception or compilation error was reported; existing MCP project-path warnings remain unrelated.
 - **Known limitations:** Unity may report GPU frame time as zero on platforms or Editor configurations that do not expose Frame Timing data. Center-view material diagnostics require the viewed reveal surface to have a Physics collider. The latest log is intentionally overwritten when a new Play Mode session starts.
 - **Follow-up:** Run the intended headset playtest, trigger several sonar pings while looking at wall/floor intersections where AO should be visible, exit Play Mode, then ask Codex to read the AO playtest log and diagnose it before starting another Play Mode session.
+
+
+### POLISH-01-001 — Correct smooth locomotion speeds
+
+- **Date:** 2026-07-15
+- **Goal:** Set smooth locomotion to the GDD starting values of 2.0 m/s walking and 3.5 m/s sprinting without changing movement input, acceleration, turning, or sprint activation behavior.
+- **Result:** `DynamicSprintController` source defaults now use 2.0/3.5, and the authoritative XR rig prefab serializes the same values. The loaded `MainScene` rig inherits both prefab values and has no independent `normalSpeed` or `sprintSpeed` property overrides.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/Controller/DynamicSprintController.cs`
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/PlayerController`
+- **Components/assets/settings:** `DynamicSprintController.normalSpeed=2.0` and `DynamicSprintController.sprintSpeed=3.5`. The existing `DynamicMoveProvider` and `PlayerInputManager` references and all other locomotion fields/logic were preserved.
+- **Decisions and assumptions:** The live `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/PlayerController` instance was inspected but not serialized because Unity reported both speed fields as inherited rather than instance overrides. The prefab is therefore the authoritative serialized runtime value source.
+- **Verification:** Unity AssetDatabase refresh and C# recompilation completed with `EditorUtility.scriptCompilationFailed=False`, `EditorApplication.isCompiling=False`, and the active `MainScene` remained clean. MCP prefab readback reported exactly one `DynamicSprintController` at the recorded object path with 2.0/3.5. MCP loaded-scene readback reported exactly one instance at `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/PlayerController`, also 2.0/3.5 with both override flags false. The focused Git diff contains only the two default changes and two prefab values; no movement input, acceleration, turning, or sprint activation code changed. Unity Console errors in the verification window were limited to MCP transport/dynamic-inspection diagnostics and contained no project-script compilation failure.
+- **Known limitations:** Play Mode and headset comfort/feel were not tested during this coordinated multi-session pass. Physical sprint-input validation remains a user acceptance check.
+- **Follow-up:** In headset, confirm comfortable walking at 2.0 m/s and sprinting at 3.5 m/s, then tune only if the GDD values feel unsuitable on target hardware.
+
+
+### POLISH-08-001 — Spatial door open/close audio wiring
+
+- **Date:** 2026-07-15
+- **Goal:** Ensure every shipped maze/tutorial `Door` uses the existing wood-door open and close clips through a restrained spatial AudioSource without disturbing puzzle, animator, or prefab wiring.
+- **Result:** Maze A-D now have explicit open/close clip references on their existing Door components. The shared brown-door source prefab now carries an explicit AudioSource reference and spatial settings, which propagate through `Door Frame.prefab` to the tutorial door. All five shipped doors use the same restrained 3D configuration. Maze E was inspected and correctly left unchanged because it contains no `Door` component.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Prefabs/Door_3_Brown.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Prefabs/Door_3_Brown.prefab :: Door_3_Brown/Door`
+  - `Assets/_EchoRoom/Prefabs/Door Frame.prefab :: Door Frame/Door_3_Brown/Door` (inherits the shared source-prefab change; asset serialization unchanged)
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Door_Leaf`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Door_Leaf`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door_Leaf`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Door_Leaf`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Door Frame/Door_3_Brown/Door` (inherits through nested prefab sources; asset serialization unchanged)
+- **Components/assets/settings:** Reused `Assets/_Third Party Assets/Free Wood Door Pack/Audio/Door_Open.wav` (0.5 seconds) and `Assets/_Third Party Assets/Free Wood Door Pack/Audio/Door_Close.wav` (1.1 seconds). Each affected `Door.asource` references the AudioSource on the same GameObject. AudioSource settings are `playOnAwake=false`, `loop=false`, volume `0.55`, spatial blend `1.0`, Doppler `0`, logarithmic rolloff, minimum distance `1 m`, and maximum distance `12 m`; no AudioSource was added or duplicated.
+- **Decisions and assumptions:** Updated `Door_3_Brown.prefab` rather than adding tutorial overrides so its existing nested source chain remains authoritative. Patched Maze A-D directly because their Door components are local to each level prefab. `Assets/_EchoRoom/SObjects/LevelData.asset` was inspected through Unity and confirms the shipped campaign contains exactly Maze A-E; the separate legacy `Assets/_EchoRoom/Prefabs/Level - 1 (echo puzzle).prefab` is not referenced by that LevelData and was not changed. Existing `Door.SetOpen` state guarding and initialization logic were preserved: repeated requests for the current state return without playback, and `Start()` synchronizes the animator without playing a clip.
+- **Verification:** Unity MCP readback after synchronous reimport found five shipped Door components total and validated 5/5 with non-null same-object AudioSource, exact open/close asset references, and all intended spatial settings. Animator references on Maze A-D remained assigned; the tutorial's existing animator fallback was unchanged. Maze E read back with zero Door components. The focused Git diff contains only the intended audio references/settings. Unity reported not playing, not paused, not compiling, and not updating. Recent Console errors were limited to pre-existing/shared MCP transport and dynamic-tool diagnostics; no project-script compilation failure or door-audio error was present.
+- **Known limitations:** Coordinated sessions were simultaneously using the shared Unity Editor, so Play Mode was intentionally not entered. One-shot open/close playback and silent closed-state initialization are supported by the unchanged `Door.SetOpen`/`Start` control flow but still require an isolated Play Mode or headset confirmation. Final loudness and spatial feel require headset listening.
+- **Follow-up:** In the next clear headset/Play Mode window, open and close one maze door and the tutorial door, confirm each transition plays once with no sound on initial closed-state load, and tune only volume/max distance if the mix feels too loud or carries too far.
+
+
+### POLISH-03-001 — Restrained controller haptic feedback foundation
+
+- **Date:** 2026-07-15
+- **Goal:** Add reusable controller feedback for sonar emission, button/lever interaction, tracked-hand wall contact, and Entity proximity without per-frame device lookup or impulse spam.
+- **Result:** Added a central XR haptic service that caches left/right controller devices and refreshes them on XR connection changes. Accepted sonar pings use right-hand feedback; right-trigger interactions identify the right controller; tracked-hand interactions and wall contacts resolve left/right from the existing hand hierarchy; Entity danger uses rate-limited bilateral pulses whose strength and cadence rise with closeness. Entity feedback stops when out of range, paused/menu-captured, disabled, destroyed, or captured.
+- **Files created:**
+  - `Assets/_EchoRoom/Scripts/Utility/EchoHaptics.cs`
+  - `Assets/_EchoRoom/Scripts/Utility/EchoHaptics.cs.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/PingEmitter.cs`
+  - `Assets/_EchoRoom/Scripts/Controller/SimpleControllerInteraction.cs`
+  - `Assets/_EchoRoom/Scripts/Interactables/EchoButtonInteractable.cs`
+  - `Assets/_EchoRoom/Scripts/Interactables/LeverInteractable.cs`
+  - `Assets/_EchoRoom/Scripts/Interactables/HandPressCollider.cs`
+  - `Assets/_EchoRoom/Scripts/AI/PingAttractedEntity.cs`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:** No scene or prefab asset was serialized. Direct Unity inspection verified these principal runtime consumers:
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/PingEmiiter`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_Palm/Collider`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Hand Tracking/L_Wrist/L_IndexMetacarpal/L_IndexProximal/L_IndexIntermediate/L_IndexDistal/L_IndexTip/Collider`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_Palm/Collider`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Hand Tracking/R_Wrist/R_IndexMetacarpal/R_IndexProximal/R_IndexIntermediate/R_IndexDistal/R_IndexTip/Collider`
+  - `Assets/_EchoRoom/Prefabs/Colliders/Index Collider.prefab :: Index Collider`
+  - `Assets/_EchoRoom/Prefabs/Colliders/Palm Collider.prefab :: Palm Collider`
+  - `Assets/_EchoRoom/Prefabs/Auto_P3_Button Variant.prefab :: Auto_P3_Button Variant`
+  - `Assets/_EchoRoom/Prefabs/PuzzleButton_Auto.prefab :: PuzzleButton_Auto`
+  - `Assets/_EchoRoom/Prefabs/Tutorial/Tutorial Button.prefab :: Tutorial Button`
+  - `Assets/_EchoRoom/Prefabs/Lever_P1_D1 Variant.prefab :: Lever_P1_D1 Variant`
+  - `Assets/_EchoRoom/Prefabs/Tutorial/Tutorial Lever.prefab :: Tutorial Lever`
+  - `Assets/_EchoRoom/Prefabs/Entity.prefab :: Entity`
+  - `Assets/_EchoRoom/Prefabs/Tutorial/Tutorial Entity.prefab :: Tutorial Entity`
+  - `Assets/_EchoRoom/Prefabs/Level - 1 (echo puzzle).prefab :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P1_D1`
+  - `Assets/_EchoRoom/Prefabs/Level - 1 (echo puzzle).prefab :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P2_A4`
+  - `Assets/_EchoRoom/Prefabs/Level - 1 (echo puzzle).prefab :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P3_E5`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P1_D1`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P2_A4`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P3_E5`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P1_Lever`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P2_Lever`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P3_Lever`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P1_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P2_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P3_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P1_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P2_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P3_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Entity`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Tutorial Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Tutorial Lever`
+- **Components/assets/settings:** `EchoHaptics` clamps amplitude to 0–1 and duration to 0–1 second, checks `HapticCapabilities.supportsImpulse`, and uses `InputDevices.deviceConnected/deviceDisconnected` with cached `XRNode.LeftHand`/`RightHand` devices. Patterns are ping `0.3/0.15 s`, button `0.5/0.1 s`, lever `0.4/0.2 s`, and wall touch `0.2/0.05 s`. Entity defaults are 8 m maximum range, amplitude `0.08–0.55`, duration `0.08 s`, and cadence `0.45–0.12 s` from far to near.
+- **Decisions and assumptions:** `SimpleControllerInteraction` is verified as a right-controller trigger path, so it passes `HapticHand.Right`. The four tracked-hand collider instances infer left/right from their verified `Left Hand Tracking`/`Right Hand Tracking` ancestry. Unknown future/custom hand hierarchies use both hands as the explicitly documented compatibility fallback. Entity proximity is intentionally bilateral because it is body-level danger rather than a hand-originated interaction. Wall feedback is limited to non-trigger colliders with `wall` in their inspected hierarchy names and is emitted only on trigger entry with an unscaled-time cooldown. Keyboard-only testing does not request controller haptics. Gameplay events, puzzle state, animations, and existing audio calls were preserved.
+- **Verification:** Unity AssetDatabase refresh and C# compilation completed successfully. After clearing the Console, a fresh refresh produced zero Error entries. A focused Play Mode diagnostic observed logical requests of Ping Right `0.300/0.150`, Button Right `0.500/0.100`, Lever Left `0.400/0.200`, WallTouch Left `0.200/0.050`, and near Entity Both `0.530/0.080`. Two immediate Entity updates produced only one request, proving cadence limiting; moving out of range cleared the active haptic state; setting `Time.timeScale=0` also changed the Entity haptic state from active to inactive. Play Mode was stopped and `MainScene` remained clean.
+- **Known limitations:** Actual tactile strength, cross-device support, and comfort require testing on the target Quest headset. Current accepted sonar input is right-controller based; if a future ping binding identifies another hand, that source should be passed through instead of the current verified right-hand mapping. Wall recognition intentionally follows the project's inspected `*Wall*` naming convention rather than vibrating on floors, doors, the Entity collider, or every solid surface.
+- **Follow-up:** In headset, verify the four event patterns and Entity escalation, then tune wall/Entity values only if they feel intrusive. Confirm that opening pause/captured menus immediately silences Entity rumble on device.
+
+
+### POLISH-04-001 — Persistent VR settings and turning controls
+
+- **Date:** 2026-07-15
+- **Goal:** Add a shared in-headset settings screen to the main and pause menus, persist comfort/locomotion preferences independently of UI lifetime, and make snap/smooth turning plus continuous-turn speed apply immediately.
+- **Result:** Both menu controllers now expose the shared Settings screen and return to the screen that opened it. The pause menu stays at `Time.timeScale=0` and keeps environment audio paused while browsing Settings. Locomotion mode, turn mode, vignette preference, height offset, and turn speed persist under namespaced PlayerPrefs keys. The XR rig now enables exactly one turning provider at runtime, defaults to 45-degree snap turning, and applies the saved continuous speed immediately when smooth turning is selected. Vignette, height, and teleport preferences are exposed for POLISH-05/06/07 without implementing those behaviors here.
+- **Files created:**
+  - `Assets/_EchoRoom/Scripts/UI/EchoRoomSettings.cs`
+  - `Assets/_EchoRoom/Scripts/UI/EchoRoomSettings.cs.meta`
+  - `Assets/_EchoRoom/Scripts/UI/VRSettingsPanelController.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRSettingsPanelController.cs.meta`
+  - `Assets/_EchoRoom/Scripts/Controller/TurnSettingsController.cs`
+  - `Assets/_EchoRoom/Scripts/Controller/TurnSettingsController.cs.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Resources/UI/VRMenu.uxml`
+  - `Assets/_EchoRoom/Resources/UI/VRMenu.uss`
+  - `Assets/_EchoRoom/Scripts/UI/VRMainMenu.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRPauseMenu.cs`
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu`
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/Locomotion System/Turn`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Locomotion System/Turn`
+- **Components/assets/settings:** `MainScene :: VR Pause Menu` now references the same `Assets/_EchoRoom/Resources/UI/VRMenu.uxml` and `VRMenu.uss` used by the main menu. `TurnSettingsController` serializes the existing `ActionBasedSnapTurnProvider` and `ActionBasedContinuousTurnProvider` references on the Turn object. PlayerPrefs keys are `EchoRoom.Settings.LocomotionMode`, `TurnMode`, `VignetteEnabled`, `HeightOffsetMeters`, and `TurnSpeedDegreesPerSecond`; the same namespace reserves master/music/SFX/subtitle preferences for future UI. Defaults are Smooth locomotion, Snap turning, vignette enabled, zero height offset, and 60 degrees/second continuous turning; limits are 30–120 degrees/second and -0.30 to +0.30 metres. The snap angle remains 45 degrees. POLISH-01's `DynamicSprintController` values remain 2.0 m/s normal and 3.5 m/s sprint.
+- **Decisions and assumptions:** Preserved 60 degrees/second as the continuous-turn default because that is the existing serialized rig value verified by POLISH-04; 45 is the separate snap-turn angle. Retained the rig's legacy action-based XRI providers and their existing input action references rather than migrating bindings during a settings task. Every UI and static settings-event subscription added here has a matching disposal/unsubscription path. Settings getters read PlayerPrefs directly, so gameplay consumers do not depend on a menu having been instantiated.
+- **Verification:** Unity AssetDatabase refresh/recompile completed with `IsCompiling=False`, `EditorUtility.scriptCompilationFailed=False`, and no Console Errors in the verification window. MCP prefab and loaded-scene readback confirmed `TurnSettingsController` on the exact recorded Turn paths, both provider references assigned, snap angle 45, continuous speed 60, and movement 2.0/3.5 preserved. The imported shared UXML contains every required main, pause, settings, Back, mode, vignette, height, and speed element. In focused MainScene Play Mode, NavigationSubmit events exercised the same standard UI Toolkit Buttons used by controller pointers: Pause -> Settings kept time at 0 and audio paused; all five controls wrote exact namespaced PlayerPrefs values; Smooth enabled only continuous turning and applied 75 degrees/second immediately; Back returned to Pause without resuming; Continue restored time to 1 and audio. Runtime layout measured 900x560 with the 780x492 settings screen fully inside it. A second Play session read Teleport/Smooth/75/vignette-off/+0.05 m from PlayerPrefs before opening any settings UI, applied Smooth/75 to the providers, and populated the matching UI labels. Verification preferences were then restored to the documented defaults and the providers returned to Snap/60. Unity finished stopped, unpaused, not compiling, and not updating.
+- **Known limitations:** No physical Quest/controller-ray or headset comfort test was performed. The main-menu object and shared UXML/button bindings were inspected through Unity and compiled, while the focused runtime navigation pass used the pause-menu instance in MainScene. Teleport locomotion, vignette rendering, and camera-height application intentionally remain for POLISH-05/06/07. The legacy XRI providers should eventually be migrated separately before their deprecated types are removed by a future XRI upgrade.
+- **Follow-up:** In headset, open Settings from both main and pause menus with controller rays, confirm snap/smooth comfort and pointer targeting, and tune the 60 degrees/second default only if user testing supports a change. POLISH-05/06/07 should consume `EchoRoomSettings.LocomotionMode`, `VignetteEnabled`, and `HeightOffset` respectively.
+
+
+### POLISH-02-001 — Distinct button and microphone ping profiles
+
+- **Date:** 2026-07-15
+- **Goal:** Give the sonar control and microphone shout explicit visual range, directional echo distance, and cooldown profiles while preserving tutorial source classification and POLISH-03 haptics.
+- **Result:** Accepted sonar-control pings now reveal/cast to 10 m with a 2.5-second lockout; accepted microphone pings reveal/cast to 16 m with a 4-second lockout. Both inputs share one timer owned by the accepted ping, so neither can bypass the other's remaining cooldown. Each GPU pulse stores its own visual range beside its origin/start time, allowing simultaneous button and microphone pulses to retain independent limits. Microphone polling now receives the exact full or remaining shared wait duration.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/PingEmitter.cs`
+  - `Assets/_EchoRoom/Scripts/MicPingTrigger.cs`
+  - `Assets/_EchoRoom/Scripts/Controller/SonarRevealController.cs`
+  - `Assets/_EchoRoom/Scripts/Diagnostics/AOPlaytestLogger.cs`
+  - `Assets/_EchoRoom/Shaders/EchoSonarReveal.shader`
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab`
+  - `Logs/AOPlaytests/AOPlaytest_latest.jsonl` (runtime-generated verification log; overwritten by the focused Play Mode run)
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/PingEmiiter`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/PingEmiiter` (inherits the prefab profiles; scene serialization unchanged)
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/EchoPulseController` (runtime `SonarRevealController`; scene serialization unchanged)
+  - `Runtime DontDestroyOnLoad scene (not a serialized asset) :: AO Playtest Logger`
+- **Components/assets/settings:** `PingEmitter.basicPingProfile` serializes visual range `10`, echo cast distance `10`, and cooldown `2.5`; `microphonePingProfile` serializes `16`, `16`, and `4`. `SonarRevealController` writes matching per-slot `_SonarPulses` and `_SonarPulseRanges` global vector arrays with 16 slots. `EchoRoom/EchoSonarReveal` uses each positive per-pulse range for lifetime, distance cutoff, reveal falloff, and ring lifetime; non-profile callers retain `_RevealRadius` as a legacy fallback. `AOPlaytestLogger` now reconstructs and logs the matching per-pulse range. The accepted-emission path still calls `EchoHaptics.PlayPing(HapticHand.Right)` using POLISH-03's `0.3` amplitude and `0.15 s` duration.
+- **Decisions and assumptions:** Kept `OnPingEmitted` as the existing origin-only event so TutorialDirector, Entity AI, and other subscribers remain compatible. `PingEmitter` writes the range-aware pulse before raising that event; the existing same-frame/origin deduplication prevents `SonarRevealController`'s legacy event subscription from replacing its profile. Removed the previous implicit cooldown dependency on echo travel time and clip length because the profiles now define cooldown explicitly. `LastPingInputSource` is still assigned only for accepted pings; controller and Editor Space use `SonarControl`, while `RequestPing` uses `Microphone`.
+- **Verification:** Unity synchronous refresh and C# compilation completed with the Editor idle afterward and zero Console Error entries. MCP prefab readback and loaded-`MainScene` readback both reported exact `10/10/2.5` and `16/16/4` profile values. Saving the XR rig preserved POLISH-01 movement `2.0/3.5` and POLISH-04 `TurnSettingsController` references. Shader inspection reported `IsSupported=True`, `HasErrors=False`, and zero compilation messages. A focused Play Mode diagnostic produced `[POLISH02_CHECK] pass=True`: button range `10.00`, cooldown `2.500`, one active pulse; microphone range `16.00`, cooldown `4.000`, one active pulse; button-to-mic and mic-to-button lockouts both held; repeated mic returned `4.000`; final accepted source remained `Microphone` after a blocked button attempt; exactly two accepted right-hand ping haptic requests were observed and blocked attempts added none. TutorialDirector's first-step check still requires `LastPingInputSource == SonarControl`. Play Mode was stopped and Unity finished idle with no Console Errors.
+- **Known limitations:** The focused test invoked the same runtime request/emission paths but did not generate a physical acoustic microphone signal or visually measure the ring in a Quest headset. Actual echo audibility at 10/16 m, tactile feedback, reveal appearance, and comfort remain device checks. Per-material `_RevealRadius` now acts only as the fallback for legacy non-profile pulse calls; explicit button/microphone pulses use their profile ranges by design.
+- **Follow-up:** In headset, compare button and microphone pings in the same corridor, confirm the visual wave ends near 10/16 m, verify the directional echo distance and 2.5/4-second cadence by feel, and confirm the tutorial still rejects microphone input for its first sonar-control instruction.
+
+
+### POLISH-05-001 — Persistent floor-safe teleport locomotion
+
+- **Date:** 2026-07-15
+- **Goal:** Implement the persisted Teleport locomotion choice from POLISH-04 as a functional XRI 3.3.1 alternative to smooth movement, with deliberate destinations across every shipped maze and the tutorial.
+- **Result:** The XR rig now has left- and right-controller projectile teleport arcs, a modern `TeleportationProvider`, and a mode controller that applies `EchoRoomSettings.LocomotionMode` on startup and immediately after settings changes. Smooth mode enables the existing move/sprint stack and hides/disables teleport input and visuals. Teleport mode disables the smooth move provider, sprint controller, and Move actions while enabling Teleport Mode actions and the teleport provider. Holding either thumbstick forward shows its arc; releasing queues a valid floor teleport and hides the arc. Only the explicit maze, hallway, and tutorial floor objects accept teleport. Destination validation rejects non-floor colliders, slopes over 20 degrees, blocked body capsules, and floor points hidden behind maze walls, preventing projectile arcs from bypassing corridor walls.
+- **Files created:**
+  - `Assets/_EchoRoom/Scripts/Controller/TeleportLocomotionController.cs`
+  - `Assets/_EchoRoom/Scripts/Controller/TeleportLocomotionController.cs.meta`
+  - `Assets/_EchoRoom/Scripts/Controller/EchoTeleportationProvider.cs`
+  - `Assets/_EchoRoom/Scripts/Controller/EchoTeleportationProvider.cs.meta`
+  - `Assets/_EchoRoom/Scripts/Controller/EchoTeleportationArea.cs`
+  - `Assets/_EchoRoom/Scripts/Controller/EchoTeleportationArea.cs.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)`
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/Locomotion System/Teleportation`
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/Camera Offset/Left Controller/Teleport Interactor`
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/Camera Offset/Right Controller/Teleport Interactor`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Locomotion System/Teleportation`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Teleport Interactor`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Teleport Interactor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Maze_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Exit_Hallway/Hallway_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Maze_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Exit_Hallway/Hallway_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Maze_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Exit_Hallway/Hallway_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Maze_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Exit_Hallway/Hallway_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Maze_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Exit_Hallway/Hallway_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Floor`
+- **Components/assets/settings:** The rig root now serializes one `XRBodyTransformer` and one `LocomotionMediator`; `MainScene` inherits those components after its two obsolete added-component overrides were removed. `Locomotion System/Teleportation` contains `EchoTeleportationProvider` at transformation priority 20 with zero delay and `TeleportLocomotionController`. The two nested `Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/Prefabs/Interactors/Teleport Interactor.prefab` instances use Projectile Curve, 14 m maximum ray distance, velocity 10, sample frequency 50, Directional/Blocking Teleport Reticles, physical raycast mask `4294967291` (all except Ignore Raycast), and interaction layer bit `2147483648` (layer 31, Teleport). They reference `XRI Left Locomotion/Teleport Mode` and `XRI Right Locomotion/Teleport Mode`; the controller also owns the matching left/right Move action state. `EchoTeleportationArea` uses interaction layer 31, `MatchOrientation.None`, OnSelectExited, 20-degree hit-normal/slope limits, a 0.30 m radius by 1.70 m clearance capsule, and the same obstruction mask. The XRI interactor prefab's extra `SimpleHapticFeedback` is disabled so it does not duplicate the project's POLISH-03 haptic service.
+- **Decisions and assumptions:** Both hands support teleport because XRI's shipped input asset already exposes equivalent left/right Teleport Mode controls. Turn actions/providers remain independent and enabled according to `TurnSettingsController`; only smooth Move actions/providers are exchanged for teleport. Direct head-to-destination line of sight intentionally prevents teleporting around or over maze walls even when the projectile arc could physically reach the floor behind them. Only the eleven inspected floor objects were made teleportable; roofs, walls, doors, props, trigger volumes, the Entity, and exterior space were left non-teleportable. The existing scene-only `Menu UI Ray` objects were not reused or modified. The XRI input-action asset was referenced but not changed. The POLISH-01 movement values `2.0/3.5`, POLISH-02 ping profiles `10/10/2.5` and `16/16/4`, POLISH-03 haptics, POLISH-04 turn controller/settings, and menu wiring were preserved.
+- **Verification:** Unity AssetDatabase refresh and C# compilation completed with the Editor idle and zero fresh Console Errors. Live MCP prefab readback found zero missing scripts, exactly one body transformer/mediator, assigned provider/controller/action/interactor references, exact interaction/raycast masks, both arcs initially inactive, and exactly two floor areas in each Maze A-E plus one tutorial floor area; every area had a collider, correct Teleport mask, and no area existed on a non-floor object. `MainScene` readback confirmed one inherited body transformer/mediator, no duplicate added overrides, provider/controller/rays present, zero missing scripts, and a clean scene. Focused Play Mode checks proved Smooth and Teleport apply exact inverse provider/action states, four repeated mode changes do not duplicate or stick, and a right-hand aim becomes visible then hides after release. The active Maze produced two runtime floor areas; a clear floor request succeeded, a wall hit failed, and a floor point behind `Maze_Walls` failed line-of-sight validation. Queueing the valid request moved the camera XZ to the destination with `0.000 m` measured error, left the CharacterController enabled at height `1.60` and radius `0.30`, and returned the provider to Idle. A full Play Mode stop/restart loaded persisted Teleport before settings UI creation and applied it correctly; verification then restored Smooth and removed diagnostic PlayerPrefs. The second focused run had zero Console Errors. Unity finished stopped, unpaused, not compiling/updating, with all prefabs closed.
+- **Known limitations:** Physical thumbstick input, arc appearance, reticle readability, destination feel, and comfort were not tested on a Quest headset. Static live-Editor validation covered every shipped Maze A-E and Tutorial asset, while the focused runtime request test used the currently loaded Maze A. Direct line-of-sight is intentionally conservative and disallows teleporting around corners; headset testing should confirm that this feels appropriate rather than overly restrictive.
+- **Follow-up:** On Quest, test both controller sticks in each maze and the tutorial, confirm the arc/reticles are comfortable and every corridor has enough reachable floor, verify walls and closed doors cannot be bypassed, and tune the 14 m arc or clearance values only from observed headset evidence.
+
+
+### POLISH-06-001 — Actual-motion comfort vignette
+
+- **Date:** 2026-07-15
+- **Goal:** Add the persisted optional tunneling vignette to artificial smooth movement and continuous turning without obscuring stationary play or activating during snap turns and teleport locomotion.
+- **Result:** The XRI 3.3.1 Starter Assets tunneling-vignette prefab is now nested directly under the XR rig's Main Camera. A new `ComfortVignetteController` measures actual XR Origin planar translation and rotation, requests XRI's vignette only for saved Smooth locomotion and Smooth turning, releases it when motion stops, suppresses it while paused, and excludes snap-turn and Teleport modes. The renderer follows `EchoRoomSettings.VignetteEnabled` immediately and at startup; turning the setting off disables the overlay renderer immediately.
+- **Files created:**
+  - `Assets/_EchoRoom/Scripts/Controller/ComfortVignetteController.cs`
+  - `Assets/_EchoRoom/Scripts/Controller/ComfortVignetteController.cs.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab`
+  - `Logs/AOPlaytests/AOPlaytest_latest.jsonl` (ignored runtime-generated verification log; overwritten by the focused Play Mode sessions)
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/Camera Offset/Main Camera/Comfort Vignette`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Main Camera/Comfort Vignette` (inherits the XR rig prefab change; scene serialization unchanged)
+- **Components/assets/settings:** Reused the nested source `Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/TunnelingVignette/TunnelingVignette.prefab` with its `TunnelingVignetteController`, hemisphere mesh, material, `VR/TunnelingVignette` shader, MeshRenderer, and SortingGroup order 30010. `ComfortVignetteController` implements `ITunnelingVignetteProvider`, references the rig root as its measured motion Transform, and uses aperture `0.72`, feathering `0.22`, ease-in `0.18 s`, and ease-out `0.22 s`. Actual-motion thresholds are `0.05 m/s` planar movement and `3 degrees/s` rotation, with per-frame discontinuity guards of `1 m` and `40 degrees` plus a `0.08 s` release hold. `EchoRoomSettings.VignetteEnabled`, `LocomotionMode`, and `TurnMode` changes apply through the existing settings event.
+- **Decisions and assumptions:** Measured XR Origin motion instead of provider enabled/state because the continuous move provider can remain active for zero-input/gravity housekeeping; physical tracked-head motion changes the camera pose rather than the XR Origin pose and therefore does not trigger the effect. Locomotion and turn settings explicitly exclude Teleport and Snap even if the rig Transform changes. Kept the sample as a nested prefab so its maintained XRI mesh/material/shader remain authoritative. Disabling the renderer on setting-off provides an immediate no-vignette guarantee while retaining the XRI controller's normal easing lifecycle when motion ends.
+- **Verification:** Unity compiled the new controller with the Editor idle afterward. Live MCP readback confirmed exactly one prefab and one loaded-scene driver at the recorded paths, assigned controller/renderer/root references, local position/rotation zero, unit scale, no missing scripts, supported vignette shader with zero compiler messages, and no duplicate overlay. Preserved readback reported movement `2.0/3.5`, button/microphone ping profiles `10/10/2.5` and `16/16/4`, one turn controller, one teleport mode controller/provider, two teleport rays, and all eleven teleport areas. Focused Play Mode produced `[POLISH06_CHECK] pass=True`: stationary aperture `1`, actual smooth movement and smooth turning requested/closed the vignette, stopping reopened it, snap and teleport Transform changes were excluded, setting-off disabled the renderer immediately, pause ended and fully reopened the effect, and repeated lifecycle changes retained one XRI provider record. A full Play Mode restart loaded persisted vignette-off before UI interaction and kept the renderer off; verification then restored Smooth/Snap/Vignette On. Unity finished stopped, unpaused, not compiling/updating, MainScene clean, all prefab stages closed, and a final Console Error query returned no entries.
+- **Known limitations:** Stereo correctness, both-eye edge coverage, controller-pointer/hand/UI readability, final comfort, and threshold tuning require a Quest headset test. Editor automation changed the rig Transform to exercise real-motion detection but did not use physical controller input or a live OpenXR headset. Discontinuous runtime repositioning smaller than the configured guards could be interpreted as smooth motion when the saved mode is Smooth.
+- **Follow-up:** On Quest, test walking, sprinting, and smooth turning at several speeds; confirm the vignette is comfortable in both eyes, central UI/hands/pointers remain readable, snap/teleport never tunnel, and the setting switches cleanly from both menus. Tune the serialized comfort profile or thresholds only from headset evidence.
+
+
+### POLISH-07-001 — Deterministic seated height offset
+
+- **Date:** 2026-07-15
+- **Goal:** Apply the persisted seated/standing height preference without moving the tracked Camera or XR Origin locomotion root, and remain correct when XROrigin changes tracking-origin baselines.
+- **Result:** The XR rig now has one `HeightOffsetController` on its root. It captures the authoritative Camera Offset baseline, applies `EchoRoomSettings.HeightOffset` as an absolute relative value, clamps the runtime safety envelope to -0.5..+0.5 m (the shared UI setting remains the stricter -0.3..+0.3 m), and never accumulates previous applications. It subscribes to height-setting, scene-load, XR tracking-origin, and subsystem-reload changes; Floor rebases to 0, Device/Unbounded rebases to `XROrigin.CameraYOffset`, and Unknown/no-XR mode safely recognizes an external raw baseline reset before reapplying on the following frame.
+- **Files created:**
+  - `Assets/_EchoRoom/Scripts/Controller/HeightOffsetController.cs`
+  - `Assets/_EchoRoom/Scripts/Controller/HeightOffsetController.cs.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab`
+  - `Logs/AOPlaytests/AOPlaytest_latest.jsonl` (ignored runtime-generated verification log; overwritten by the focused Play Mode sessions)
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)`
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/Camera Offset`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)` (inherits the root controller; scene serialization unchanged)
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset` (runtime height target; scene serialization unchanged)
+- **Components/assets/settings:** `HeightOffsetController` requires the existing `Unity.XR.CoreUtils.XROrigin` and resolves its assigned `CameraFloorOffsetObject`; no serialized Camera or root Transform reference is introduced. The rig retains `RequestedTrackingOriginMode=NotSpecified`, `CameraYOffset=1.361`, serialized Camera Offset local Y `1.0`, and root local position zero. `EchoRoomSettings.HeightOffset` remains persisted by POLISH-04 under `EchoRoom.Settings.HeightOffsetMeters` with UI limits -0.30..+0.30 m and 0.05 m steps.
+- **Decisions and assumptions:** Only the Camera Offset local Y is written, preserving its X/Z coordinates. The tracked Main Camera is never written and the locomotion root is never repositioned. XROrigin's own tracking-origin result is treated as the baseline rather than altering `CameraYOffset`. A next-frame reapply is used after tracking-origin callbacks so XROrigin's baseline write completes first regardless of callback order. Scene-load handling also covers a persistent rig; a newly created rig captures its own baseline during `Awake`.
+- **Verification:** Unity synchronous refresh and compilation completed with the Editor idle and zero fresh Console Errors. MCP readback found exactly one prefab controller on the rig root and one inherited loaded-scene controller; Camera Offset remained `(0,1,0)`, Main Camera remained its child with unchanged local pose, XR Origin root remained local zero, and MainScene remained clean. Focused Play Mode checks passed absolute +0.30, -0.30, +0.15, and 0 targets; 25 repeated applications at each value produced no drift. The root and Camera local pose stayed fixed; left/right hand roots, right controller, `Maze Timer Display`, and `Menu UI Ray` retained local alignment and followed Camera Offset by the exact preference delta; CharacterController Transform, height, and center remained stable. Simulating an external XROrigin-style raw reset from baseline 1.000 to 1.361 while +0.20 was saved rebased on the next frame to baseline 1.361 and target/actual 1.561. A full Play Mode stop/restart loaded persisted +0.20 at baseline 1.000/actual 1.200, after which the setting was restored and persisted to 0. Unity finished stopped, unpaused, idle, MainScene clean, and with zero Console Errors.
+- **Known limitations:** The Editor had no active XR headset, so `CurrentTrackingOriginMode` was `Unknown`; Floor/Device/Unbounded baseline selection is covered by direct XROrigin API behavior and the external-reset runtime check, but an actual Quest tracking-origin transition was not generated. Seated reach, physical floor relationship, stereo viewpoint comfort, and real controller/hand interaction reach require a headset/manual check.
+- **Follow-up:** On Quest, test at -0.30/0/+0.30 in seated and standing use, recenter or change tracking origin while a non-zero offset is active, and confirm floor relationship, hand/controller reach, menus, timer display, teleport, and CharacterController behavior remain comfortable and aligned.
+
+
+### POLISH-09-001 — Surface- and size-aware directional echoes
+
+- **Date:** 2026-07-15
+- **Goal:** Give directional echoes restrained material and object-size character while preserving the stable ping profiles, default untagged sound, spatial rolloff, and haptic path.
+- **Result:** Directional ray hits now resolve optional `EchoSurface` metadata before the distance delay and pass bounded pitch and volume multipliers to one explicit `EchoSoundController.ConfigureAndPlay` call. The controller captures the echo prefab's authored base volume, disables legacy Play On Awake at runtime, applies the multiplier before playback, rejects duplicate play requests, preserves 3D logarithmic rolloff, and owns the one normal playback/destruction lifecycle. Untagged surfaces remain exactly pitch 1 and volume multiplier 1. Representative Maze C iron, stone/masonry, and wood geometry is tagged Metal, Concrete, and Wood without expanding the mapping across every maze.
+- **Files created:**
+  - `Assets/_EchoRoom/Scripts/Sonar.meta`
+  - `Assets/_EchoRoom/Scripts/Sonar/EchoSurface.cs`
+  - `Assets/_EchoRoom/Scripts/Sonar/EchoSurface.cs.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/PingEmitter.cs`
+  - `Assets/_EchoRoom/Scripts/Controller/EchoSoundController.cs`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door_Frame`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Maze_Walls`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door_Leaf`
+  - `Assets/_EchoRoom/Prefabs/EchoSound.prefab :: EchoSound` (runtime behavior changes through `EchoSoundController`; prefab serialization unchanged)
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/PingEmiiter` (runtime directional-echo path changes through `PingEmitter`; rig serialization unchanged)
+- **Components/assets/settings:** `EchoSurfaceType` supports Default, Metal, Concrete, Wood, Glass, and FabricAbsorptive. Built-in 2 m pitch/volume multipliers are Metal `1.08/0.96`, Concrete `0.97/0.86`, Wood `0.92/0.78`, Glass `1.12/0.72`, and FabricAbsorptive `0.88/0.58`; pitch clamps to `0.85..1.15` and volume multiplier to `0.55..1.15`. Tagged surfaces derive a logarithmic loudness contribution from the hit collider's largest world-space bound, with renderer fallback, normalized at 2 m and limited to `-5%/+8%`. Untagged or explicitly Default surfaces skip size scaling and return exact `1/1`. Maze C readback resolved Door_Frame `1.08/0.97`, Maze_Walls `0.97/0.93`, and Door_Leaf `0.92/0.78`. The EchoSound prefab retains its authored clip, base volume 1, min distance 3 m, max distance 30 m, and logarithmic rolloff.
+- **Decisions and assumptions:** Applied size contribution only to deliberately tagged surfaces so untagged content has no regression. Tagged volume profiles attenuate from the unchanged full-volume default, leaving headroom for the conservative size contribution instead of saturating immediately at AudioSource volume 1. Maze C was chosen because its imported materials identify `Door_FrameIron`, `Maze_Stone`, and `Door_Wood`; stone is used as the representative concrete/masonry acoustic class. Pitch/volume trims remain 1 on all three representative objects. No XR rig, scene, other maze, teleport, or door-audio serialization was changed.
+- **Verification:** Unity synchronous refresh and compilation completed with `EditorUtility.scriptCompilationFailed=False`; the final Editor state was stopped, unpaused, not compiling, and not updating. Live prefab-stage inspection verified the three exact Maze C object paths and bounds before adding one `EchoSurface` to each; the prefab was saved and closed. Asset readback found exactly three surface tags, exactly two existing `EchoTeleportationArea` components, and retained the Door AudioSource plus assigned `Door.openDoor`/`Door.closeDoor` clips. Focused Play Mode verified an untagged 40 m collider remained exact `1/1`; Metal/Concrete/Wood responses were distinct; Metal's size response increased from `0.91` at 0.1 m to `1.04` at 40 m; a spawned EchoSound was idle before configuration, the first configuration played, a duplicate returned false, spatial blend/logarithmic 3/30 m rolloff remained, and a shortened diagnostic lifetime self-destroyed. XR rig readback preserved button `10/10/2.5`, microphone `16/16/4`, and the accepted right-hand haptic call. The final code audit found one `audioSource.Play()` call in `EchoSoundController` and no direct echo AudioSource playback in `PingEmitter`. A final post-compile gate had zero Console Errors in its fresh one-minute window. Two earlier diagnostic assertions failed because the harness incorrectly expected the intentionally null Door AudioSource clip instead of the Door open/close fields, and compared unclamped volume `1.05` to AudioSource's clamped `1.0`; corrected assertions passed and neither was a product defect. Unity's MCP Console-clear helper could not clear its own locked log-cache file, so final error verification used a fresh timestamp window after clearing the Editor Console directly.
+- **Known limitations:** Surface intelligibility, echo loudness, spatial localization, and whether the differences remain comfortably non-cartoonish require Quest/headset listening. Only three representative Maze C objects are tagged; Glass and FabricAbsorptive mappings are implemented but not yet assigned to shipped geometry. Large responses can still clamp at AudioSource volume 1 after multiplying a high prefab base volume. Unity-generated prefab YAML retains standard blank `m_Name` trailing spaces reported by `git diff --check`; source files had no whitespace errors.
+- **Follow-up:** In headset, compare the same directional ping against Maze C Door_Frame, Maze_Walls, Door_Leaf, and an untagged surface at similar distances. Tune built-in multipliers only from listening evidence, then deliberately tag a small number of proven Glass/Fabric surfaces before considering broader maze authoring.
+
+
+### POLISH-02-PTT-001 — Make microphone sonar push-to-talk
+
+- **Date:** 2026-07-15
+- **Goal:** Replace the always-listening microphone sonar path with explicit push-to-talk behavior.
+- **Result:** Microphone sonar now captures only while the left controller secondary face button (Y on Quest) is held. Editor testing uses V. Releasing the control, pausing gameplay, disabling the component, or leaving its lifecycle stops `Microphone` capture. A loud threshold crossing can request at most one microphone ping per hold, so continuous speech cannot repeatedly fire after cooldown; the player must release and hold again. The existing 16 m / 4 s microphone profile, shared ping lockout, tutorial source classification, sound, and haptic emission path are unchanged.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/MicPingTrigger.cs`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab`
+  - `Docs/PolishTasks/POLISH-02-PING-PROFILES.md`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Prefabs/XR Origin (XR Rig).prefab :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/PingEmiiter` (runtime `MicPingTrigger` behavior changes through its script; prefab serialization unchanged)
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/PingEmiiter` (inherits the XR rig behavior; scene serialization unchanged)
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Microphone Wall Tip`
+- **Components/assets/settings:** `MicPingTrigger` owns a runtime `InputAction` bound to `<XRController>{LeftHand}/secondaryButton` plus Editor-only `<Keyboard>/v`. Capture still uses the first available microphone at 44.1 kHz with a one-second looping clip, a 128-sample peak window, serialized sensitivity `0.1`, and serialized polling interval `0.1 s`. Public read-only state exposes whether push-to-talk is held and whether the microphone is actually recording. The tutorial tip now reads, `Hold Y and speak to use a stronger microphone ping.`
+- **Decisions and assumptions:** Left Y was selected after a project-wide input audit found right secondary reserved for normal sonar, right primary reserved for the maze timer, trigger/grip reserved for interactions, and sticks reserved for movement/turn/teleport. Starting and ending `Microphone` capture on each hold was chosen over merely ignoring an always-running stream so the behavior is genuinely push-to-talk. A threshold crossing during another ping's lockout consumes that hold and requires release/re-hold; this makes each physical hold one deliberate attempt. Existing concurrent teleport serialization in the tutorial prefab was preserved untouched; this change edits only the microphone instructional text there.
+- **Verification:** Project-wide binding search found no gameplay use of left secondary/Y. Source audit confirmed capture begins only on the held edge, ends on release/pause/disable, uses the named device consistently for position/end calls, and permits one threshold attempt per hold. `git diff --check` found no new C# or documentation whitespace issue; the tutorial prefab retains one pre-existing Unity-generated blank `m_Name` trailing-space warning. Unity's generated Roslyn response compiled the entire game `Assembly-CSharp` successfully with exit code 0 and only existing obsolete/unused-field warnings after excluding six missing generated Ivan Murzak MCP reference assemblies. Not inspected — Unity connection unavailable: the running Editor's MCP transport could not start because `com.ivanmurzak.unity.mcp` 0.84.0 currently fails in `UnityMcpPlugin.Config.cs(148,50)` with CS0115 (`CredentialProvider` has no suitable method to override).
+- **Known limitations:** Full Unity refresh, live component readback, Play Mode microphone simulation, Android microphone-permission behavior, and physical Quest Y/microphone testing remain pending because the unrelated MCP package compile error blocks the normal Editor/MCP verification loop. Starting microphone hardware on press can introduce device-specific startup latency; headset testing must confirm speech is not clipped.
+- **Follow-up:** Repair or align the Ivan Murzak MCP package and its bundled `McpPlugin` dependency, then refresh Unity and run a focused Play Mode/device pass: verify idle capture is off, hold Y starts capture, speech emits one 16 m ping, sustained speech cannot repeat, release ends capture, re-hold can emit again after shared cooldown, and pause immediately ends recording.
+
+
+### MCP-COMPAT-001 — Restore compatible Unity-MCP dependency family
+
+- **Date:** 2026-07-15
+- **Goal:** Resolve CS0115 in `UnityMcpPlugin.Config.cs` and restore the Unity Editor/MCP connection without altering gameplay packages or code.
+- **Result:** Replaced the incompatible direct Unity-MCP core 0.84.0 pin with 0.82.1, matching the exact core dependency declared by the installed Animation 1.2.21, Cinemachine 1.0.7, and Input System 1.0.7 extensions. Unity Package Manager resolved the compatible package, regenerated the MCP assemblies, and restored the NuGet `McpPlugin`/`McpPlugin.Common` binaries from the mismatched 6.11.0 state to the repository-compatible 6.10.0 state. The `CredentialProvider` override compile error is gone and the local MCP endpoint is reachable again.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Packages/manifest.json`
+  - `Packages/packages-lock.json`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:** None — package resolution and editor tooling only.
+- **Components/assets/settings:** `com.ivanmurzak.unity.mcp` is now a direct registry dependency at 0.82.1 with lock depth 0. Existing extension versions remain Animation 1.2.21, Cinemachine 1.0.7, and Input System 1.0.7. Unity resolution restored `Assets/Plugins/NuGet/McpPlugin.dll` and `McpPlugin.Common.dll` to file version 6.10.0; those files and `.nuget-installed.json` match the repository afterward and therefore have no final diff.
+- **Decisions and assumptions:** Chose the version required by all three installed MCP extensions instead of editing generated `Library/PackageCache` source or manually replacing DLLs. This keeps UPM authoritative and avoids mixing the 0.84.0 source API, which expects McpPlugin 7.x `CredentialProvider`, with older precompiled binaries. No other package version or dependency entry was changed.
+- **Verification:** Unity resolved `com.ivanmurzak.unity.mcp@0.82.1` into a new package-cache directory, rebuilt `com.IvanMurzak.Unity.MCP.Runtime.dll`, rebuilt `Assembly-CSharp.dll`, and the current Editor log contains no fresh CS compiler error, Tundra failure, or script-compilation failure after resolution. Live MCP package-list readback reports core 0.82.1 and the three unchanged extension versions. `unity-mcp-cli status` reports the running Editor and local server connected, and the system readiness probe returns `pong`. The original CS0115 no longer appears in the fresh post-resolution compilation output.
+- **Known limitations:** `console-clear-logs` still cannot clear `Temp/mcp-server/ai-editor-logs.txt` while the server holds the file; invoking it logged a tool-specific file-lock error but did not affect compilation or connectivity. The Meta XR SDK package also reports two immutable-package missing-`.meta` import messages independently of this fix.
+- **Follow-up:** No MCP compatibility work is required unless the extension family is upgraded together. If upgrading to Unity-MCP 0.84.x later, update its required McpPlugin dependency family atomically and verify all extension packages declare a compatible core version before opening Unity.
+
+
+### MCP-COMPAT-002 — Correct MCP-COMPAT-001 and complete the 0.84 dependency bootstrap
+
+- **Date:** 2026-07-15
+- **Correction:** `MCP-COMPAT-001` records a successful intermediate 0.82.1 rollback, but that was not the durable final state. The managed Unity-MCP server restored the direct core dependency to 0.84.0, revealing that the correct repair was to complete 0.84.0's NuGet bootstrap rather than hold the older package. The final authoritative state is recorded here.
+- **Goal:** Keep Unity-MCP 0.84.0 while installing its required precompiled dependency family and making the local server configuration restart-safe.
+- **Result:** Reopened Unity through the official `unity-mcp-cli open` bootstrap path, which dismissed the expected launch compiler dialog once so the package's editor dependency resolver could run. The resolver upgraded `McpPlugin` and `McpPlugin.Common` from 6.x to 7.0.0 and `ReflectorNet` from 5.3.1 to 5.3.2. This supplies the `ConnectionConfig.CredentialProvider` API required by Unity-MCP 0.84.0, eliminating CS0115. The saved local auth option was migrated from legacy `required` to supported local `none`; a subsequent ordinary restart without an auth override connected successfully.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Packages/manifest.json`
+  - `Packages/packages-lock.json`
+  - `Assets/Plugins/NuGet/.nuget-installed.json`
+  - `Assets/Plugins/NuGet/McpPlugin.dll`
+  - `Assets/Plugins/NuGet/McpPlugin.Common.dll`
+  - `Assets/Plugins/NuGet/ReflectorNet.dll`
+  - `UserSettings/AI-Game-Developer-Config.json` (ignored local configuration; only `authOption` changed)
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:** None — editor tooling, package dependencies, and ignored local connection configuration only.
+- **Components/assets/settings:** Direct registry package `com.ivanmurzak.unity.mcp` is 0.84.0 at lock depth 0. Existing MCP extensions remain Animation 1.2.21, Cinemachine 1.0.7, and Input System 1.0.7. NuGet manifest versions are `com.IvanMurzak.McpPlugin` 7.0.0, `com.IvanMurzak.McpPlugin.Common` 7.0.0, and `com.IvanMurzak.ReflectorNet` 5.3.2; DLL file versions match. Local connection mode remains Custom on the existing localhost endpoint with keep-connected/server behavior preserved, while auth is now `none` as supported by server 9.0.0. No token or credential value is recorded here.
+- **Decisions and assumptions:** Followed the package's official CLI bootstrap behavior instead of editing generated `Library/PackageCache` source or downloading individual DLLs manually. The temporary 0.82.1 rollback was useful to restore tooling, but the managed server owns the 0.84 package family and rewrote it; the final fix therefore aligns all required binaries with 0.84.0. Local `none` auth is appropriate for this loopback-only Custom endpoint; no remote or cloud endpoint was placed in scope.
+- **Verification:** Unity exited cleanly and reopened through the supported CLI bootstrap, after which `McpPlugin.dll` reported file version 7.0.0.0 and the CS0115 error disappeared. Live MCP package-list readback reports core 0.84.0 and unchanged extension versions. The readiness probe returned `pong`. Unity was then closed and reopened normally without passing an auth override; `wait-for-ready` connected immediately to the existing local endpoint. A fresh two-minute MCP Console Error query after that durable restart returned an empty result. `git diff --check` reports no new whitespace errors in the tracked text files.
+- **Known limitations:** The package's `console-clear-logs` helper still has a known file-lock failure while its own log file is open; verification used a fresh Editor process/log window instead. Physical Quest testing remains unrelated and pending as documented in the polish entries.
+- **Follow-up:** Upgrade the Unity-MCP core, MCP server, NuGet binaries, and extension compatibility as one tested family in future. Do not downgrade or replace only `McpPlugin.dll`, and do not edit `Library/PackageCache` directly.
+
+
+### UI-MOCK-001 — Rebuild shared VR menus from the sonar-facility mock
+
+- **Date:** 2026-07-15
+- **Goal:** Translate the supplied `mock menu.jpg` composition into the project's existing Unity UI Toolkit menu while preserving all current screens, element names, settings controls, and button callbacks.
+- **Result:** The shared menu now presents a dark sonar-facility background with concentric echo rings, a centered double-line signal frame, corner telemetry marks, wide-spaced Echo Room typography, and a vertical main-menu stack matching the mock's hierarchy. New Game has the brighter default signal state; hover/focus, pressed, disabled, secondary, and danger states remain native UI Toolkit styling. Level select, overwrite warning, pause, settings, and captured screens were restyled to the same frame and spacing system. The main menu and settings screen both fit within the existing 900×560 world-space document without changing the runtime C# bindings.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Resources/UI/VRMenu.uxml`
+  - `Assets/_EchoRoom/Resources/UI/VRMenu.uss`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu` (runtime presentation changes through the shared `VRMenu` UXML/USS; scene serialization unchanged)
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu` (runtime presentation changes through the same shared `VRMenu` UXML/USS; scene serialization unchanged)
+- **Components/assets/settings:** Both menu objects retain their existing `UIDocument`/world-space setup and 900×560 layout size. `VRMenu.uss` references the user-supplied `Assets/_EchoRoom/Art/UI/width1680.jpg` as the root background. The mock source `Assets/_EchoRoom/Art/UI/mock menu.jpg` guided the composition. Existing query names such as `new-game-button`, `load-game-button`, `tutorial-replay-button`, `main-settings-button`, the level buttons, pause/captured actions, and every settings control were preserved for `VRMainMenu`, `VRPauseMenu`, `VRFrontEndMenu`, and `VRSettingsPanelController`.
+- **Decisions and assumptions:** Recreated panels, borders, buttons, labels, and interaction states in UXML/USS instead of slicing them into raster assets, keeping text readable and controls responsive in VR. The supplied selected/unselected button JPGs were not used because their apparent checkerboard transparency is baked into the pixel data and would render as pale rectangular backgrounds. No C# script, scene, prefab, collider, panel size, navigation callback, or save/settings behavior was changed. During visual verification only, the MainMenuScene EventSystem was temporarily disabled in memory to prevent a retained XR simulator trigger from immediately activating New Game; it was restored to active afterward and the scene remained clean and unsaved.
+- **Verification:** PowerShell XML parsing accepted the complete UXML, a required-name audit found every existing script-bound element, and `git diff --check` reported no whitespace errors. Unity `ForceSynchronousImport` refreshed the assets successfully with no import/compiler error. Live 1920×1080 Game View captures verified the runtime main screen and settings screen: the main title/tagline, vertical four-button layout, selected state, sonar frame, all five settings rows, steppers, values, and Back button render without clipping. Live scene inspection confirmed the exact `Main Menu` and `VR Pause Menu` object paths; MainMenuScene finished stopped, unpaused, clean, with EventSystem active. Two MCP diagnostic errors were generated while restoring the temporarily inactive EventSystem by name before accounting for inactive-object lookup; the corrected inclusive lookup succeeded and these were tooling-only, not product/runtime faults. A fresh final one-minute Unity Console Error query returned no entries.
+- **Known limitations:** The corridor artwork is intentionally extremely dark and subtle at the current world-space size; its contrast and text comfort still require a Quest headset check. The main and settings screens were visually captured; the remaining screens share the verified frame/button system and retained bindings but were not each captured separately. The UI uses the project's current default runtime font because no shippable matching condensed font asset was supplied.
+- **Follow-up:** Check the menu at normal Quest viewing distance, especially the small controller hint and settings labels. If the corridor disappears in the headset, raise only the background image exposure or reduce the dim overlay rather than brightening the core panel. Add a licensed condensed font asset later if closer typography matching is desired.

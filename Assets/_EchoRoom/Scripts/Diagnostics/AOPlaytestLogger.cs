@@ -23,6 +23,7 @@ namespace EchoRoom.Diagnostics
 
         private const string RevealShaderName = "EchoRoom/EchoSonarReveal";
         private const string PulseArrayName = "_SonarPulses";
+        private const string PulseRangesArrayName = "_SonarPulseRanges";
         private const string LingerOverrideName = "_EchoRevealLingerOverride";
 
         private static AOPlaytestLogger instance;
@@ -391,8 +392,10 @@ namespace EchoRoom.Diagnostics
             if (pulses == null || pulses.Length == 0)
                 return 0f;
 
+            Vector4[] pulseRanges = Shader.GetGlobalVectorArray(PulseRangesArrayName);
+
             float speed = Mathf.Max(0.001f, GetFloat(material, "_RevealSpeed"));
-            float maxRadius = Mathf.Max(0.001f, GetFloat(material, "_RevealRadius"));
+            float materialRadius = Mathf.Max(0.001f, GetFloat(material, "_RevealRadius"));
             float linger = Shader.GetGlobalFloat(LingerOverrideName);
             if (linger <= 0f)
                 linger = Mathf.Max(0.001f, GetFloat(material, "_RevealLinger"));
@@ -403,6 +406,10 @@ namespace EchoRoom.Diagnostics
                 Vector4 pulse = pulses[i];
                 if (pulse.w <= 0f)
                     continue;
+
+                float maxRadius = pulseRanges != null && i < pulseRanges.Length && pulseRanges[i].x > 0f
+                    ? pulseRanges[i].x
+                    : materialRadius;
 
                 float age = Time.time - pulse.w;
                 if (age < 0f || age > maxRadius / speed + linger)
@@ -432,6 +439,8 @@ namespace EchoRoom.Diagnostics
             if (pulses == null)
                 return;
 
+            Vector4[] pulseRanges = Shader.GetGlobalVectorArray(PulseRangesArrayName);
+
             for (int i = 0; i < pulses.Length; i++)
             {
                 Vector4 pulse = pulses[i];
@@ -445,6 +454,7 @@ namespace EchoRoom.Diagnostics
                 WriteEvent("sonar_pulse",
                     "{\"slot\":" + i.ToString(CultureInfo.InvariantCulture) +
                     ",\"startTime\":" + N(pulse.w) +
+                    ",\"visualRange\":" + N(pulseRanges != null && i < pulseRanges.Length ? pulseRanges[i].x : 0f) +
                     ",\"origin\":[" + N(pulse.x) + "," + N(pulse.y) + "," + N(pulse.z) + "]}");
                 Flush();
             }

@@ -24,6 +24,7 @@ public class EchoButtonInteractable : BaseInteractable, IPuzzleElement
     private bool _isPressing;
     private bool _isOn;
     private Animator _animator;
+    private HapticHand _interactionHand;
 
     public bool IsOn => _isOn;
 
@@ -57,12 +58,12 @@ public class EchoButtonInteractable : BaseInteractable, IPuzzleElement
         bool keyboardPressed = allowKeyboardTesting && Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
 
         if (!_isOn && gripPressed)
-            TurnOn(false);
+            TurnOn(false, _interactionHand);
 
         if (!_isOn && keyboardPressed && IsPlayerCloseEnoughForKeyboardTest())
         {
             Debug.Log($"[EchoButtonInteractable] E pressed on {name}; button is on.");
-            TurnOn(true);
+            TurnOn(true, HapticHand.None);
         }
 
         AnimateFallbackPress();
@@ -71,9 +72,20 @@ public class EchoButtonInteractable : BaseInteractable, IPuzzleElement
 
     public void TurnOn(bool fromKeyboard = false)
     {
+        TurnOn(fromKeyboard, HapticHand.None);
+    }
+
+    public void TurnOn(HapticHand hand)
+    {
+        TurnOn(false, hand);
+    }
+
+    private void TurnOn(bool fromKeyboard, HapticHand hand)
+    {
         if (_isOn) return;
 
         _isOn = true;
+        _interactionHand = hand;
         _isPressing = !CanUseAnimatorBool();
         SetAnimatorOn(true);
         SetOnStateVisual(true, true);
@@ -103,6 +115,7 @@ public class EchoButtonInteractable : BaseInteractable, IPuzzleElement
         Log("Button turned on.");
         onButtonPressed?.Invoke();
         PlayButtonClip(buttonOnClip);
+        EchoHaptics.PlayButton(_interactionHand);
 
         OnAnyButtonPressed?.Invoke(this);
     }
@@ -185,15 +198,20 @@ public class EchoButtonInteractable : BaseInteractable, IPuzzleElement
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponent<HandPressCollider>() == null) return;
+        HandPressCollider handCollider = other.GetComponent<HandPressCollider>();
+        if (handCollider == null) return;
         _handInRange = true;
+        _interactionHand = handCollider.Hand;
         Log("Hand in range.");
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.GetComponent<HandPressCollider>() == null) return;
+        HandPressCollider handCollider = other.GetComponent<HandPressCollider>();
+        if (handCollider == null) return;
         _handInRange = false;
+        if (_interactionHand == handCollider.Hand)
+            _interactionHand = HapticHand.None;
         Log("Hand left range.");
     }
 
@@ -203,6 +221,7 @@ public class EchoButtonInteractable : BaseInteractable, IPuzzleElement
         _handInRange = false;
         _wasGripHeld = false;
         _isPressing = false;
+        _interactionHand = HapticHand.None;
         SetAnimatorOn(false);
 
         if (buttonTop != null)

@@ -14,7 +14,7 @@ namespace EchoRoom.UI
     [DisallowMultipleComponent, RequireComponent(typeof(UIDocument), typeof(BoxCollider))]
     public class VRPauseMenu : MonoBehaviour
     {
-        public enum MenuState { Hidden, Start, Pause, Captured }
+        public enum MenuState { Hidden, Start, Pause, Captured, Settings }
 
         [Header("UI Toolkit")]
         [SerializeField] VisualTreeAsset menuLayout;
@@ -45,10 +45,13 @@ namespace EchoRoom.UI
         VisualElement menuRoot;
         VisualElement pauseScreen;
         VisualElement capturedScreen;
+        VisualElement settingsScreen;
         Label capturedTitle;
         Label capturedSubtitle;
         Label capturedBody;
         VRFrontEndMenu frontEnd;
+        VRSettingsPanelController settingsController;
+        MenuState settingsReturnState = MenuState.Pause;
         bool controllerWasPressed;
         bool ownsTimePause;
         float previousTimeScale = 1f;
@@ -168,6 +171,7 @@ namespace EchoRoom.UI
                 menuRoot.styleSheets.Add(menuStyles);
             pauseScreen = menuRoot.Q<VisualElement>("pause-screen");
             capturedScreen = menuRoot.Q<VisualElement>("captured-screen");
+            settingsScreen = menuRoot.Q<VisualElement>("settings-screen");
             capturedTitle = capturedScreen?.Query<Label>(className: "title").First();
             capturedSubtitle = capturedScreen?.Query<Label>(className: "subtitle").First();
             capturedBody = capturedScreen?.Query<Label>(className: "body").First();
@@ -179,6 +183,9 @@ namespace EchoRoom.UI
             BindButton("restart-button", RestartGame);
             BindButton("return-button", ReturnToMenu);
             BindButton("pause-return-button", ReturnToMenu);
+            BindButton("pause-settings-button", ShowSettingsMenu);
+            BindButton("main-settings-button", ShowSettingsMenu);
+            settingsController = new VRSettingsPanelController(menuRoot, ReturnFromSettings);
         }
 
         void ConfigurePauseInput()
@@ -210,7 +217,8 @@ namespace EchoRoom.UI
         internal void RegisterFrontEnd(VRFrontEndMenu value)
         {
             frontEnd = value;
-            SetContent(State == MenuState.Start, State == MenuState.Pause, State == MenuState.Captured);
+            SetContent(State == MenuState.Start, State == MenuState.Pause, State == MenuState.Captured,
+                State == MenuState.Settings);
         }
 
         public void ToggleMenu()
@@ -223,6 +231,17 @@ namespace EchoRoom.UI
         public void ShowStartMenu() { SetState(MenuState.Start); }
         public void ShowMenu() { ShowPauseMenu(); }
         public void ShowPauseMenu() { SetState(MenuState.Pause); }
+        public void ShowSettingsMenu()
+        {
+            settingsReturnState = State == MenuState.Start ? MenuState.Start : MenuState.Pause;
+            settingsController?.Refresh();
+            SetState(MenuState.Settings);
+        }
+
+        void ReturnFromSettings()
+        {
+            SetState(settingsReturnState);
+        }
         public void ShowCapturedMenu()
         {
             SetFailureCopy("SIGNAL LOST", "YOU HAVE BEEN CAPTURED",
@@ -298,7 +317,7 @@ namespace EchoRoom.UI
         public void HideMenu(bool resumeTime)
         {
             State = MenuState.Hidden;
-            SetContent(false, false, false);
+            SetContent(false, false, false, false);
             SetVisible(false);
             if (resumeTime) RestoreTime();
             RestoreEnvironmentAudio();
@@ -309,7 +328,8 @@ namespace EchoRoom.UI
         {
             ResolveCamera();
             State = state;
-            SetContent(state == MenuState.Start, state == MenuState.Pause, state == MenuState.Captured);
+            SetContent(state == MenuState.Start, state == MenuState.Pause, state == MenuState.Captured,
+                state == MenuState.Settings);
             SetVisible(true);
             PlaceMenuInFrontOfPlayer();
             PauseTime();
@@ -317,11 +337,21 @@ namespace EchoRoom.UI
             OnMenuStateChanged?.Invoke(State);
         }
 
-        void SetContent(bool start, bool pause, bool captured)
+        void SetContent(bool start, bool pause, bool captured, bool settings)
         {
-            frontEnd?.SetVisible(start);
+            if (frontEnd != null)
+            {
+                frontEnd.SetVisible(start);
+            }
+            else
+            {
+                SetElementVisible(menuRoot?.Q("start-screen"), start);
+                SetElementVisible(menuRoot?.Q("level-screen"), false);
+                SetElementVisible(menuRoot?.Q("warning-screen"), false);
+            }
             SetElementVisible(pauseScreen, pause);
             SetElementVisible(capturedScreen, captured);
+            SetElementVisible(settingsScreen, settings);
         }
 
         static void SetElementVisible(VisualElement element, bool visible)
@@ -503,6 +533,8 @@ namespace EchoRoom.UI
             RestorePlayerVisualOverlay();
             RestoreTime();
             RestoreEnvironmentAudio();
+            settingsController?.Dispose();
+            settingsController = null;
 #if ENABLE_INPUT_SYSTEM
             pauseAction?.Dispose();
             pauseAction = null;

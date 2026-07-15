@@ -1,8 +1,8 @@
 // Echo Room VR - expanding sonar reveal.
 //
 // Each ping sends a bright ring expanding outward from the player's origin. As the
-// wavefront passes a surface, that surface lights up (radial falloff, capped at
-// _RevealRadius), lingers briefly, then fades back to black. The leading edge is drawn
+// wavefront passes a surface, that surface lights up (radial falloff, capped by that
+// pulse's profile range), lingers briefly, then fades back to black. The leading edge is drawn
 // as a glowing ring so you see the "circle" travelling out from you.
 //
 // _RevealQuality picks how the revealed surface is shaded (uniform branch, ~free):
@@ -12,7 +12,8 @@
 //
 // Pulse data is fed in globally by SonarRevealController via Shader.SetGlobalVectorArray:
 //   _SonarPulses[i].xyz = world-space origin of the ping (the player's body)
-//   _SonarPulses[i].w   = start time in seconds (Time.timeSinceLevelLoad); <= 0 means "slot empty".
+//   _SonarPulses[i].w   = start time in seconds (Time.time); <= 0 means "slot empty".
+//   _SonarPulseRanges[i].x = that pulse's maximum visual range; <= 0 uses _RevealRadius.
 Shader "EchoRoom/EchoSonarReveal"
 {
     Properties
@@ -85,6 +86,7 @@ Shader "EchoRoom/EchoSonarReveal"
             // Global pulse buffer (written by SonarRevealController). Outside CBUFFER on purpose:
             // global arrays are not SRP-batcher compatible, which is fine for this FX shader.
             float4 _SonarPulses[ECHO_MAX_PULSES];
+            float4 _SonarPulseRanges[ECHO_MAX_PULSES];
             float _EchoSceneViewCamera;
             float _EchoRevealLingerOverride;
 
@@ -204,27 +206,30 @@ Shader "EchoRoom/EchoSonarReveal"
                     float age = t - startT;
                     if (age < 0.0) continue;
 
-                    float maxAge = _RevealRadius / max(_RevealSpeed, 0.001) + revealLingerSeconds;
+                    float pulseRevealRadius = _SonarPulseRanges[i].x > 0.0
+                        ? _SonarPulseRanges[i].x
+                        : _RevealRadius;
+                    float maxAge = pulseRevealRadius / max(_RevealSpeed, 0.001) + revealLingerSeconds;
                     if (age > maxAge) continue;
 
                     float3 pulsePos = _SonarPulses[i].xyz;
                     float d = distance(IN.positionWS, pulsePos);
-                    if (d > _RevealRadius + _RingWidth) continue;
+                    if (d > pulseRevealRadius + _RingWidth) continue;
 
                     float radius = age * _RevealSpeed;
                     float fromEdge = radius - d;            // > 0 once the wave has passed this point
 
-                    if (fromEdge > 0.0 && d <= _RevealRadius)
+                    if (fromEdge > 0.0 && d <= pulseRevealRadius)
                     {
                         float timeSince = fromEdge / max(_RevealSpeed, 0.001);
                         float linger = saturate(1.0 - timeSince / max(revealLingerSeconds, 0.001));
-                        float distFall = saturate(1.0 - d / max(_RevealRadius, 0.001));
+                        float distFall = saturate(1.0 - d / max(pulseRevealRadius, 0.001));
                         float c = linger * distFall;
                         if (c > revealAmt) { revealAmt = c; lightPos = pulsePos; }  // track dominant pulse as the light
                     }
 
                     float ring = 1.0 - smoothstep(0.0, _RingWidth, abs(fromEdge));
-                    float ringLife = saturate(1.0 - radius / max(_RevealRadius, 0.001));
+                    float ringLife = saturate(1.0 - radius / max(pulseRevealRadius, 0.001));
                     ringGlow += ring * ringLife;
                 }
 

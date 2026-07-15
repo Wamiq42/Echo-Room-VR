@@ -16,8 +16,10 @@ public class SonarRevealController : MonoBehaviour
     private const int MaxPulses = 16;
 
     private static readonly int PulsesId = Shader.PropertyToID("_SonarPulses");
+    private static readonly int PulseRangesId = Shader.PropertyToID("_SonarPulseRanges");
     private static readonly int RevealLingerOverrideId = Shader.PropertyToID("_EchoRevealLingerOverride");
     private static readonly Vector4[] SharedPulses = new Vector4[MaxPulses];
+    private static readonly Vector4[] SharedPulseRanges = new Vector4[MaxPulses];
     private static int sharedNextIndex;
     private static int lastRevealFrame = -1;
     private static Vector3 lastRevealOrigin;
@@ -72,7 +74,13 @@ public class SonarRevealController : MonoBehaviour
     /// <param name="origin">World position of the reveal center (the player's body).</param>
     public void Reveal(Vector3 origin) => RevealGlobal(origin);
 
-    public static void RevealGlobal(Vector3 origin)
+    public static void RevealGlobal(Vector3 origin) => RevealGlobal(origin, 0f);
+
+    /// <summary>
+    /// Adds one reveal pulse with its own maximum visual range. A non-positive range
+    /// keeps the legacy material _RevealRadius fallback for non-profile callers.
+    /// </summary>
+    public static void RevealGlobal(Vector3 origin, float visualRange)
     {
         EnsureGlobalBuffer();
 
@@ -85,11 +93,13 @@ public class SonarRevealController : MonoBehaviour
         float startTime = Mathf.Max(Time.time, 0.0001f);
 
         SharedPulses[sharedNextIndex] = new Vector4(origin.x, origin.y, origin.z, startTime);
+        SharedPulseRanges[sharedNextIndex] = new Vector4(Mathf.Max(0f, visualRange), 0f, 0f, 0f);
         sharedNextIndex = (sharedNextIndex + 1) % MaxPulses;
         lastRevealFrame = Time.frameCount;
         lastRevealOrigin = origin;
 
         Shader.SetGlobalVectorArray(PulsesId, SharedPulses);
+        Shader.SetGlobalVectorArray(PulseRangesId, SharedPulseRanges);
     }
 
     private static void EnsureGlobalBuffer()
@@ -103,12 +113,16 @@ public class SonarRevealController : MonoBehaviour
     private static void ResetGlobalPulses()
     {
         for (int i = 0; i < MaxPulses; i++)
+        {
             SharedPulses[i] = Vector4.zero;
+            SharedPulseRanges[i] = Vector4.zero;
+        }
 
         sharedNextIndex = 0;
         lastRevealFrame = -1;
         lastRevealOrigin = Vector3.zero;
         sharedBufferInitialized = true;
         Shader.SetGlobalVectorArray(PulsesId, SharedPulses);
+        Shader.SetGlobalVectorArray(PulseRangesId, SharedPulseRanges);
     }
 }

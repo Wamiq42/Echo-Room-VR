@@ -5112,45 +5112,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
   m_PrefabInstance: {fileID: 8338603742182400825}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &804398067 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 178819243864471633, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
-  m_PrefabInstance: {fileID: 8338603742182400825}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 804398065}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0cb9aa70a22847b5925ee5f067c10a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &804398071
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 804398065}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6fa7b4195685c3846be746c74f0ab2f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionMediator
---- !u!114 &804398072
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 804398065}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a26c941eb8a46f7b6d00416227ab8c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Locomotion.XRBodyTransformer
-  m_XROrigin: {fileID: 804398067}
-  m_BodyPositionEvaluatorObject: {fileID: 0}
-  m_ConstrainedBodyManipulatorObject: {fileID: 0}
-  m_UseCharacterControllerIfExists: 1
 --- !u!143 &804398076 stripped
 CharacterController:
   m_CorrespondingSourceObject: {fileID: 4416326421142735586, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
@@ -9762,6 +9723,12 @@ MonoBehaviour:
   maxAudioDistance: 12
   minVolume: 0
   maxVolume: 1
+  maxHapticDistance: 8
+  minHapticAmplitude: 0.08
+  maxHapticAmplitude: 0.55
+  hapticDuration: 0.08
+  farHapticInterval: 0.45
+  nearHapticInterval: 0.12
   reactiveVisual: {fileID: 0}
   reactiveSmoke: {fileID: 0}
   reactiveSmokeRenderer: {fileID: 0}
@@ -9866,7 +9833,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab51f02060f373a4eb4bf03ff69fe104, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EchoRoom.UI.VRPauseMenu
-  menuLayout: {fileID: 9197481963319205126, guid: 4f0b0a75a708925498c46d34c83f67ba, type: 3}
+  menuLayout: {fileID: 9197481963319205126, guid: 29a147394fe1c7548bbd761c54f34ca6, type: 3}
   menuStyles: {fileID: 7433441132597879392, guid: 2becd1cdd6fe8ee4ab3ad33fdeaecfa9, type: 3}
   cameraTransform: {fileID: 1790717474}
   vrPointerRoots:
@@ -16658,12 +16625,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1102790409}
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 804398072}
-    - targetCorrespondingSourceObject: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 804398071}
     - targetCorrespondingSourceObject: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       insertIndex: -1
       addedObject: {fileID: 804398077}

@@ -36,14 +36,14 @@ public sealed class SimpleControllerInteraction : MonoBehaviour
             EchoButtonInteractable hitButton = hit.collider.GetComponentInParent<EchoButtonInteractable>();
             if (hitButton != null && !hitButton.IsOn)
             {
-                hitButton.TurnOn();
+                hitButton.TurnOn(HapticHand.Right);
                 return true;
             }
 
             LeverInteractable hitLever = hit.collider.GetComponentInParent<LeverInteractable>();
             if (hitLever != null)
             {
-                hitLever.Toggle();
+                hitLever.Toggle(HapticHand.Right);
                 return true;
             }
         }
@@ -51,13 +51,13 @@ public sealed class SimpleControllerInteraction : MonoBehaviour
         Component bestTarget = FindBestNearbyTarget();
         if (bestTarget is EchoButtonInteractable button && !button.IsOn)
         {
-            button.TurnOn();
+            button.TurnOn(HapticHand.Right);
             return true;
         }
 
         if (bestTarget is LeverInteractable lever)
         {
-            lever.Toggle();
+            lever.Toggle(HapticHand.Right);
             return true;
         }
 

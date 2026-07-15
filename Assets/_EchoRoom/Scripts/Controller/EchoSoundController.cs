@@ -1,8 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// Controls playback and lifetime of a spawned echo sound.
-/// Automatically sets spatial settings and self-destroys after a short delay.
+/// Controls the single playback and lifetime of a spawned echo sound.
+/// Call ConfigureAndPlay after instantiation so pitch and volume are applied
+/// before the AudioSource starts.
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class EchoSoundController : MonoBehaviour
@@ -15,11 +16,24 @@ public class EchoSoundController : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool isDebugging = false;
 
+    private const float MinimumPitch = 0.85f;
+    private const float MaximumPitch = 1.15f;
+    private const float MinimumVolumeMultiplier = 0.55f;
+    private const float MaximumVolumeMultiplier = 1.15f;
+
     private AudioSource audioSource;
+    private float baseVolume;
+    private bool playbackStarted;
 
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
+        baseVolume = Mathf.Clamp01(audioSource.volume);
+
+        // Spawned echoes must be configured before they play. This also guards
+        // older prefab data that may still have Play On Awake enabled.
+        audioSource.playOnAwake = false;
+        audioSource.Stop();
 
         audioSource.spatialBlend = 1f;
         audioSource.minDistance = minDistance;
@@ -27,16 +41,38 @@ public class EchoSoundController : MonoBehaviour
         audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
     }
 
-    private void Start()
+    /// <summary>
+    /// Applies bounded material/size multipliers to the prefab-authored sound,
+    /// then starts it exactly once. This controller owns the only lifetime
+    /// destruction scheduled for a correctly configured echo instance.
+    /// </summary>
+    public bool ConfigureAndPlay(float pitchMultiplier, float volumeMultiplier)
     {
+        if (playbackStarted)
+        {
+            LogDebug("Ignored duplicate ConfigureAndPlay call.");
+            return false;
+        }
+
+        playbackStarted = true;
+        audioSource.pitch = Mathf.Clamp(pitchMultiplier, MinimumPitch, MaximumPitch);
+
+        float safeVolumeMultiplier = Mathf.Clamp(
+            volumeMultiplier,
+            MinimumVolumeMultiplier,
+            MaximumVolumeMultiplier);
+        audioSource.volume = Mathf.Clamp01(baseVolume * safeVolumeMultiplier);
+
         if (audioSource.clip == null)
         {
             LogDebug("No AudioClip assigned to echo.");
-            return;
+            Destroy(gameObject, Mathf.Max(0.1f, lifetime));
+            return false;
         }
 
         audioSource.Play();
-        Destroy(gameObject, lifetime);
+        Destroy(gameObject, Mathf.Max(0.1f, lifetime));
+        return true;
     }
 
     /// <summary>
@@ -45,14 +81,6 @@ public class EchoSoundController : MonoBehaviour
     public void SetClip(AudioClip clip)
     {
         audioSource.clip = clip;
-    }
-
-    /// <summary>
-    /// Adjusts the volume of the echo at runtime.
-    /// </summary>
-    public void SetVolume(float volume)
-    {
-        audioSource.volume = volume;
     }
 
     private void LogDebug(string msg)

@@ -30,6 +30,14 @@ public class PingAttractedEntity : MonoBehaviour
     [SerializeField] private float minVolume = 0f;
     [SerializeField] private float maxVolume = 1f;
 
+    [Header("Proximity Haptics")]
+    [SerializeField, Min(0.1f)] private float maxHapticDistance = 8f;
+    [SerializeField, Range(0f, 1f)] private float minHapticAmplitude = 0.08f;
+    [SerializeField, Range(0f, 1f)] private float maxHapticAmplitude = 0.55f;
+    [SerializeField, Min(0.01f)] private float hapticDuration = 0.08f;
+    [SerializeField, Min(0.02f)] private float farHapticInterval = 0.45f;
+    [SerializeField, Min(0.02f)] private float nearHapticInterval = 0.12f;
+
     [Header("Reactive Smoke")]
     [SerializeField] private Transform reactiveVisual;
     [SerializeField] private ParticleSystem reactiveSmoke;
@@ -74,6 +82,8 @@ public class PingAttractedEntity : MonoBehaviour
     private float _baseEyeGlowStrength = 0.62f;
     private bool _reactiveDefaultsCached;
     private MaterialPropertyBlock _smokePropertyBlock;
+    private float _nextProximityHapticTime;
+    private bool _proximityHapticsActive;
 
     private bool IsDangerous => Time.time < _dangerUntil;
 
@@ -110,6 +120,12 @@ public class PingAttractedEntity : MonoBehaviour
     {
         UnsubscribeFromPingEmitter();
         CancelOutburst(false);
+        StopProximityHaptics();
+    }
+
+    private void OnDestroy()
+    {
+        StopProximityHaptics();
     }
 
     private void Update()
@@ -122,6 +138,7 @@ public class PingAttractedEntity : MonoBehaviour
             _agent.speed = moveSpeed;
 
         UpdateProximityAudio();
+        UpdateProximityHaptics();
         UpdateReactiveVisuals();
 
         if (_isOutbursting)
@@ -438,6 +455,7 @@ public class PingAttractedEntity : MonoBehaviour
 
     private void CapturePlayer()
     {
+        StopProximityHaptics();
         CancelOutburst(true);
         _dangerUntil = 0f;
         _hasPingTarget = false;
@@ -491,6 +509,48 @@ public class PingAttractedEntity : MonoBehaviour
 
         if (proximityAudio.clip != null && !proximityAudio.isPlaying)
             proximityAudio.Play();
+    }
+
+    private void UpdateProximityHaptics()
+    {
+        if (playerRoot == null || Time.timeScale <= 0.0001f ||
+            (EchoRoom.UI.VRPauseMenu.Instance != null && EchoRoom.UI.VRPauseMenu.Instance.IsOpen))
+        {
+            StopProximityHaptics();
+            return;
+        }
+
+        float distance = Vector3.Distance(transform.position, playerRoot.position);
+        float distanceLimit = Mathf.Max(0.1f, maxHapticDistance);
+        if (distance >= distanceLimit)
+        {
+            StopProximityHaptics();
+            return;
+        }
+
+        if (Time.unscaledTime < _nextProximityHapticTime)
+            return;
+
+        float closeness = 1f - Mathf.Clamp01(distance / distanceLimit);
+        closeness = Mathf.SmoothStep(0f, 1f, closeness);
+        float amplitude = Mathf.Lerp(minHapticAmplitude, maxHapticAmplitude, closeness);
+        float interval = Mathf.Lerp(farHapticInterval, nearHapticInterval, closeness);
+
+        // Entity proximity is body-level danger feedback, so it is deliberately
+        // bilateral rather than attributed to an interacting hand.
+        EchoHaptics.Request(HapticHand.Both, amplitude, hapticDuration, HapticReason.EntityProximity);
+        _proximityHapticsActive = true;
+        _nextProximityHapticTime = Time.unscaledTime + Mathf.Max(0.02f, interval);
+    }
+
+    private void StopProximityHaptics()
+    {
+        if (!_proximityHapticsActive)
+            return;
+
+        EchoHaptics.Stop(HapticHand.Both);
+        _proximityHapticsActive = false;
+        _nextProximityHapticTime = 0f;
     }
 
     private void ResolveReferences()

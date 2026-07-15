@@ -17,6 +17,7 @@ public class LeverInteractable : BaseInteractable, IPuzzleElement
     private bool _wasGripHeld;
     private bool _isOn;
     private Animator _animator;
+    private HapticHand _interactionHand;
 
     public bool IsOn => _isOn;
 
@@ -41,28 +42,35 @@ public class LeverInteractable : BaseInteractable, IPuzzleElement
         bool gripPressed = _handInRange && gripHeld && !_wasGripHeld;
         bool keyboardPressed = allowKeyboardTesting && Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
 
-        if (gripPressed || (keyboardPressed && IsPlayerCloseEnoughForKeyboardTest()))
-            Toggle();
+        if (gripPressed)
+            Toggle(_interactionHand);
+        else if (keyboardPressed && IsPlayerCloseEnoughForKeyboardTest())
+            Toggle(HapticHand.None);
 
         _wasGripHeld = gripHeld;
     }
 
     public void Toggle()
     {
-        SetOn(!_isOn);
+        Toggle(HapticHand.None);
+    }
+
+    public void Toggle(HapticHand hand)
+    {
+        SetOn(!_isOn, hand);
     }
 
     public void TurnOn()
     {
-        SetOn(true);
+        SetOn(true, HapticHand.None);
     }
 
     public void TurnOff()
     {
-        SetOn(false);
+        SetOn(false, HapticHand.None);
     }
 
-    private void SetOn(bool isOn)
+    private void SetOn(bool isOn, HapticHand hand)
     {
         if (_isOn == isOn)
         {
@@ -87,6 +95,7 @@ public class LeverInteractable : BaseInteractable, IPuzzleElement
         }
 
         PlayLeverAudio(_isOn ? leverOnClip : leverOffClip);
+        EchoHaptics.PlayLever(hand);
         OnAnyLeverStateChanged?.Invoke(this);
     }
 
@@ -100,17 +109,22 @@ public class LeverInteractable : BaseInteractable, IPuzzleElement
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponent<HandPressCollider>() == null) return;
+        HandPressCollider handCollider = other.GetComponent<HandPressCollider>();
+        if (handCollider == null) return;
 
         _handInRange = true;
+        _interactionHand = handCollider.Hand;
         Log("Hand in range.");
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.GetComponent<HandPressCollider>() == null) return;
+        HandPressCollider handCollider = other.GetComponent<HandPressCollider>();
+        if (handCollider == null) return;
 
         _handInRange = false;
+        if (_interactionHand == handCollider.Hand)
+            _interactionHand = HapticHand.None;
         Log("Hand left range.");
     }
 
@@ -119,6 +133,7 @@ public class LeverInteractable : BaseInteractable, IPuzzleElement
         _isOn = false;
         _handInRange = false;
         _wasGripHeld = false;
+        _interactionHand = HapticHand.None;
 
         if (_renderer != null && idleMat != null)
             _renderer.material = idleMat;

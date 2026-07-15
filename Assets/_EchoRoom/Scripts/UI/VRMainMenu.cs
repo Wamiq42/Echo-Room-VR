@@ -25,11 +25,13 @@ namespace EchoRoom.UI
         VisualElement startScreen;
         VisualElement levelScreen;
         VisualElement warningScreen;
+        VisualElement settingsScreen;
         Button newGameButton;
         Button loadGameButton;
         Button tutorialButton;
         readonly List<Button> levelButtons = new List<Button>();
         PuzzleProgressData progress;
+        VRSettingsPanelController settingsController;
 
         void Awake()
         {
@@ -64,6 +66,7 @@ namespace EchoRoom.UI
             startScreen = root.Q<VisualElement>("start-screen");
             levelScreen = root.Q<VisualElement>("level-screen");
             warningScreen = root.Q<VisualElement>("warning-screen");
+            settingsScreen = root.Q<VisualElement>("settings-screen");
             newGameButton = root.Q<Button>("new-game-button");
             loadGameButton = root.Q<Button>("load-game-button");
             tutorialButton = root.Q<Button>("tutorial-replay-button");
@@ -75,6 +78,8 @@ namespace EchoRoom.UI
             root.Q<Button>("level-back-button").clicked += ShowStartPanel;
             root.Q<Button>("confirm-new-game-button").clicked += ConfirmNewGame;
             root.Q<Button>("cancel-new-game-button").clicked += ShowStartPanel;
+            root.Q<Button>("main-settings-button").clicked += ShowSettingsPanel;
+            settingsController = new VRSettingsPanelController(root, ShowStartPanel);
 
             for (int i = 0; i < levelData.levels.Length; i++)
             {
@@ -104,6 +109,12 @@ namespace EchoRoom.UI
             bool hasSave = PuzzleProgressSaveSystem.HasSaveFile;
             loadGameButton.style.display = hasSave ? DisplayStyle.Flex : DisplayStyle.None;
             SetScreen(startScreen);
+        }
+
+        void ShowSettingsPanel()
+        {
+            settingsController?.Refresh();
+            SetScreen(settingsScreen);
         }
 
         void ShowLevelPanel()
@@ -218,6 +229,7 @@ namespace EchoRoom.UI
             SetVisible(startScreen, active == startScreen);
             SetVisible(levelScreen, active == levelScreen);
             SetVisible(warningScreen, active == warningScreen);
+            SetVisible(settingsScreen, active == settingsScreen);
             SetVisible(root.Q("pause-screen"), false);
             SetVisible(root.Q("captured-screen"), false);
         }
@@ -243,6 +255,12 @@ namespace EchoRoom.UI
             for (int i = 0; i < transforms.Length; i++)
                 if (transforms[i] != null && transforms[i].name == "Menu UI Ray")
                     transforms[i].gameObject.SetActive(value);
+        }
+
+        void OnDestroy()
+        {
+            settingsController?.Dispose();
+            settingsController = null;
         }
     }
 }
