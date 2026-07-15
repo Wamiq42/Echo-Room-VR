@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a65fcca70b5f384ca20ac6793e36dd1, type: 3}
+  m_Name: Maze_C_Lighting
+  m_EditorClassIdentifier: Assembly-CSharp::LevelLightingData
+  lightmapsMode: 1
+  lightmaps:
+  - color: {fileID: 2800000, guid: 0948b44172fdc1441843f6fd5fd7318a, type: 3}
+    direction: {fileID: 2800000, guid: b506166a51bbabe428a31daf09ffce9b, type: 3}
+    shadowMask: {fileID: 0}
+  rendererBindings:
+  - childIndices: 00000000
+    rendererComponentIndex: 0
+    rendererPath: Door_Frame
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.05373562, y: 0.05403314, z: 0.79316056, w: 0.6803592}
+  - childIndices: 01000000
+    rendererComponentIndex: 0
+    rendererPath: Door_Leaf
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.054334175, y: 0.054232784, z: 0.77693564, w: 0.5503762}
+  - childIndices: 02000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Floor
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.37441078, y: 0.37411377, z: 0.5129056, w: 0.01534822}
+  - childIndices: 03000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Roof
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.37441078, y: 0.37411377, z: 0.515347, w: 0.38644198}
+  - childIndices: 04000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Walls
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.517963, y: 0.5179264, z: -0.001230969, w: -0.0012308648}
+  - childIndices: 07000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P1_Button
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.039353624, y: 0.039888564, z: 0.81209624, w: 0.41658628}
+  - childIndices: 0700000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P1_Button/Button_Object
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.018201051, y: 0.01881536, z: 0.8707758, w: 0.71403503}
+  - childIndices: 08000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P2_Button
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.039353624, y: 0.039888564, z: 0.8028189, w: 0.6143402}
+  - childIndices: 0800000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P2_Button/Button_Object
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.018201051, y: 0.01881536, z: 0.46989688, w: 0.5196991}
+  - childIndices: 09000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P3_Button
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.039353624, y: 0.039888564, z: 0.42098296, w: 0.51668394}
+  - childIndices: 0900000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P3_Button/Button_Object
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.018201051, y: 0.01881536, z: 0.73503363, w: 0.56510925}
+  - childIndices: 0a00000000000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_Floor
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.21300149, y: 0.2137425, z: 0.695181, w: 0.043810844}
+  - childIndices: 0a00000001000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_NorthWall
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.22628334, y: 0.22653693, z: 0.036924046, w: 0.5608488}
+  - childIndices: 0a00000002000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_SouthWall
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.22628334, y: 0.22653693, z: 0.27569357, w: 0.56182534}
+  - childIndices: 0a00000003000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_SouthWall (1)
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.15101953, y: 0.1512755, z: 0.71349883, w: 0.45080248}
+  - childIndices: 0a00000004000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_Ceiling
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.21300149, y: 0.2137425, z: 0.695181, w: 0.19468975}
+  sourceScene: Assets/_EchoRoom/Scenes/MainScene.unity
+  sourcePrefab: Assets/_EchoRoom/Models/Maze_5x5_C.fbx
+  capturedUtc: 2026-07-15T06:42:38.9318162Z

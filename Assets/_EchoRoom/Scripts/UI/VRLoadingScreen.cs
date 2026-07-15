@@ -13,7 +13,7 @@ namespace EchoRoom.UI
         [SerializeField] Transform cameraTransform;
         [SerializeField, Min(0.5f)] float distanceFromCamera = 1.15f;
         [SerializeField] float heightOffset;
-        [SerializeField, Min(0.1f)] float minimumDisplayTime = 0.65f;
+        [SerializeField, Min(0.1f)] float minimumDisplayTime = 1f;
         [SerializeField, Min(0.1f)] float thankYouDuration = 5f;
         [SerializeField, Min(0.0001f)] float worldScale = 0.0016f;
 
@@ -192,14 +192,23 @@ namespace EchoRoom.UI
             busy = true;
             ShowLoading(message);
             float shownAt = Time.realtimeSinceStartup;
-            yield return null;
-            swapAction?.Invoke();
-            yield return null;
-            SetProgress(1f);
+            try
+            {
+                yield return null;
+                SetProgress(0.2f);
+                swapAction?.Invoke();
+                SetProgress(0.85f);
+                yield return null;
+                SetProgress(1f);
 
-            float remaining = minimumDisplayTime - (Time.realtimeSinceStartup - shownAt);
-            if (remaining > 0f) yield return new WaitForSecondsRealtime(remaining);
-            Hide();
+                float effectiveMinimum = Mathf.Max(1f, minimumDisplayTime);
+                float remaining = effectiveMinimum - (Time.realtimeSinceStartup - shownAt);
+                if (remaining > 0f) yield return new WaitForSecondsRealtime(remaining);
+            }
+            finally
+            {
+                Hide();
+            }
         }
 
         void HideImmediate()

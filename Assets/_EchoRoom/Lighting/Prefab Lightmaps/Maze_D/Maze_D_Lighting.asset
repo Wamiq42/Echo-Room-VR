@@ -1,0 +1,124 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a65fcca70b5f384ca20ac6793e36dd1, type: 3}
+  m_Name: Maze_D_Lighting
+  m_EditorClassIdentifier: Assembly-CSharp::LevelLightingData
+  lightmapsMode: 1
+  lightmaps:
+  - color: {fileID: 2800000, guid: a379770dcfe7afb46bcaeb6e81327993, type: 3}
+    direction: {fileID: 2800000, guid: 0b87a916702455647b55df52c29a3c24, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: d3fde3f7b34749f4d90d54a71e8afe04, type: 3}
+    direction: {fileID: 2800000, guid: 3300e81186e1a374aadd913311e40a00, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: 441e5a8bf4e615d40b4df9010fd15716, type: 3}
+    direction: {fileID: 2800000, guid: 63fe85bbb618fc3438ed6bbfda0b9764, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: d762d31f31f6178449a3a7a7681154d8, type: 3}
+    direction: {fileID: 2800000, guid: 9bb5a102f2c30264982d8edd44950b84, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: 51d2010cc944ae244a3affb44d4b05dc, type: 3}
+    direction: {fileID: 2800000, guid: 48d4d131fb3129547ae306a8633a2dfd, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: 71eb2a0f26069e04b8dd154cfd352be2, type: 3}
+    direction: {fileID: 2800000, guid: b75b034ae26ec854cb5a9844528ba768, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: 2c32dd4515fbbd94388194f68510118f, type: 3}
+    direction: {fileID: 2800000, guid: f6ecc25ff68970d4fafb982a6bb48a67, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: d2657dea31b7c19469fcca8482c77b0f, type: 3}
+    direction: {fileID: 2800000, guid: ba22691cde5938649a65ac9a971469a6, type: 3}
+    shadowMask: {fileID: 0}
+  rendererBindings:
+  - childIndices: 00000000
+    rendererComponentIndex: 0
+    rendererPath: Door_Frame
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.41736403, y: 0.4183211, z: 0.49407527, w: 0.15811074}
+  - childIndices: 01000000
+    rendererComponentIndex: 0
+    rendererPath: Door_Leaf
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.4346734, y: 0.43386227, z: 0.6256413, w: 0.44988433}
+  - childIndices: 02000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Floor
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 1.0132934, y: 1.0095134, z: -0.0021028332, w: -0.0020877025}
+  - childIndices: 03000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Roof
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 1.0132934, y: 1.0095134, z: -0.0021028332, w: -0.0020877025}
+  - childIndices: 04000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Walls
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 1.0023972, y: 1.0005397, z: -0.00090160733, w: -0.0008963174}
+  - childIndices: 05000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P1_Button
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 0.314829, y: 0.31910852, z: 0.5045825, w: 0.27019015}
+  - childIndices: 0500000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P1_Button/Button_Object
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.14560841, y: 0.15052287, z: 0.5208938, w: 0.04040514}
+  - childIndices: 06000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P2_Button
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 0.314829, y: 0.31910852, z: 0.606145, w: 0.6842526}
+  - childIndices: 0600000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P2_Button/Button_Object
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.14560841, y: 0.15052287, z: 0.5208938, w: 0.89196765}
+  - childIndices: 07000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P3_Button
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 0.314829, y: 0.31910852, z: 0.5944263, w: 0.043627646}
+  - childIndices: 0700000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P3_Button/Button_Object
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.14560841, y: 0.15052287, z: 0.7396438, w: 0.05603014}
+  - childIndices: 0800000000000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_Floor
+    lightmapIndex: 5
+    lightmapScaleOffset: {x: 1.0035174, y: 1.0075625, z: -0.002116907, w: -0.002133313}
+  - childIndices: 0800000001000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_NorthWall
+    lightmapIndex: 7
+    lightmapScaleOffset: {x: 1.0035174, y: 1.0075625, z: -0.002116907, w: -0.002133313}
+  - childIndices: 0800000002000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_NorthWall (1)
+    lightmapIndex: 6
+    lightmapScaleOffset: {x: 1.0035174, y: 1.0075625, z: -0.002116907, w: -0.002133313}
+  - childIndices: 0800000003000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_SouthWall
+    lightmapIndex: 3
+    lightmapScaleOffset: {x: 1.0035174, y: 1.0075625, z: -0.002116907, w: -0.002133313}
+  - childIndices: 0800000004000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_Ceiling
+    lightmapIndex: 4
+    lightmapScaleOffset: {x: 1.0035174, y: 1.0075625, z: -0.002116907, w: -0.002133313}
+  sourceScene: Assets/_EchoRoom/Scenes/MainScene.unity
+  sourcePrefab: Assets/_EchoRoom/Models/Maze_5x5_D.fbx
+  capturedUtc: 2026-07-15T07:04:19.8725508Z

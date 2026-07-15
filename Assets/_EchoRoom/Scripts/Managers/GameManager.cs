@@ -53,6 +53,7 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
+        PrefabLightmapRuntime.InitializeSceneLighting();
         if (screenFade == null) screenFade = GetComponent<VRScreenFade>();
         if (screenFade == null) screenFade = gameObject.AddComponent<VRScreenFade>();
         if (loadingScreen == null) loadingScreen = FindObjectOfType<VRLoadingScreen>(true);
@@ -104,6 +105,7 @@ public class GameManager : MonoBehaviour
 
     private void LoadTutorialLevel()
     {
+        PrefabLightmapRuntime.RestoreSceneLighting();
         if (_currentLevelInstance != null && !_currentLevelIsSceneInstance)
             Destroy(_currentLevelInstance);
 
@@ -128,6 +130,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        PrefabLightmapRuntime.RestoreSceneLighting();
         if (_currentLevelInstance != null && !_currentLevelIsSceneInstance)
             Destroy(_currentLevelInstance);
 
@@ -159,6 +162,9 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (data.bakedLighting != null)
+            PrefabLightmapRuntime.Apply(_currentLevelInstance, data.bakedLighting);
+
         MovePlayerToSpawn(ResolveSpawnPoint(_currentLevelInstance));
         OnLevelLoaded?.Invoke(data);
     }
@@ -173,11 +179,17 @@ public class GameManager : MonoBehaviour
     private IEnumerator LoadFirstLevelAfterTutorialRoutine()
     {
         _isTransitioning = true;
-        if (loadingScreen != null)
-            yield return loadingScreen.CoverPrefabSwap("ENTERING " + GetLevelDisplayName(0).ToUpperInvariant(), () => LoadLevel(0));
-        else
-            LoadLevel(0);
-        _isTransitioning = false;
+        try
+        {
+            if (loadingScreen != null)
+                yield return loadingScreen.CoverPrefabSwap("ENTERING " + GetLevelDisplayName(0).ToUpperInvariant(), () => LoadLevel(0));
+            else
+                LoadLevel(0);
+        }
+        finally
+        {
+            _isTransitioning = false;
+        }
     }
 
     public void NotifyLevelExitReached()
@@ -189,43 +201,49 @@ public class GameManager : MonoBehaviour
     private IEnumerator TransitionToNextPuzzle()
     {
         _isTransitioning = true;
-        int completedIndex = _currentLevelIndex;
-        int nextIndex = completedIndex + 1;
-        bool hasNextPuzzle = HasValidLevelData() && nextIndex < levelData.levels.Length;
-
-        CompleteLevel();
-        if (_progress == null) _progress = PuzzleProgressSaveSystem.CreateNew(GetPuzzleId(0));
-
-        string completedPuzzleId = GetPuzzleId(completedIndex);
-        string nextPuzzleId = hasNextPuzzle ? GetPuzzleId(nextIndex) : string.Empty;
-        PuzzleProgressSaveSystem.MarkCompleted(_progress, completedPuzzleId, nextPuzzleId);
-        PuzzleProgressSaveSystem.Save(_progress);
-
-        if (hasNextPuzzle)
+        try
         {
-            if (loadingScreen != null)
-                yield return loadingScreen.CoverPrefabSwap(
-                    "TUNING " + GetLevelDisplayName(nextIndex).ToUpperInvariant(),
-                    () => LoadLevel(nextIndex));
-            else
+            int completedIndex = _currentLevelIndex;
+            int nextIndex = completedIndex + 1;
+            bool hasNextPuzzle = HasValidLevelData() && nextIndex < levelData.levels.Length;
+
+            CompleteLevel();
+            if (_progress == null) _progress = PuzzleProgressSaveSystem.CreateNew(GetPuzzleId(0));
+
+            string completedPuzzleId = GetPuzzleId(completedIndex);
+            string nextPuzzleId = hasNextPuzzle ? GetPuzzleId(nextIndex) : string.Empty;
+            PuzzleProgressSaveSystem.MarkCompleted(_progress, completedPuzzleId, nextPuzzleId);
+            PuzzleProgressSaveSystem.Save(_progress);
+
+            if (hasNextPuzzle)
             {
-                yield return null;
-                LoadLevel(nextIndex);
+                if (loadingScreen != null)
+                    yield return loadingScreen.CoverPrefabSwap(
+                        "TUNING " + GetLevelDisplayName(nextIndex).ToUpperInvariant(),
+                        () => LoadLevel(nextIndex));
+                else
+                {
+                    yield return null;
+                    LoadLevel(nextIndex);
+                }
+
+                yield break;
             }
 
-            _isTransitioning = false;
-            yield break;
-        }
+            Log("All configured puzzles are complete.");
+            if (loadingScreen != null)
+            {
+                yield return loadingScreen.ShowThankYouThenLoad(mainMenuSceneName);
+                yield break;
+            }
 
-        Log("All configured puzzles are complete.");
-        if (loadingScreen != null)
+            yield return new WaitForSecondsRealtime(5f);
+            SceneManager.LoadScene(mainMenuSceneName);
+        }
+        finally
         {
-            yield return loadingScreen.ShowThankYouThenLoad(mainMenuSceneName);
-            yield break;
+            _isTransitioning = false;
         }
-
-        yield return new WaitForSecondsRealtime(5f);
-        SceneManager.LoadScene(mainMenuSceneName);
     }
 
     public void CompleteLevel()
@@ -264,24 +282,36 @@ public class GameManager : MonoBehaviour
     private IEnumerator RestartTutorialRoutine()
     {
         _isTransitioning = true;
-        if (loadingScreen != null)
-            yield return loadingScreen.CoverPrefabSwap("RESTARTING TUTORIAL", LoadTutorialLevel);
-        else
-            LoadTutorialLevel();
-        _isTransitioning = false;
+        try
+        {
+            if (loadingScreen != null)
+                yield return loadingScreen.CoverPrefabSwap("RESTARTING TUTORIAL", LoadTutorialLevel);
+            else
+                LoadTutorialLevel();
+        }
+        finally
+        {
+            _isTransitioning = false;
+        }
     }
 
     private IEnumerator RestartLevelRoutine()
     {
         _isTransitioning = true;
         int index = _currentLevelIndex;
-        if (loadingScreen != null)
-            yield return loadingScreen.CoverPrefabSwap(
-                "RESTARTING " + GetLevelDisplayName(index).ToUpperInvariant(),
-                () => LoadLevel(index));
-        else
-            LoadLevel(index);
-        _isTransitioning = false;
+        try
+        {
+            if (loadingScreen != null)
+                yield return loadingScreen.CoverPrefabSwap(
+                    "RESTARTING " + GetLevelDisplayName(index).ToUpperInvariant(),
+                    () => LoadLevel(index));
+            else
+                LoadLevel(index);
+        }
+        finally
+        {
+            _isTransitioning = false;
+        }
     }
 
     public void ReturnToMainMenu()
@@ -349,13 +379,19 @@ public class GameManager : MonoBehaviour
     private IEnumerator LoadSelectedLevelRoutine(int index)
     {
         _isTransitioning = true;
-        if (loadingScreen != null)
-            yield return loadingScreen.CoverPrefabSwap(
-                "ENTERING " + GetLevelDisplayName(index).ToUpperInvariant(),
-                () => LoadLevel(index));
-        else
-            LoadLevel(index);
-        _isTransitioning = false;
+        try
+        {
+            if (loadingScreen != null)
+                yield return loadingScreen.CoverPrefabSwap(
+                    "ENTERING " + GetLevelDisplayName(index).ToUpperInvariant(),
+                    () => LoadLevel(index));
+            else
+                LoadLevel(index);
+        }
+        finally
+        {
+            _isTransitioning = false;
+        }
     }
 
     public void RespawnPlayerAtSpawn()
@@ -432,6 +468,7 @@ public class GameManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        PrefabLightmapRuntime.RestoreSceneLighting();
         if (Instance == this) Instance = null;
     }
 

@@ -1428,3 +1428,582 @@ Copy this section for each completed change:
 - **Verification:** PowerShell XML parsing accepted the complete UXML, a required-name audit found every existing script-bound element, and `git diff --check` reported no whitespace errors. Unity `ForceSynchronousImport` refreshed the assets successfully with no import/compiler error. Live 1920×1080 Game View captures verified the runtime main screen and settings screen: the main title/tagline, vertical four-button layout, selected state, sonar frame, all five settings rows, steppers, values, and Back button render without clipping. Live scene inspection confirmed the exact `Main Menu` and `VR Pause Menu` object paths; MainMenuScene finished stopped, unpaused, clean, with EventSystem active. Two MCP diagnostic errors were generated while restoring the temporarily inactive EventSystem by name before accounting for inactive-object lookup; the corrected inclusive lookup succeeded and these were tooling-only, not product/runtime faults. A fresh final one-minute Unity Console Error query returned no entries.
 - **Known limitations:** The corridor artwork is intentionally extremely dark and subtle at the current world-space size; its contrast and text comfort still require a Quest headset check. The main and settings screens were visually captured; the remaining screens share the verified frame/button system and retained bindings but were not each captured separately. The UI uses the project's current default runtime font because no shippable matching condensed font asset was supplied.
 - **Follow-up:** Check the menu at normal Quest viewing distance, especially the small controller hint and settings labels. If the corridor disappears in the headset, raise only the background image exposure or reduce the dim overlay rather than brightening the core panel. Add a licensed condensed font asset later if closer typography matching is desired.
+
+### LIGHT-PREFAB-001 — Runtime baked lighting for prefab levels
+
+- **Date:** 2026-07-14
+- **Goal:** Create a Unity workflow that bakes a level prefab instance in MainScene, preserves its generated lightmaps in a standalone per-level asset, and restores that lighting when GameManager loads the prefab at runtime.
+- **Result:** Added Tools > Echo Room > Prefab Baked Lighting. The window can bake the active scene and capture the selected level, or capture an existing bake. It copies color, directional, and shadow-mask textures into a level-specific folder; records each baked renderer using a sibling-index hierarchy path, component index, lightmap index, and scale/offset; creates or updates a LevelLightingData asset; and automatically assigns it to the matching LevelData entry. GameManager now preserves persistent scene lightmaps, appends the loaded level's captured maps, applies the recorded renderer bindings, and restores scene lighting before level swaps and destruction. The window can clear the temporary scene bake after all level captures.
+- **Files created:**
+  - `Assets/_EchoRoom/Scripts/Lighting.meta`
+  - `Assets/_EchoRoom/Scripts/Lighting/LevelLightingData.cs`
+  - `Assets/_EchoRoom/Scripts/Lighting/LevelLightingData.cs.meta`
+  - `Assets/_EchoRoom/Scripts/Lighting/PrefabLightmapRuntime.cs`
+  - `Assets/_EchoRoom/Scripts/Lighting/PrefabLightmapRuntime.cs.meta`
+  - `Assets/_EchoRoom/Editor/PrefabBakedLightingWindow.cs`
+  - `Assets/_EchoRoom/Editor/PrefabBakedLightingWindow.cs.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/Managers/GameManager.cs`
+  - `Assets/_EchoRoom/Scripts/Scriptable Object Scripts/LevelData.cs`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: GameManager` — runtime behavior changes through its existing GameManager component; the scene asset itself was not modified or saved.
+- **Components/assets/settings:** Each Level now exposes a LevelLightingData bakedLighting reference. The existing `Assets/_EchoRoom/SObjects/LevelData.asset` has five compatible entries (Maze_A through Maze_E); captures populate these references. Default captured output is `Assets/_EchoRoom/Lighting/Prefab Lightmaps/<PuzzleId>/`. Captures preserve LightmapsMode and Texture2D references for color, direction, and shadow-mask data.
+- **Decisions and assumptions:** Exact prefab-source matching is preferred. Live MCP inspection found the five MainScene Maze roots are not direct connected prefab instances, so the editor tool also accepts a unique scene-root name matching the configured prefab name; all five current roots match uniquely. The user must enable only the intended level, keep it at its final runtime transform, and disable other levels before baking. Prefab Mode remains the editing workspace, while MainScene is the baking workspace.
+- **Verification:** Unity AssetDatabase refresh and script compilation completed successfully. MCP reflection confirmed LevelLightingData, PrefabLightmapRuntime, and PrefabBakedLightingWindow are loaded; the Tools/Echo Room/Prefab Baked Lighting menu is registered; Level.bakedLighting has the expected type; all five configured levels resolve through the unique-name fallback; and the live LevelData asset exposes bakedLighting on every entry. MainScene was clean before implementation and no scene or prefab was saved.
+- **Known limitations:** No actual lighting bake/capture or Play Mode runtime application was performed because the live scene currently reports zero loaded lightmaps. Light probes, reflection probes, and occlusion data are not captured. Changing renderer hierarchy, sibling order, meshes, lightmap UVs, materials, baked lights, or the level transform requires rebaking and recapturing that level. The MCP plugin logs its existing warning that the project path contains spaces.
+- **Follow-up:** Capture Maze A first, verify its generated asset and runtime appearance in Play Mode, then repeat for Maze B through Maze E. After all captures, clear the temporary MainScene bake to avoid shipping the last staging bake as persistent scene lighting.
+
+### LIGHT-BAKE-GI-001 — Baked GI support without changing sonar reveal
+
+- **Date:** 2026-07-14
+- **Goal:** Prevent sonar-reveal materials from becoming incorrectly dark after a baked-lighting workflow, prepare all five level prefabs for lightmapping, and keep the existing material-reveal mechanics unchanged.
+- **Result:** The `EchoRoom/EchoSonarReveal` forward pass now compiles lightmapped variants and samples baked GI through URP's `SAMPLE_GI` path for both geometric-normal and normal-mapped lighting. Baked GI is combined only inside the existing revealed-lighting calculation; the black unrevealed base, sonar pulse timing/radius/linger, leading ring, tint/fade, visibility mask, final masked blend, and realtime-light response remain intact. A bake-only Meta pass exports each material's base texture to the lightmapper without affecting runtime rendering. Static maze architecture now contributes GI and receives lightmaps, while doors, levers, buttons, indicators, text, particles, and other non-architecture renderers do not contribute GI and receive light probes. All 22 level point lights are Mixed, preserving realtime direct lighting while allowing baked indirect lighting. Lightmap UV generation is enabled for all five maze FBX importers.
+- **Files created:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Shaders/EchoSonarReveal.shader`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab`
+  - `Assets/_EchoRoom/Models/Maze_5x5_A.fbx.meta`
+  - `Assets/_EchoRoom/Models/Maze_5x5_B.fbx.meta`
+  - `Assets/_EchoRoom/Models/Maze_5x5_C.fbx.meta`
+  - `Assets/_EchoRoom/Models/Maze_5x5_D.fbx.meta`
+  - `Assets/_EchoRoom/Models/Maze_5x5_E.fbx.meta`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Affected Unity objects:**
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Door_Leaf`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P1_D1/Lever_Body`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P1_D1/Lever_Pivot/Lever_Handle`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P2_A4/Lever_Body`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P2_A4/Lever_Pivot/Lever_Handle`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P3_E5/Lever_Body`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P3_E5/Lever_Pivot/Lever_Handle`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Door Progress Indicators/Indicator 1 (Lever_P1_D1)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Door Progress Indicators/Indicator 2 (Lever_P2_A4)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Door Progress Indicators/Indicator 3 (Lever_P3_E5)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Writing placement/Level Intro Text`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Door Instruction Text`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Level Realtime Lights/Maze Point Light 1`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Level Realtime Lights/Maze Point Light 1 (1)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Level Realtime Lights/Maze Point Light 2`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Level Realtime Lights/Maze Point Light 3`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Door_Frame`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Door_Leaf`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Maze_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Maze_Roof`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Maze_Walls`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P1_Lever/Lever_Body`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P1_Lever/Lever_Pivot/Lever_Handle`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P2_Lever/Lever_Body`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P2_Lever/Lever_Pivot/Lever_Handle`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P3_Lever/Lever_Body`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P3_Lever/Lever_Pivot/Lever_Handle`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Door Progress Indicators/Indicator 1 (Auto_P1_Lever)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Door Progress Indicators/Indicator 2 (Auto_P2_Lever)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Door Progress Indicators/Indicator 3 (Auto_P3_Lever)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Writing placement/Level Intro Text`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Door Instruction Text`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Level Realtime Lights/Maze Point Light 1`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Level Realtime Lights/Maze Point Light 1 (1)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Level Realtime Lights/Maze Point Light 2`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Level Realtime Lights/Maze Point Light 3`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door_Frame`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door_Leaf`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Maze_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Maze_Roof`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P1_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P1_Button/Button_Object`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P2_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P2_Button/Button_Object`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P3_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P3_Button/Button_Object`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door Progress Indicators/Indicator 1 (Auto_P1_Button)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door Progress Indicators/Indicator 2 (Auto_P2_Button)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door Progress Indicators/Indicator 3 (Auto_P3_Button)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Writing placement/Level Intro Text`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door Instruction Text`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Level Realtime Lights/Maze Point Light 1`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Level Realtime Lights/Maze Point Light 1 (1)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Level Realtime Lights/Maze Point Light 2`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Level Realtime Lights/Maze Point Light 3`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Level Realtime Lights/Maze Point Light 4`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Door_Frame`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Door_Leaf`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Maze_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Maze_Roof`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Maze_Walls`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P1_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P1_Button/Button_Object`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P2_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P2_Button/Button_Object`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P3_Button`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P3_Button/Button_Object`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Door Progress Indicators/Indicator 1 (Auto_P1_Button)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Door Progress Indicators/Indicator 2 (Auto_P2_Button)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Door Progress Indicators/Indicator 3 (Auto_P3_Button)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Writing placement/Level Intro Text`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Door Instruction Text`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Level Realtime Lights/Maze Point Light 1 (1)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Level Realtime Lights/Maze Point Light 2`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Level Realtime Lights/Maze Point Light 3`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Level Realtime Lights/Maze Point Light 4`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Maze_Floor`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Maze_Floor (1)`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Maze_Roof`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Maze_Walls`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Entity/Vertical Circular Glow Smoke/Luminous Smoke`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Entity/Vertical Circular Glow Smoke/Smoky Red Eyes/Left Eye`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Entity/Vertical Circular Glow Smoke/Smoky Red Eyes/Right Eye`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Entity/Vertical Circular Glow Smoke/Smoky Red Eyes/Subtle Red Scatter`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Writing placement/Level Intro Text`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Level Realtime Lights/Maze Point Light 1`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Level Realtime Lights/Maze Point Light 2`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Level Realtime Lights/Maze Point Light 3`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Level Realtime Lights/Maze Point Light 4`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab :: Maze_5x5_E/Level Realtime Lights/Maze Point Light 4 (1)`
+- **Components/assets/settings:** `EchoSonarReveal.shader` adds `LIGHTMAP_ON` and `DIRLIGHTMAP_COMBINED` variants, static-lightmap UV/SH varyings, two `SAMPLE_GI` calls, and a custom URP Meta pass. The Meta pass exports only `_BaseMap` albedo and zero emission; it deliberately ignores the dark runtime base color and cannot reveal surfaces at runtime. Across the prefabs, 45 referenced materials still use `EchoRoom/EchoSonarReveal`; 44 have an assigned `_BaseMap`, and no material asset or serialized material value was modified. Static architecture is selected by exact object role: `Door_Frame`, `Maze_Floor`, `Maze_Floor (1)`, `Maze_Roof`, `Maze_Walls`, and renderers under `Exit_Hallway`. Each level has 9 static lightmapped renderers. Non-architecture renderers receive light probes. Mixed-light totals are A=4, B=4, C=5, D=4, E=5. ModelImporter `generateSecondaryUV` is enabled for Maze_5x5_A through Maze_5x5_E.
+- **Decisions/assumptions:** Material brightness values were not bulk-adjusted because the audit identified missing baked-GI shader support—not material tuning—as the systemic cause. The project lighting setting uses Mixed IndirectOnly, so Mixed point lights keep realtime direct illumination while contributing baked indirect illumination. Baked GI is evaluated only in the already-revealed shader branch. Moving/interactable geometry is excluded from lightmaps so prefab mechanics and transforms remain valid. The sonar controller, reveal globals, material values, textures, normals, metallic/AO controls, timing, ring, tint, and fade code were not changed.
+- **Verification:** Unity reports `EchoRoom/EchoSonarReveal` supported with no shader errors and four active passes: ForwardUnlit, Meta, ShadowCaster, and DepthOnly. A full MCP prefab audit passed: every intended static renderer has Contribute GI enabled, receives lightmaps, and has a complete UV2 set; every other renderer has Contribute GI disabled and receives light probes; every level light is Mixed; and every maze importer generates lightmap UVs. Counts are A 9 static/12 probes/4 lights, B 9/12/4, C 9/12/5, D 9/12/4, and E 9/5/5. Source-level invariants confirmed the black pre-ping base, pulse inputs, ring inputs, reveal visibility mask, and final masked blend are unchanged. Unity was not compiling or updating, the final one-minute error query was empty, and `Assets/_EchoRoom/Scenes/MainScene.unity` remained loaded and clean.
+- **Known limitations:** No new lightmaps have been baked or captured in this change, so visual confirmation awaits a bake. Any previously captured lightmap data must be regenerated after the UV/import and renderer-GI changes. The current runtime capture tool does not capture light-probe data; probe-driven moving objects will use probes only if the baking scene provides them, otherwise Unity falls back to ambient SH. One referenced sonar material has no assigned `_BaseMap` and therefore uses the shader's white default in the Meta pass.
+- **Follow-up:** In MainScene, enable one level at its final runtime transform, bake lighting, use `Tools > Echo Room > Prefab Baked Lighting` to capture that level, then test its reveal in Play Mode/headset before repeating for the remaining levels.
+
+## 2026-07-14 - LIGHT-INTERACTABLE-RECEIVERS-001
+
+Goal: make lever and button renderers receive baked lighting from the prefab lightmap bake without changing the material reveal mechanics.
+
+Resulting behavior: targeted lever/button mesh renderers in the level prefabs are now marked Lightmap Static/Contribute GI and their serialized renderer GI receiver mode is set to Lightmaps. Existing EchoSonarReveal materials, reveal shader values, EchoButtonInteractable components, colliders, animations, audio sources, and lever/button gameplay scripts were not modified. The currently open scene instances were also adjusted so the next bake in MainScene can include the interactables immediately; the scene was marked dirty but not saved.
+
+Files created/modified/moved/deleted:
+- Modified: Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab
+- Modified: Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab
+- Modified: Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab
+- Modified: Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab
+- Modified: Docs/PROJECT_MEMORY.md
+
+Affected Unity objects:
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P1_D1/Lever_Body
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P1_D1/Lever_Pivot/Lever_Handle
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P2_A4/Lever_Body
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P2_A4/Lever_Pivot/Lever_Handle
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P3_E5/Lever_Body
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P3_E5/Lever_Pivot/Lever_Handle
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P1_Lever/Lever_Body
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P1_Lever/Lever_Pivot/Lever_Handle
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P2_Lever/Lever_Body
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P2_Lever/Lever_Pivot/Lever_Handle
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P3_Lever/Lever_Body
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P3_Lever/Lever_Pivot/Lever_Handle
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P1_Button
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P1_Button/Button_Object
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P2_Button
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P2_Button/Button_Object
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P3_Button
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Auto_P3_Button/Button_Object
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P1_Button
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P1_Button/Button_Object
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P2_Button
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P2_Button/Button_Object
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P3_Button
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Auto_P3_Button/Button_Object
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Button_Prefab
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Button_Prefab/Button_Object
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P1_D1/Lever_Body
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P1_D1/Lever_Handle
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P2_A4/Lever_Body
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P2_A4/Lever_Handle
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P3_E5/Lever_Body
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P3_E5/Lever_Handle
+
+Important references and settings:
+- Renderer serialized `m_ReceiveGI` set to `1` (`ReceiveGI.Lightmaps`) on targeted lever/button MeshRenderers.
+- `StaticEditorFlags.LightmapStatic` added to targeted lever/button renderer GameObjects.
+- `m_ScaleInLightmap` left at existing positive values, with zero-or-negative values normalized to `1` if encountered.
+- Door progress indicator emissive renderers were excluded intentionally; they remain probe/emissive driven.
+- No material assets and no source scripts were modified, preserving the sonar/material reveal behavior.
+
+Decisions, assumptions, limitations, follow-up:
+- Baked lighting will appear on these interactables only after rebaking and recapturing the prefab lightmaps. Existing captured lightmap files cannot contain objects that were excluded at bake time.
+- Lever handles and animated button parts may carry static baked shading while moving. This is acceptable for the requested baked-light look, but if the motion exposes large hidden surfaces, those parts may need a hybrid probe/lightmap split later.
+- MainScene was already dirty with a temporary baked maze instance; this change did not save the scene, so the user can decide when to rebake, capture, clear, or discard the temporary instance.
+
+Verification:
+- VERIFY targetedPrefabRenderers=24 bad=0
+- Inspected Unity through MCP before changing: lever/button renderers had `lightmapIndex=-1` and were set to probe-based GI, explaining why they were not receiving baked light.
+
+## 2026-07-14 - LIGHT-LEVER-UV2-001
+
+Goal: fix lever meshes appearing dark after baked lighting even when placed near baked lights.
+
+Resulting behavior: `Assets/_EchoRoom/Models/Lever.fbx` now generates secondary lightmap UVs on import, so `Lever_Body` and `Lever_Handle` can sample their assigned baked lightmap regions correctly. This does not change lever/button gameplay scripts, reveal shader timing, material reveal values, colliders, animations, or audio.
+
+Files created/modified/moved/deleted:
+- Modified: Assets/_EchoRoom/Models/Lever.fbx.meta
+- Modified: Docs/PROJECT_MEMORY.md
+
+Affected Unity objects:
+- Assets/_EchoRoom/Models/Lever.fbx :: Lever_Body
+- Assets/_EchoRoom/Models/Lever.fbx :: Lever_Handle
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P1_D1/Lever_Body
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P1_D1/Lever_Pivot/Lever_Handle
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P2_A4/Lever_Body
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P2_A4/Lever_Pivot/Lever_Handle
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P3_E5/Lever_Body
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_A/Lever_P3_E5/Lever_Pivot/Lever_Handle
+
+Important references and settings:
+- `ModelImporter.generateSecondaryUV = true` for `Assets/_EchoRoom/Models/Lever.fbx`.
+- Secondary UV settings: angle distortion 8, area distortion 15, hard angle 88, calculated margin, minimum lightmap resolution 40, minimum object scale 1.
+- Mesh `Lever_Body` verification: vertices 5371, UV2 5371.
+- Mesh `Lever_Handle` verification: vertices 1329, UV2 1329.
+
+Decisions, assumptions, limitations, follow-up:
+- Diagnosis found active lever renderers had valid `lightmapIndex` assignments after the bake, but the source lever meshes had no UV2 channel. Without UV2, the runtime shader can sample the wrong/dark area of the lightmap even when the object sits under a baked light.
+- The current bake still needs to be regenerated and captured again; old lightmap textures were produced before the lever model had secondary UVs.
+- The sonar reveal remains black before ping by design. This fix targets the revealed/baked-lit state only.
+
+Verification:
+- MCP inspection before change: `Lever_Body` and `Lever_Handle` from `Assets/_EchoRoom/Models/Lever.fbx` had `uv2=0` and `generateSecondaryUV=False`.
+- MCP verification after change confirmed imported lever meshes now contain UV2 coordinates matching their vertex counts.
+
+## 2026-07-15 - LIGHT-DOOR-PBR-002
+
+Goal: make maze door leaves receive baked lighting and make the metallic maze door frames respond to both baked GI and realtime point/spot lights across the maze prefabs.
+
+Resulting behavior: EchoRoom/EchoSonarReveal PBR materials now add baked indirect specular for metallic surfaces and direct specular from URP additional lights. This fixes fully metallic Door_FrameIron materials being black: their diffuse term was correctly reduced to zero by metallic PBR, but the previous shader had neither baked indirect specular nor additional-light specular. Door leaves in Mazes A-D are now Lightmap Static/Contribute GI receivers so they are included in future bakes. The active Maze B staging instance was updated for the next bake and left unsaved.
+
+Files created/moved/deleted:
+- None.
+
+Files modified:
+- Assets/_EchoRoom/Shaders/EchoSonarReveal.shader
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab
+- Docs/PROJECT_MEMORY.md
+
+Affected Unity objects:
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Door_Frame
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Door_Leaf
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Door_Frame
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Door_Leaf
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door_Frame
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab :: Maze_5x5_C/Door_Leaf
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Door_Frame
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab :: Maze_5x5_D/Door_Leaf
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Door_Frame
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Maze_5x5_B/Door_Leaf
+
+Important components, assets, settings, and dependencies:
+- Door_FrameIron materials for Mazes A-D use EchoRoom/EchoSonarReveal, _RevealQuality=2, and _Metallic=1; material assets were inspected but not modified.
+- The PBR branch retains non-metal diffuse lighting and adds indirectSpecular = specColor * normalAmbient * metallic.
+- The PBR branch now evaluates specular for URP additional lights, which includes the maze point/spot lights.
+- A-D Door_Leaf MeshRenderers now have StaticEditorFlags.LightmapStatic, serialized m_ReceiveGI=1 (Lightmaps), positive scale-in-lightmap, and complete UV2 channels.
+- A-D Door_Frame renderers remain lightmapped with complete UV2; no frame prefab flags or material values were changed.
+- No sonar pulse inputs, radius/speed/linger, reveal ring, visibility mask, base-black behavior, texture assignments, material values, colliders, animation, audio, or door gameplay scripts were modified.
+
+Decisions, assumptions, known limitations, and follow-up:
+- Door leaves move, so their baked shading and baked shadow remain tied to the closed bake pose after opening. This is the accepted tradeoff for the requested baked-light appearance.
+- The active Maze B bake finished before its door leaf was changed to a lightmap receiver. Its frame currently has lightmapIndex=0, while the door remains lightmapIndex=-1; Maze B must be baked again before capture so the door receives a lightmap region.
+- Assets/_EchoRoom/Scenes/MainScene.unity was already dirty and was not saved. Only the live Maze_5x5_B/Door_Leaf staging object was updated for the next bake.
+- Maze E has no Door_Frame/Door_Leaf pair; its existing Maze_5x5_E/Exit_Hallway/Exit_Door was already a lightmapped receiver and was not changed.
+- Visual confirmation still requires the Maze B rebake and a sonar reveal test in Scene/Game View or headset.
+
+Verification:
+- Unity Editor was not compiling, updating, or baking at final verification.
+- EchoRoom/EchoSonarReveal is supported, has four passes, and reports zero shader compilation messages.
+- Source invariants confirmed the black pre-ping base and existing sonar visibility-mask expression are unchanged.
+- MCP audit passed for all A-D prefab pairs: door receiver OK, frame receiver OK, UV2 count matches vertex count, and no bad entries were found.
+- Active MainScene audit: Maze B door receiver OK with pending lightmapIndex=-1; Maze B frame receiver OK with baked lightmapIndex=0.
+
+## 2026-07-15 - MAZEB-LEVER-DEFAULT-OFF-001
+
+Goal: independently test the report that one Maze B lever starts ON, double-confirm the saved and runtime defaults, and remove any configuration capable of starting a lever ON.
+
+Resulting behavior: the three Maze B lever instances now inherit an Animator Controller whose `On` parameter defaults to `false`, matching `LeverInteractable.Awake()` and the controller's default `Off` state. This prevents an Animator from entering the On animation before or without the component's runtime initialization. No lever prefab transform, puzzle event, interaction setting, scene object, animation clip, or gameplay script was changed.
+
+Files created/moved/deleted:
+- None.
+
+Files modified:
+- Assets/_EchoRoom/Animations/Lever.controller
+- Docs/PROJECT_MEMORY.md
+
+Affected Unity objects:
+- Assets/_EchoRoom/Prefabs/Level - 1 (echo puzzle).prefab :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P1_D1
+- Assets/_EchoRoom/Prefabs/Level - 1 (echo puzzle).prefab :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P2_A4
+- Assets/_EchoRoom/Prefabs/Level - 1 (echo puzzle).prefab :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P3_E5
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P1_D1
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P2_A4
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab :: Maze_5x5_A/Lever_P3_E5
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P1_Lever
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P2_Lever
+- Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab :: Maze_5x5_B/Auto_P3_Lever
+- Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Tutorial Lever
+- Assets/_EchoRoom/Prefabs/Lever.prefab :: Lever
+- Assets/_EchoRoom/Prefabs/Lever_P1_D1 Variant.prefab :: Lever_P1_D1 Variant
+- Assets/_EchoRoom/Prefabs/PuzzleLever_Auto.prefab :: PuzzleLever_Auto
+- Assets/_EchoRoom/Prefabs/Tutorial/Tutorial Lever.prefab :: Tutorial Lever
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P1_D1
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P2_A4
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Level - 1 (echo puzzle)/Maze_5x5_A/Lever_P3_E5
+
+Important components, assets, settings, and dependencies:
+- Shared controller: Assets/_EchoRoom/Animations/Lever.controller.
+- Parameter `On`: default changed from `true` to `false`.
+- Base Layer default state remains `Off`; the Off state uses `Lever_OnToOff.anim`, ending with the lever pivot at -35 degrees.
+- `LeverInteractable.Awake()` already calls `SetAnimatorOn(false)`; `ResetElement()` also forces the logical and Animator states off.
+- The controller dependency audit above was generated from Unity's loaded prefabs and open scene; only the controller asset itself was modified.
+- Assets/_EchoRoom/Scenes/MainScene.unity was already dirty before this work and was deliberately not saved or otherwise modified.
+
+Decisions, assumptions, known limitations, and follow-up:
+- The reported persistent one-lever-on condition was not reproduced in an isolated pre-fix Play Mode instantiation: P1, P2, and P3 all reported logical `IsOn=false`, Animator `On=false`, and the same off pose.
+- The mismatched shared controller default was still corrected because it was the only discovered default-on configuration and could produce an incorrect initial animation when component initialization is delayed, skipped, or observed before it resets the parameter.
+- This shared correction intentionally affects every lever using the controller; all inspected lever gameplay code expects an off default.
+- No headset input test was required because verification targeted initialization without player interaction.
+
+Verification:
+- Saved-asset inspection before change: all three Maze B lever transforms and components matched; all used Assets/_EchoRoom/Animations/Lever.controller. The controller default state was `Off`, but parameter `On.defaultBool` was incorrectly `true`.
+- Pre-fix Play Mode probe: all three Maze B levers were logically off and visually at pivot Y=325 degrees (-35 degrees).
+- Post-fix serialized check after save/reimport: `On.defaultBool=false`, default state `Off`, and all three Maze B lever instances still reference the corrected controller.
+- Post-fix Play Mode probe: Auto_P1_Lever, Auto_P2_Lever, and Auto_P3_Lever each had `IsOn=false`, Animator `On=false`, active `Off` state, `Lever_OnToOff` clip, pivot Y=325 degrees, and `ok=true`; aggregate `bad=0`.
+- Unity MCP log audit found no exceptions or asserts from the change. The only recent errors were the pre-existing Unity MCP startup warning that the project path contains spaces.
+
+## 2026-07-15 - LOAD-MAZED-LIGHTMAP-RECOVERY-001
+
+- **Goal:** Fix maze transitions becoming permanently covered by the VR loading screen when Maze D was already instantiated, and make the loading presentation more consistent across fast and slow prefab swaps.
+- **Resulting behavior:** Maze D and Maze E now use the valid lightmaps mode value 1, matching the current MainScene lighting mode and their captured direction textures. Runtime lightmap application validates saved modes and falls back safely when legacy/corrupt data is encountered. Prefab-swap loading always hides and clears its busy flag through a `finally` block, uses staged visual progress, and remains visible for at least one second so fast swaps do not flash. GameManager level-transition coroutines now release `_isTransitioning` through `finally` blocks when a nested load fails. The baked-lighting capture window refuses to save an undefined lightmaps mode, preventing recurrence.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/UI/VRLoadingScreen.cs`
+  - `Assets/_EchoRoom/Scripts/Managers/GameManager.cs`
+  - `Assets/_EchoRoom/Scripts/Lighting/PrefabLightmapRuntime.cs`
+  - `Assets/_EchoRoom/Editor/PrefabBakedLightingWindow.cs`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Maze_D_Lighting.asset`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Maze_E_Lighting.asset`
+  - `Docs/PROJECT_MEMORY.md`
+- **Affected Unity objects:**
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: GameManager`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen`
+- **Important components, assets, settings, and dependencies:**
+  - `Maze_D_Lighting.lightmapsMode` changed from invalid `-1` to valid value `1` (`Single, Dual` in this Unity version); it retains 8 captured lightmap sets and 16 renderer bindings.
+  - `Maze_E_Lighting.lightmapsMode` changed from invalid `-1` to valid value `1`; it retains 3 captured lightmap sets and 8 renderer bindings.
+  - `PrefabLightmapRuntime.ResolveLightmapsMode` accepts defined enum values and otherwise selects value 1 when direction maps exist or NonDirectional when they do not, with a warning.
+  - `VRLoadingScreen.CoverPrefabSwap` reports staged progress 0/20/85/100 percent, enforces an effective minimum of one second, and calls `Hide()` from `finally`.
+  - The capture workflow checks `Enum.IsDefined(typeof(LightmapsMode), mode)` before recording a bake.
+  - Transition cleanup was added to tutorial-to-first-level, next-level, tutorial restart, level restart, and selected-level loading routines.
+- **Decisions and assumptions:** Preserved the current directional-lightmap look by using numeric mode 1 because the active scene reports mode 1 and both affected assets contain direction textures. No rebake, texture replacement, prefab hierarchy change, Addressables conversion, or scene save was performed. The already-dirty MainScene was preserved unsaved to avoid overwriting unrelated staging work.
+- **Known limitations and follow-up:** Level prefab instantiation and lightmap assignment are still synchronous main-thread work, so genuinely heavy levels can take longer than the one-second minimum and may briefly stall animation. A future optimization pass can standardize lightmap atlas sizes and preload the next maze or migrate level dependencies to an asynchronous loading system. Headset playtesting is still recommended for subjective transition smoothness.
+- **Verification:** Unity MCP read-back confirmed Maze D and Maze E both store lightmaps mode 1. A temporary preview-scene test instantiated each configured level prefab and called `PrefabLightmapRuntime.Apply`: Maze D returned `applied=True` for 8 lightmaps/16 bindings and Maze E returned `applied=True` for 3 lightmaps/8 bindings, with no exception. Source read-back confirmed all four defensive code changes. Unity finished compiling and reported `playing=False, compiling=False, updating=False`. A fresh exception query was empty; the only error was the pre-existing Unity MCP warning about spaces in the project path. Direct scene inspection confirmed the affected objects at `GameManager` and `VR Loading Screen`; `MainScene.unity` remained dirty and was not saved.
+
+## 2026-07-15 - PAUSE-UI-INPUT-LIFECYCLE-001
+
+- **Goal:** Fix intermittent mouse hover/click failures when reopening the pause/restart menu and when the entity opens the captured/death menu.
+- **Resulting behavior:** The shared world-space UI Toolkit menu now clears retained pointer capture and keyboard focus whenever it hides or changes state. When a pause, start, or captured screen is shown, buttons, its BoxCollider, and the two configured pointer roots remain disabled until two UI panel updates have produced valid geometry; input is then enabled together. This prevents a zero-sized first frame or a stale held pointer from leaving later pause/death screens non-responsive. Restart, return, pause timing, audio pause, and failure-copy behavior are unchanged.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - Assets/_EchoRoom/Scripts/UI/VRPauseMenu.cs
+  - Docs/PROJECT_MEMORY.md
+- **Affected Unity objects:**
+  - Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu
+  - Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray
+  - Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray
+- **Important components, assets, settings, and dependencies:**
+  - VRPauseMenu.SetVisible now stops any pending activation, releases pointer capture/focus, and gates all menu input while the selected visual tree is laying out.
+  - EnableInputAfterLayout waits for two unscaled player-loop frames (yield return null continues while Time.timeScale == 0), repositions/refreshes the panel, then enables all bound UI Toolkit Button elements, the menu BoxCollider, and vrPointerRoots.
+  - Pointer capture cleanup recursively covers pointer IDs 0-31 across the complete UIDocument.rootVisualElement tree.
+  - OnDestroy also stops the activation coroutine and releases retained UI state.
+  - The existing Resources/UI/VRMenu layout, styles, button callback bindings, and serialized scene references were not changed.
+- **Decisions and assumptions:** The fix is centralized in the single VRPauseMenu shared by pause and captured/death states so both reports follow the same lifecycle. Two panel updates were chosen because the reproduced first-open frame reported root and button geometry as 0x0, while the next stable probe reported root 900x560 and button 320x78. No scene or prefab serialization was changed or saved; MainScene.unity remained clean after Play Mode.
+- **Known limitations and follow-up:** Desktop mouse lifecycle and the shared death-menu path were verified through Unity MCP. A physical headset/controller test is still recommended. The current XRI setup logs an existing compatibility warning for the menu XRRayInteractor input mode; that separate controller-ray configuration was not changed by this mouse/death-menu fix.
+- **Verification:**
+  - Unity recompiled VRPauseMenu.cs with scriptCompilationFailed=false; the source change introduced no project compilation error.
+  - Pause first-frame probe: state Pause, root 0x0, Continue disabled, collider disabled, both pointer roots disabled, Time.timeScale=0, and audio paused. Stable probe: root 900x560, Continue 320x78, button enabled, collider enabled, and both pointer roots enabled.
+  - Stale-pointer regression: forced Continue-button capture reported captureBeforeHide=True; HideMenu(true) immediately changed it to captureAfterHide=False, state Hidden, Time.timeScale=1, and audio unpaused.
+  - Captured/death first-frame probe: state Captured, root 0x0, Restart disabled, collider/pointers disabled. Stable probe: root 900x560, Restart 320x78, button/collider/pointers enabled.
+  - Pause-to-death transition with an active pointer capture released the capture immediately (before=True, after=False), kept Restart disabled during transition, and enabled it only after stable layout.
+  - The Restart button's registered Clickable callback was invoked in Play Mode: MainScene reloaded with one VRPauseMenu, state Hidden, Time.timeScale=1, and audio unpaused.
+  - Final Editor state: playing=False, compiling=False; Assets/_EchoRoom/Scenes/MainScene.unity was open and dirty=False.
+
++### MERGE-LIGHTING-001 — Integrate baked-lighting branch without regressing Development
+
+- **Date:** 2026-07-15
+- **Goal:** Merge `origin/dev-LightingSetup-Usama` into `Development-Phase`, resolve the reported conflicts, preserve the newer gameplay/polish scene, and retain the baked-lighting pipeline and captures.
+- **Result:** Integrated lighting commit `1891d64` with the two newer Development commits. The five prefab-level lightmap captures, runtime lightmap application, shader/GI changes, supporting assets, and the lighting branch journal are present. `Assets/_EchoRoom/Scenes/MainScene.unity` was resolved to the exact `Development-Phase` version because the automatic YAML hybrid had two orphaned parent references (`Entity` and `StartCheckpoint`) and reduced the scene from 504 serialized documents to 174; the chosen scene has 504 documents and zero unresolved parent references. The journal conflict was resolved as a union: the complete Development history is retained and all eight lighting-branch entries are appended intact.
+- **Files created:**
+  - `Assets/_EchoRoom/Editor/PrefabBakedLightingWindow.cs`
+  - `Assets/_EchoRoom/Editor/PrefabBakedLightingWindow.cs.meta`
+  - `Assets/_EchoRoom/Lighting.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-000_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-000_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-000_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-000_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-001_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-001_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-001_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-001_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-002_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-002_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-002_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-002_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-003_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-003_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-003_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-003_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-004_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-004_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-004_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-004_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-005_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-005_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-005_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-005_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-006_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-006_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-006_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-006_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-007_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-007_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-007_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Lightmap-007_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Maze_A_Lighting.asset`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_A/Maze_A_Lighting.asset.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_B.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_B/Lightmap-000_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_B/Lightmap-000_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_B/Lightmap-000_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_B/Lightmap-000_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_B/Maze_B_Lighting.asset`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_B/Maze_B_Lighting.asset.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_C.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_C/Lightmap-000_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_C/Lightmap-000_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_C/Lightmap-000_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_C/Lightmap-000_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_C/Maze_C_Lighting.asset`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_C/Maze_C_Lighting.asset.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-000_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-000_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-000_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-000_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-001_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-001_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-001_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-001_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-002_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-002_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-002_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-002_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-003_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-003_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-003_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-003_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-004_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-004_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-004_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-004_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-005_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-005_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-005_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-005_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-006_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-006_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-006_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-006_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-007_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-007_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-007_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Lightmap-007_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Maze_D_Lighting.asset`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_D/Maze_D_Lighting.asset.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-000_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-000_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-000_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-000_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-001_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-001_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-001_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-001_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-002_Color.exr`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-002_Color.exr.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-002_Direction.png`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Lightmap-002_Direction.png.meta`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Maze_E_Lighting.asset`
+  - `Assets/_EchoRoom/Lighting/Prefab Lightmaps/Maze_E/Maze_E_Lighting.asset.meta`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E/NavMesh-Maze_5x5_E.asset`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-0_comp_dir.png`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-0_comp_dir.png.meta`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-0_comp_light.exr`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-0_comp_light.exr.meta`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-1_comp_dir.png`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-1_comp_dir.png.meta`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-1_comp_light.exr`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-1_comp_light.exr.meta`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-2_comp_dir.png`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-2_comp_dir.png.meta`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-2_comp_light.exr`
+  - `Assets/_EchoRoom/Scenes/MainScene/Lightmap-2_comp_light.exr.meta`
+  - `Assets/_EchoRoom/Scenes/MainScene/NavMesh-Maze_5x5_E.asset.meta`
+  - `Assets/_EchoRoom/Scenes/MainScene/NavMesh-Maze_Floor.asset`
+  - `Assets/_EchoRoom/Scenes/MainScene/NavMesh-Maze_Floor.asset.meta`
+  - `Assets/_EchoRoom/Scripts/Lighting.meta`
+  - `Assets/_EchoRoom/Scripts/Lighting/LevelLightingData.cs`
+  - `Assets/_EchoRoom/Scripts/Lighting/LevelLightingData.cs.meta`
+  - `Assets/_EchoRoom/Scripts/Lighting/PrefabLightmapRuntime.cs`
+  - `Assets/_EchoRoom/Scripts/Lighting/PrefabLightmapRuntime.cs.meta`
+  - `Assets/_Recovery/0 (24).unity`
+  - `Assets/_Recovery/0 (24).unity.meta`
+  - `Assets/_Recovery/0 (25).unity`
+  - `Assets/_Recovery/0 (25).unity.meta`
+  - `Assets/_Recovery/0 (26).unity`
+  - `Assets/_Recovery/0 (26).unity.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Animations/Lever.controller`
+  - `Assets/_EchoRoom/Materials/Lever/Lever_Iron.mat`
+  - `Assets/_EchoRoom/Materials/Lever/Lever_Red.mat`
+  - `Assets/_EchoRoom/Materials/Lever/Lever_Stone.mat`
+  - `Assets/_EchoRoom/Materials/MazeB/Door_FrameIron.mat`
+  - `Assets/_EchoRoom/Materials/MazeB/Door_Wood.mat`
+  - `Assets/_EchoRoom/Models/Lever.fbx.meta`
+  - `Assets/_EchoRoom/Models/Maze_5x5_A.fbx.meta`
+  - `Assets/_EchoRoom/Models/Maze_5x5_B.fbx.meta`
+  - `Assets/_EchoRoom/Models/Maze_5x5_C.fbx.meta`
+  - `Assets/_EchoRoom/Models/Maze_5x5_D.fbx.meta`
+  - `Assets/_EchoRoom/Models/Maze_5x5_E.fbx.meta`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_A.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_B.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_C.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_D.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E.prefab`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/New Lighting Settings.lighting`
+  - `Assets/_EchoRoom/SObjects/LevelData.asset`
+  - `Assets/_EchoRoom/Scenes/MainScene/LightingData.asset`
+  - `Assets/_EchoRoom/Scripts/Managers/GameManager.cs`
+  - `Assets/_EchoRoom/Scripts/Scriptable Object Scripts/LevelData.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRLoadingScreen.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRPauseMenu.cs`
+  - `Assets/_EchoRoom/Shaders/EchoSonarReveal.shader`
+  - `Docs/PROJECT_MEMORY.md`
+  - `ProjectSettings/NavMeshAreas.asset`
+- **Files renamed:**
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E/NavMesh-Maze_5x5_E 1.asset.meta -> Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E/NavMesh-Maze_5x5_E.asset.meta`
+  - `Assets/_EchoRoom/Prefabs/Level prefabs/Maze_5x5_E/NavMesh-Maze_5x5_E 1.asset -> Assets/_EchoRoom/Scenes/MainScene/NavMesh-Maze_5x5_E.asset`
+- **Files deleted:**
+  - None.
+- **Files conflict-resolved but unchanged relative to the first parent:**
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+- **Unity objects affected:** The imported lighting branch’s exhaustive affected-object paths are preserved in the eight immediately preceding `LIGHT-*`, `MAZEB-*`, `LOAD-*`, and `PAUSE-*` journal entries. Conflict resolution itself changes no serialized Unity object relative to `Development-Phase`; it deliberately preserves that branch’s complete `MainScene` hierarchy.
+- **Components/assets/settings:** Preserved `LevelLightingData`, `PrefabLightmapRuntime`, `PrefabBakedLightingWindow`, all five `LevelData.bakedLighting` references, the captured Maze A–E lightmaps, shader baked-GI/PBR support, level prefab GI/lightmap settings, loading recovery, and the shared lever-controller default correction. `MainScene` staging lightmap support files remain imported, but the scene YAML itself stays at the newer Development version.
+- **Decisions and assumptions:** A whole-side choice was required for `MainScene`: retaining the automatic text merge would have shipped broken Unity PPtrs, while taking the lighting side would have discarded extensive newer gameplay and polish serialization. The project-local memory uses an append-only union rather than choosing either side. No branch content outside the scene conflict was intentionally discarded.
+- **Verification:** No conflict markers remain, and `git diff --check` passes for the conflict-resolution worktree edits. The cached lighting commit retains Unity-generated trailing spaces after empty YAML values, so a whole-index `git diff --cached --check` reports those pre-existing source-branch lines; they were not mass-rewritten during the merge. Static integrity audit passed for all 159 first-parent changed paths: every added Unity asset has its `.meta`, every added `.meta` has its asset, all changed scene/prefab `m_Father` references resolve locally, and all five `LevelData.bakedLighting` GUIDs resolve. Unity successfully performed two AssetDatabase refreshes; the first domain reload compiled the merged scripts with zero assembly errors, and the final refresh imported the restored Development scene file. The Editor log confirmed the hybrid’s broken PPtrs before correction and no such error during the final file import.
+- **Known limitations:** The Unity HTTP/MCP bridge stopped responding after the final domain reload, so the planned live renderer-binding/script/shader audit timed out without a result. Not inspected — Unity connection unavailable for a final live hierarchy readback. This is a verification-tool limitation, not a returned project audit failure.
+- **Follow-up:** Reconnect or restart the Unity MCP bridge, reopen `MainScene`, and run the five-level renderer-binding/missing-script/shader audit before the next release build. A headset smoke test remains appropriate for the imported baked lighting and loading transitions.

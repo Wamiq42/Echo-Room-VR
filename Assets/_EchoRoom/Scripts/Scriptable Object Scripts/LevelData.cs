@@ -16,6 +16,10 @@ public class Level
     public string levelName = "New Level";
     public GameObject levelPrefab;
 
+    [Header("Baked Lighting")]
+    [Tooltip("Captured lightmaps and renderer bindings for this prefab level.")]
+    public LevelLightingData bakedLighting;
+
     [Header("Optional")]
     public Sprite previewImage;
     public string description;
