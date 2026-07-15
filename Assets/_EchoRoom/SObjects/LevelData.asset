@@ -16,29 +16,34 @@ MonoBehaviour:
   - puzzleId: Maze_A
     levelName: Maze A
     levelPrefab: {fileID: 5545046285265823969, guid: cd6b83c380b2ab547824d948e3cc5cc8, type: 3}
+    bakedLighting: {fileID: 11400000, guid: e4536c5079e0bcd44ba0661e7f808f11, type: 2}
     previewImage: {fileID: 0}
     description: Complete the puzzle and pass through the exit checkpoint to load
       the next maze.
   - puzzleId: Maze_B
     levelName: Maze B
     levelPrefab: {fileID: 2961158250037908165, guid: a01c3f2f38fe02842b214c740d4640ec, type: 3}
+    bakedLighting: {fileID: 11400000, guid: f0249199a041cf94faa6eede734d47a2, type: 2}
     previewImage: {fileID: 0}
     description: Complete the puzzle and pass through the exit checkpoint to load
       the next maze.
   - puzzleId: Maze_C
     levelName: Maze C
     levelPrefab: {fileID: 260162800454872558, guid: 25b65dbfc2eb6ef40a4dcaf8de2126a1, type: 3}
+    bakedLighting: {fileID: 11400000, guid: 02e03c1a8ad70a84fa9e98902aa89701, type: 2}
     previewImage: {fileID: 0}
     description: Complete the puzzle and pass through the exit checkpoint to load
       the next maze.
   - puzzleId: Maze_D
     levelName: Maze D
     levelPrefab: {fileID: 818937718582769101, guid: d672f0ae83d478d4eac673689d1f988e, type: 3}
+    bakedLighting: {fileID: 11400000, guid: 83668f1186ec3ef45b185416b7628a49, type: 2}
     previewImage: {fileID: 0}
     description: Complete the puzzle and pass through the exit checkpoint to load
       the next maze.
   - puzzleId: Maze_E
     levelName: Maze E
     levelPrefab: {fileID: 5314132205022506278, guid: c4266fe9725d88846a0e633d7edbef17, type: 3}
+    bakedLighting: {fileID: 11400000, guid: 049dc26a2b7c25c4e8b138e940dc1e84, type: 2}
     previewImage: {fileID: 0}
     description: Final configured maze.

@@ -75,6 +75,8 @@ Shader "EchoRoom/EchoSonarReveal"
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
             #pragma multi_compile_fog
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -125,6 +127,7 @@ Shader "EchoRoom/EchoSonarReveal"
                 float3 normalOS : NORMAL;
                 float4 tangentOS : TANGENT;
                 float2 uv : TEXCOORD0;
+                float2 staticLightmapUV : TEXCOORD1;
             };
 
             struct Varyings
@@ -136,6 +139,7 @@ Shader "EchoRoom/EchoSonarReveal"
                 float3 tangentWS : TEXCOORD3;
                 float3 bitangentWS : TEXCOORD4;
                 half fogFactor : TEXCOORD5;
+                DECLARE_LIGHTMAP_OR_SH(staticLightmapUV, vertexSH, 6);
             };
 
             Varyings vert (Attributes IN)
@@ -150,6 +154,8 @@ Shader "EchoRoom/EchoSonarReveal"
                 OUT.bitangentWS = n.bitangentWS;
                 OUT.uv = TRANSFORM_TEX(IN.uv, _BaseMap);
                 OUT.fogFactor = ComputeFogFactor(p.positionCS.z);
+                OUTPUT_LIGHTMAP_UV(IN.staticLightmapUV, unity_LightmapST, OUT.staticLightmapUV);
+                OUTPUT_SH(OUT.normalWS, OUT.vertexSH);
                 return OUT;
             }
 
@@ -164,7 +170,10 @@ Shader "EchoRoom/EchoSonarReveal"
                 Light mainLight = GetMainLight(shadowCoord);
                 AmbientOcclusionFactor screenSpaceAO = GetScreenSpaceAmbientOcclusion(GetNormalizedScreenSpaceUV(IN.positionHCS));
 
-                half3 ambientContribution = SampleSH(environmentNormal) * _EnvironmentAmbientInfluence *
+                // Baked GI replaces the ambient probe only inside the existing reveal path.
+                // With no lightmap assigned, SAMPLE_GI falls back to the same vertex SH behavior.
+                half3 bakedEnvironment = SAMPLE_GI(IN.staticLightmapUV, IN.vertexSH, environmentNormal);
+                half3 ambientContribution = bakedEnvironment * _EnvironmentAmbientInfluence *
                                             screenSpaceAO.indirectAmbientOcclusion;
                 half3 realtimeLight = mainLight.color * saturate(dot(environmentNormal, mainLight.direction)) *
                                       mainLight.distanceAttenuation * mainLight.shadowAttenuation;
@@ -246,7 +255,8 @@ Shader "EchoRoom/EchoSonarReveal"
                     float3 nTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, IN.uv), _BumpScale);
                     float3 N = normalize(TransformTangentToWorld(nTS, float3x3(tWS, bWS, nWS)));
 
-                    half3 normalAmbient = SampleSH(N) * _EnvironmentAmbientInfluence *
+                    half3 normalBakedEnvironment = SAMPLE_GI(IN.staticLightmapUV, IN.vertexSH, N);
+                    half3 normalAmbient = normalBakedEnvironment * _EnvironmentAmbientInfluence *
                                           screenSpaceAO.indirectAmbientOcclusion;
                     half3 normalRealtime = mainLight.color * saturate(dot(N, mainLight.direction)) *
                                            mainLight.distanceAttenuation * mainLight.shadowAttenuation;
@@ -280,20 +290,43 @@ Shader "EchoRoom/EchoSonarReveal"
                         float smoothness = _Smoothness * mg.a;
                         float occ = lerp(1.0, SAMPLE_TEXTURE2D(_OcclusionMap, sampler_OcclusionMap, IN.uv).g, _OcclusionStrength);
 
-                        float3 L = normalize(mainLight.direction);
-                        float ndl = saturate(dot(N, L));
                         float3 V = normalize(GetCameraPositionWS() - IN.positionWS);
-                        float3 H = normalize(L + V);
-                        float ndh = saturate(dot(N, H));
                         float specPower = exp2(smoothness * 10.0 + 1.0);
-                        float spec = pow(ndh, specPower) * ndl;
                         half3 specColor = lerp((half3)0.04, albedo, metallic);
 
+                        // Non-metals use baked/realtime diffuse. Metals receive the same baked
+                        // environment through their specular color, so lightmapped iron is not black.
                         half3 diffuse = albedo * (1.0 - metallic) * normalSceneLighting;
-                        half3 mainSpecular = specColor * spec * mainLight.color *
-                                             mainLight.distanceAttenuation * mainLight.shadowAttenuation *
-                                             screenSpaceAO.directAmbientOcclusion;
-                        lit = (diffuse + mainSpecular) * occ * _RevealBrightness * tintMul;
+                        half3 indirectSpecular = specColor * normalAmbient * metallic;
+
+                        float3 L = normalize(mainLight.direction);
+                        float ndl = saturate(dot(N, L));
+                        float3 H = normalize(L + V);
+                        float ndh = saturate(dot(N, H));
+                        float spec = pow(ndh, specPower) * ndl;
+                        half3 directSpecular = specColor * spec * mainLight.color *
+                                               mainLight.distanceAttenuation * mainLight.shadowAttenuation *
+                                               screenSpaceAO.directAmbientOcclusion;
+
+                        // Maze lights are point lights, which URP supplies as additional lights.
+                        // Include their specular response so metallic door frames react in realtime.
+                        #if defined(_ADDITIONAL_LIGHTS)
+                        [loop]
+                        for (uint specularLightIndex = 0u; specularLightIndex < additionalLightCount; ++specularLightIndex)
+                        {
+                            Light specularLight = GetAdditionalLight(specularLightIndex, IN.positionWS);
+                            float3 specularL = normalize(specularLight.direction);
+                            float specularNdl = saturate(dot(N, specularL));
+                            float3 specularH = normalize(specularL + V);
+                            float specularNdh = saturate(dot(N, specularH));
+                            float specularTerm = pow(specularNdh, specPower) * specularNdl;
+                            directSpecular += specColor * specularTerm * specularLight.color *
+                                              specularLight.distanceAttenuation * specularLight.shadowAttenuation *
+                                              screenSpaceAO.directAmbientOcclusion;
+                        }
+                        #endif
+
+                        lit = (diffuse + indirectSpecular + directSpecular) * occ * _RevealBrightness * tintMul;
                     }
                 }
 
@@ -305,6 +338,59 @@ Shader "EchoRoom/EchoSonarReveal"
                 half3 col = lerp(baseCol, revealedCol, visibilityMask);
                 col += _RingColor.rgb * _RingBrightness * saturate(ringGlow);
                 return half4(col, 1.0);
+            }
+            ENDHLSL
+        }
+
+        // Bake-only pass: exposes the visible texture albedo to the lightmapper.
+        // It does not participate in runtime rendering or alter the sonar visibility mask.
+        Pass
+        {
+            Name "Meta"
+            Tags { "LightMode" = "Meta" }
+            Cull Off
+
+            HLSLPROGRAM
+            #pragma target 2.0
+            #pragma vertex metaVert
+            #pragma fragment metaFrag
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/MetaInput.hlsl"
+
+            TEXTURE2D(_BaseMap);
+            SAMPLER(sampler_BaseMap);
+            float4 _BaseMap_ST;
+
+            struct MetaAttributes
+            {
+                float4 positionOS : POSITION;
+                float2 uv0 : TEXCOORD0;
+                float2 uv1 : TEXCOORD1;
+                float2 uv2 : TEXCOORD2;
+            };
+
+            struct MetaVaryings
+            {
+                float4 positionHCS : SV_POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            MetaVaryings metaVert(MetaAttributes IN)
+            {
+                MetaVaryings OUT;
+                OUT.positionHCS = MetaVertexPosition(
+                    IN.positionOS, IN.uv1, IN.uv2, unity_LightmapST, unity_DynamicLightmapST);
+                OUT.uv = TRANSFORM_TEX(IN.uv0, _BaseMap);
+                return OUT;
+            }
+
+            half4 metaFrag(MetaVaryings IN) : SV_Target
+            {
+                MetaInput metaInput = (MetaInput)0;
+                metaInput.Albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv).rgb;
+                metaInput.Emission = half3(0.0h, 0.0h, 0.0h);
+                return MetaFragment(metaInput);
             }
             ENDHLSL
         }

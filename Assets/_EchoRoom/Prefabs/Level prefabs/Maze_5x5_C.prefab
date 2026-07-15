@@ -74,7 +74,7 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
+  m_ReceiveGI: 2
   m_PreserveUVs: 1
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -164,7 +164,7 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
+  m_ReceiveGI: 2
   m_PreserveUVs: 1
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -375,7 +375,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 1
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 0.2
@@ -502,7 +502,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 1
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 0
@@ -612,7 +612,7 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
+  m_ReceiveGI: 2
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -779,7 +779,7 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
+  m_ReceiveGI: 2
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -900,7 +900,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 1
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 0.2
@@ -969,7 +969,7 @@ Transform:
   m_GameObject: {fileID: 4288876822018550381}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -0.25, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1066,7 +1066,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 1
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 0.2
@@ -1229,7 +1229,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 1
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 0.2
@@ -1378,7 +1378,7 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
+  m_ReceiveGI: 2
   m_PreserveUVs: 1
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -2086,8 +2086,16 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8061497654786543199, guid: 840dbf99b5304c145ac6aabf4bce6da4, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: -4770801562386190955, guid: 840dbf99b5304c145ac6aabf4bce6da4, type: 3}
       propertyPath: m_StaticShadowCaster
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -1852585990175165714, guid: 840dbf99b5304c145ac6aabf4bce6da4, type: 3}
+      propertyPath: m_StaticEditorFlags
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -437060565400333929, guid: 840dbf99b5304c145ac6aabf4bce6da4, type: 3}
@@ -2126,6 +2134,10 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3928826061365306148, guid: 840dbf99b5304c145ac6aabf4bce6da4, type: 3}
+      propertyPath: m_ReceiveGI
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7002812108301247587, guid: 840dbf99b5304c145ac6aabf4bce6da4, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.91
@@ -2150,8 +2162,16 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7606838036475513911, guid: 840dbf99b5304c145ac6aabf4bce6da4, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8587186576636537616, guid: 840dbf99b5304c145ac6aabf4bce6da4, type: 3}
       propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8587186576636537616, guid: 840dbf99b5304c145ac6aabf4bce6da4, type: 3}
+      propertyPath: m_StaticEditorFlags
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -2465,6 +2485,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 637145121851340628}
     m_Modifications:
+    - target: {fileID: 5124879796930282432, guid: 0308446f563437a45b058f0188853470, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5600042999472974888, guid: 0308446f563437a45b058f0188853470, type: 3}
       propertyPath: audioSource
       value: 
@@ -2517,9 +2541,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6219130863538116014, guid: 0308446f563437a45b058f0188853470, type: 3}
+      propertyPath: m_ReceiveGI
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271890823102726105, guid: 0308446f563437a45b058f0188853470, type: 3}
+      propertyPath: m_ReceiveGI
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7324682354564716973, guid: 0308446f563437a45b058f0188853470, type: 3}
       propertyPath: m_Name
       value: Auto_P1_Button
+      objectReference: {fileID: 0}
+    - target: {fileID: 7324682354564716973, guid: 0308446f563437a45b058f0188853470, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2680,6 +2716,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 637145121851340628}
     m_Modifications:
+    - target: {fileID: 5124879796930282432, guid: 0308446f563437a45b058f0188853470, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5600042999472974888, guid: 0308446f563437a45b058f0188853470, type: 3}
       propertyPath: audioSource
       value: 
@@ -2694,7 +2734,7 @@ PrefabInstance:
       objectReference: {fileID: 8300000, guid: e99c4a34a01b21a4581812485947dc86, type: 3}
     - target: {fileID: 5997274636065498750, guid: 0308446f563437a45b058f0188853470, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -11.53
+      value: -11.124
       objectReference: {fileID: 0}
     - target: {fileID: 5997274636065498750, guid: 0308446f563437a45b058f0188853470, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2732,9 +2772,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6219130863538116014, guid: 0308446f563437a45b058f0188853470, type: 3}
+      propertyPath: m_ReceiveGI
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271890823102726105, guid: 0308446f563437a45b058f0188853470, type: 3}
+      propertyPath: m_ReceiveGI
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7324682354564716973, guid: 0308446f563437a45b058f0188853470, type: 3}
       propertyPath: m_Name
       value: Auto_P3_Button
+      objectReference: {fileID: 0}
+    - target: {fileID: 7324682354564716973, guid: 0308446f563437a45b058f0188853470, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2950,6 +3002,14 @@ PrefabInstance:
     - target: {fileID: 5997274636065498750, guid: 0308446f563437a45b058f0188853470, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6219130863538116014, guid: 0308446f563437a45b058f0188853470, type: 3}
+      propertyPath: m_ReceiveGI
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271890823102726105, guid: 0308446f563437a45b058f0188853470, type: 3}
+      propertyPath: m_ReceiveGI
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7271890823102726105, guid: 0308446f563437a45b058f0188853470, type: 3}
       propertyPath: m_StaticShadowCaster

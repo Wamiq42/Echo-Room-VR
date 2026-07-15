@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a65fcca70b5f384ca20ac6793e36dd1, type: 3}
+  m_Name: Maze_B_Lighting
+  m_EditorClassIdentifier: Assembly-CSharp::LevelLightingData
+  lightmapsMode: 1
+  lightmaps:
+  - color: {fileID: 2800000, guid: 5ded54d7d27ff4048a5435fe2a2d1402, type: 3}
+    direction: {fileID: 2800000, guid: cfe17b1146468b0408050e098c6ab2fd, type: 3}
+    shadowMask: {fileID: 0}
+  rendererBindings:
+  - childIndices: 00000000
+    rendererComponentIndex: 0
+    rendererPath: Door_Frame
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.051127095, y: 0.051128134, z: 0.7292693, w: 0.41042164}
+  - childIndices: 01000000
+    rendererComponentIndex: 0
+    rendererPath: Door_Leaf
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.0522444, y: 0.05218626, z: 0.79311156, w: 0.6803203}
+  - childIndices: 02000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Floor
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.37441078, y: 0.37411377, z: 0.5129056, w: 0.01534822}
+  - childIndices: 03000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Roof
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.37441078, y: 0.37411377, z: 0.515347, w: 0.38644198}
+  - childIndices: 04000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Walls
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.517963, y: 0.5179264, z: -0.001230969, w: -0.0012308648}
+  - childIndices: 0700000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P1_Lever/Lever_Body
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.03629141, y: 0.03629527, z: 0.7778131, w: 0.55125046}
+  - childIndices: 070000000200000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P1_Lever/Lever_Pivot/Lever_Handle
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.0076646083, y: 0.007714045, z: 0.45836198, w: 0.7342353}
+  - childIndices: 0800000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P2_Lever/Lever_Body
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.03629141, y: 0.03629527, z: 0.42039117, w: 0.5160942}
+  - childIndices: 080000000200000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P2_Lever/Lever_Pivot/Lever_Handle
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.0076646083, y: 0.007714045, z: 0.88072526, w: 0.023786096}
+  - childIndices: 0900000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P3_Lever/Lever_Body
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.03629141, y: 0.03629527, z: 0.7646295, w: 0.3388481}
+  - childIndices: 090000000200000000000000
+    rendererComponentIndex: 0
+    rendererPath: Auto_P3_Lever/Lever_Pivot/Lever_Handle
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.0076646083, y: 0.007714045, z: 0.802112, w: 0.6136298}
+  - childIndices: 0a00000000000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_Floor
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.21300149, y: 0.2137425, z: 0.695181, w: 0.19468975}
+  - childIndices: 0a00000001000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_NorthWall
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.22628334, y: 0.22653693, z: 0.036924046, w: 0.5608488}
+  - childIndices: 0a00000002000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_SouthWall
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.22628334, y: 0.22653693, z: 0.27569357, w: 0.56182534}
+  - childIndices: 0a00000003000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_Ceiling
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.21300149, y: 0.2137425, z: 0.695181, w: 0.043810844}
+  - childIndices: 0a00000006000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_EndWall
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.1067467, y: 0.10687125, z: 0.74004555, w: 0.4602599}
+  sourceScene: Assets/_EchoRoom/Scenes/MainScene.unity
+  sourcePrefab: Assets/_EchoRoom/Models/Maze_5x5_B.fbx
+  capturedUtc: 2026-07-15T05:50:04.9237450Z

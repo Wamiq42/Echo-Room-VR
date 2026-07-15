@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a65fcca70b5f384ca20ac6793e36dd1, type: 3}
+  m_Name: Maze_E_Lighting
+  m_EditorClassIdentifier: Assembly-CSharp::LevelLightingData
+  lightmapsMode: 1
+  lightmaps:
+  - color: {fileID: 2800000, guid: 7e52043120db5b84c986f3e7dec3d432, type: 3}
+    direction: {fileID: 2800000, guid: 6bd6945cf73d9194bb45595417de430d, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: 615090570ba63bd42bc25f60ed04332c, type: 3}
+    direction: {fileID: 2800000, guid: 2d29ae4c4155416468cfd7719df0634d, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: 9dd6343f247f86840b9401f0be4402f3, type: 3}
+    direction: {fileID: 2800000, guid: fc341e5660cd93d4c8a88fa5286d568d, type: 3}
+    shadowMask: {fileID: 0}
+  rendererBindings:
+  - childIndices: 00000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Floor
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 0.74882156, y: 0.74822754, z: -0.0025090629, w: -0.002506685}
+  - childIndices: 02000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Roof
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.74882156, y: 0.74822754, z: -0.0025090629, w: -0.002506685}
+  - childIndices: 03000000
+    rendererComponentIndex: 0
+    rendererPath: Maze_Walls
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 1.0041097, y: 1.0034825, z: -0.0023713284, w: -0.002369542}
+  - childIndices: 0800000000000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_Floor
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.42600298, y: 0.427485, z: 0.37278396, w: 0.68527794}
+  - childIndices: 0800000001000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_NorthWall
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.45256668, y: 0.45307386, z: 0.36193404, w: 0.38829917}
+  - childIndices: 0800000002000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_SouthWall
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.45256668, y: 0.45307386, z: 0.36193404, w: 0.03380697}
+  - childIndices: 0800000003000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Hallway_Ceiling
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 0.42600298, y: 0.427485, z: 0.36204177, w: 0.06516075}
+  - childIndices: 0800000004000000
+    rendererComponentIndex: 0
+    rendererPath: Exit_Hallway/Exit_Door
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.3099098, y: 0.31007713, z: -0.0007686404, w: 0.7443479}
+  sourceScene: Assets/_EchoRoom/Scenes/MainScene.unity
+  sourcePrefab: Assets/_EchoRoom/Models/Maze_5x5_E.fbx
+  capturedUtc: 2026-07-15T07:17:42.0639500Z

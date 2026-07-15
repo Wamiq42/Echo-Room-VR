@@ -97,6 +97,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AOVisibilityStrength: 0.75
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
@@ -111,8 +112,8 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EnvironmentAmbientInfluence: 0.16
-    - _EnvironmentLightInfluence: 0.65
+    - _EnvironmentAmbientInfluence: 1
+    - _EnvironmentLightInfluence: 2
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -121,11 +122,13 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
+    - _RealtimeLightCompression: 0.2
+    - _RealtimeLightResponse: 4
     - _ReceiveShadows: 1
     - _RevealAmbient: 0.35
     - _RevealBrightness: 1.2
     - _RevealLinger: 1.5
-    - _RevealQuality: 2
+    - _RevealQuality: 1
     - _RevealRadius: 8
     - _RevealSpeed: 8
     - _RingBrightness: 1.5

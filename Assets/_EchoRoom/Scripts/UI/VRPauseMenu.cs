@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -38,6 +39,7 @@ namespace EchoRoom.UI
         [Header("Return To Menu")]
         [SerializeField] UnityEvent onReturnToMenu;
 
+        const int MaxPointerCount = 32;
         readonly List<UnityEngine.XR.InputDevice> controllers = new List<UnityEngine.XR.InputDevice>();
         readonly List<RendererOverlayState> playerOverlayStates = new List<RendererOverlayState>();
         UIDocument document;
@@ -54,6 +56,7 @@ namespace EchoRoom.UI
         float previousTimeScale = 1f;
         bool ownsAudioPause;
         bool previousAudioPause;
+        Coroutine enableInputRoutine;
 #if ENABLE_INPUT_SYSTEM
         InputAction pauseAction;
 #endif
@@ -331,12 +334,87 @@ namespace EchoRoom.UI
 
         void SetVisible(bool visible)
         {
+            StopPendingInputActivation();
+            ReleaseMenuPointerState();
+
+            if (!visible)
+            {
+                if (documentCollider != null) documentCollider.enabled = false;
+                SetVRPointersVisible(false);
+                SetElementVisible(menuRoot, false);
+                SetMenuButtonsEnabled(true);
+                RestorePlayerVisualOverlay();
+                return;
+            }
+
             if (document != null && !document.enabled) document.enabled = true;
-            SetElementVisible(menuRoot, visible);
-            if (documentCollider != null) documentCollider.enabled = visible;
-            SetVRPointersVisible(visible);
-            if (visible) ApplyPlayerVisualOverlay();
-            else RestorePlayerVisualOverlay();
+            SetElementVisible(menuRoot, true);
+            SetMenuButtonsEnabled(false);
+            if (documentCollider != null) documentCollider.enabled = false;
+            SetVRPointersVisible(false);
+            ApplyPlayerVisualOverlay();
+            enableInputRoutine = StartCoroutine(EnableInputAfterLayout());
+        }
+
+        IEnumerator EnableInputAfterLayout()
+        {
+            menuRoot?.MarkDirtyRepaint();
+
+            // UI Toolkit world-space geometry is zero-sized on the frame a hidden screen is shown.
+            // Wait for two panel updates before accepting mouse or controller presses.
+            yield return null;
+            yield return null;
+
+            enableInputRoutine = null;
+            if (!isActiveAndEnabled || !IsOpen || menuRoot == null)
+                yield break;
+
+            PlaceMenuInFrontOfPlayer();
+            menuRoot.MarkDirtyRepaint();
+            SetMenuButtonsEnabled(true);
+            if (documentCollider != null) documentCollider.enabled = true;
+            SetVRPointersVisible(true);
+        }
+
+        void StopPendingInputActivation()
+        {
+            if (enableInputRoutine == null) return;
+            StopCoroutine(enableInputRoutine);
+            enableInputRoutine = null;
+        }
+
+        void ReleaseMenuPointerState()
+        {
+            if (menuRoot == null) return;
+            ReleasePointerCaptures(menuRoot);
+            menuRoot.panel?.focusController?.focusedElement?.Blur();
+        }
+
+        static void ReleasePointerCaptures(VisualElement element)
+        {
+            if (element == null) return;
+
+            for (int pointerId = 0; pointerId < MaxPointerCount; pointerId++)
+                if (element.HasPointerCapture(pointerId))
+                    element.ReleasePointer(pointerId);
+
+            foreach (VisualElement child in element.Children())
+                ReleasePointerCaptures(child);
+        }
+
+        void SetMenuButtonsEnabled(bool enabled)
+        {
+            if (menuRoot == null) return;
+            SetButtonsEnabled(menuRoot, enabled);
+        }
+
+        static void SetButtonsEnabled(VisualElement element, bool enabled)
+        {
+            if (element is Button button)
+                button.SetEnabled(enabled);
+
+            foreach (VisualElement child in element.Children())
+                SetButtonsEnabled(child, enabled);
         }
 
         void SetVRPointersVisible(bool visible)
@@ -500,6 +578,8 @@ namespace EchoRoom.UI
 
         void OnDestroy()
         {
+            StopPendingInputActivation();
+            ReleaseMenuPointerState();
             RestorePlayerVisualOverlay();
             RestoreTime();
             RestoreEnvironmentAudio();
