@@ -33,8 +33,8 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
     private void OnGUI()
     {
         EditorGUILayout.HelpBox(
-            "Edit and save the prefab in Prefab Mode. For baking, return to MainScene, enable one level " +
-            "instance, disable the other levels, select the enabled level root, then use this tool.",
+            "Edit and save the prefab in Prefab Mode. For baking, return to MainScene, enable one puzzle " +
+            "level or the configured tutorial instance, disable the other levels, select its root, then use this tool.",
             MessageType.Info);
 
         levelRoot = (GameObject)EditorGUILayout.ObjectField("Level Root In Scene", levelRoot, typeof(GameObject), true);
@@ -75,7 +75,7 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
 
     private void BakeAndCapture()
     {
-        if (!ValidateBeforeCapture(requireActiveRoot: true)) return;
+        if (!ValidateBeforeCapture(requireActiveRoot: true, requireExistingBake: false)) return;
 
         try
         {
@@ -97,7 +97,7 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
 
     private void CaptureExistingBake()
     {
-        if (!ValidateBeforeCapture(requireActiveRoot: false)) return;
+        if (!ValidateBeforeCapture(requireActiveRoot: false, requireExistingBake: true)) return;
 
         try
         {
@@ -123,7 +123,7 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
         Debug.Log("[PrefabBakedLighting] Cleared the temporary scene bake. Captured level lighting assets were kept.");
     }
 
-    private bool ValidateBeforeCapture(bool requireActiveRoot)
+    private bool ValidateBeforeCapture(bool requireActiveRoot, bool requireExistingBake)
     {
         if (EditorApplication.isPlaying)
         {
@@ -158,6 +158,9 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
             return false;
         }
 
+        if (!requireExistingBake)
+            return true;
+
         LightmapData[] maps = LightmapSettings.lightmaps;
         if (maps == null || maps.Length == 0)
         {
@@ -185,9 +188,13 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
             prefabSource = PrefabUtility.GetCorrespondingObjectFromSource(levelRoot);
 
         Level level = FindMatchingLevel(prefabSource);
-        if (level == null)
+        GameObject tutorialPrefab = level == null ? FindMatchingTutorialPrefab(prefabSource) : null;
+        bool isTutorial = tutorialPrefab != null;
+
+        if (level == null && !isTutorial)
             throw new InvalidOperationException(
-                "The selected scene object does not match a level prefab in the assigned LevelData asset.");
+                "The selected scene object does not match a puzzle prefab in LevelData or the tutorial prefab " +
+                "configured on GameManager in this scene.");
 
         Renderer[] bakedRenderers = levelRoot.GetComponentsInChildren<Renderer>(true)
             .Where(IsValidBakedRenderer)
@@ -207,7 +214,10 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
         for (int i = 0; i < usedGlobalIndices.Count; i++)
             globalToLocal.Add(usedGlobalIndices[i], i);
 
-        string levelId = SanitizeFileName(string.IsNullOrWhiteSpace(level.puzzleId) ? levelRoot.name : level.puzzleId);
+        string captureId = isTutorial
+            ? tutorialPrefab.name
+            : (string.IsNullOrWhiteSpace(level.puzzleId) ? levelRoot.name : level.puzzleId);
+        string levelId = SanitizeFileName(captureId);
         string levelFolder = outputFolder.TrimEnd('/') + "/" + levelId;
         EnsureAssetFolder(levelFolder);
 
@@ -252,7 +262,8 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
             AssetDatabase.CreateAsset(lightingAsset, dataPath);
         }
 
-        GameObject capturedPrefab = prefabSource != null ? prefabSource : level.levelPrefab;
+        GameObject configuredPrefab = isTutorial ? tutorialPrefab : level.levelPrefab;
+        GameObject capturedPrefab = prefabSource != null ? prefabSource : configuredPrefab;
         string prefabPath = capturedPrefab != null ? AssetDatabase.GetAssetPath(capturedPrefab) : string.Empty;
         lightingAsset.SetCapturedData(
             LightmapSettings.lightmapsMode,
@@ -262,7 +273,11 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
             prefabPath,
             DateTime.UtcNow.ToString("O"));
 
-        level.bakedLighting = lightingAsset;
+        if (isTutorial)
+            levelData.tutorialBakedLighting = lightingAsset;
+        else
+            level.bakedLighting = lightingAsset;
+
         EditorUtility.SetDirty(lightingAsset);
         EditorUtility.SetDirty(levelData);
         AssetDatabase.SaveAssets();
@@ -270,8 +285,9 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
 
         Selection.activeObject = lightingAsset;
         EditorGUIUtility.PingObject(lightingAsset);
+        string captureName = isTutorial ? tutorialPrefab.name + " (Tutorial)" : level.levelName;
         Debug.Log("[PrefabBakedLighting] Captured " + bindings.Length + " renderers and " +
-                  copiedMaps.Length + " lightmaps for '" + level.levelName + "' at " + dataPath + ".");
+                  copiedMaps.Length + " lightmaps for '" + captureName + "' at " + dataPath + ".");
     }
 
     private Level FindMatchingLevel(GameObject prefabSource)
@@ -296,6 +312,37 @@ public sealed class PrefabBakedLightingWindow : EditorWindow
                 continue;
 
             if (nameMatch != null)
+                return null;
+
+            nameMatch = candidate;
+        }
+
+        return nameMatch;
+    }
+
+    private GameObject FindMatchingTutorialPrefab(GameObject prefabSource)
+    {
+        GameManager[] managers = FindObjectsOfType<GameManager>(true);
+        string sceneRootName = levelRoot.name.Replace("(Clone)", string.Empty).Trim();
+        GameObject nameMatch = null;
+
+        for (int i = 0; i < managers.Length; i++)
+        {
+            GameManager manager = managers[i];
+            if (manager == null || manager.gameObject.scene != levelRoot.scene)
+                continue;
+
+            GameObject candidate = manager.TutorialLevelPrefab;
+            if (candidate == null)
+                continue;
+
+            if (candidate == prefabSource)
+                return candidate;
+
+            if (!string.Equals(candidate.name, sceneRootName, StringComparison.Ordinal))
+                continue;
+
+            if (nameMatch != null && nameMatch != candidate)
                 return null;
 
             nameMatch = candidate;

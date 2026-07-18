@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -13,7 +13,10 @@ namespace EchoRoom.UI
         [SerializeField] Transform cameraTransform;
         [SerializeField, Min(0.5f)] float distanceFromCamera = 1.15f;
         [SerializeField] float heightOffset;
-        [SerializeField, Min(0.1f)] float minimumDisplayTime = 1f;
+        [SerializeField] bool useFixedWorldPlacement = true;
+        [SerializeField] Vector3 fixedWorldPosition = new(-3.04f, 0.95f, -1.342f);
+        [SerializeField] Vector3 fixedWorldEulerAngles = new(0f, 89.752f, 0f);
+        [SerializeField, Min(0.1f)] float minimumDisplayTime = 5f;
         [SerializeField, Min(0.1f)] float thankYouDuration = 5f;
         [SerializeField, Min(0.0001f)] float worldScale = 0.0016f;
 
@@ -137,14 +140,18 @@ namespace EchoRoom.UI
                 yield break;
             }
 
-            while (!operation.isDone)
+            operation.allowSceneActivation = false;
+            while (operation.progress < 0.9f || Time.realtimeSinceStartup - shownAt < minimumDisplayTime)
             {
-                SetProgress(Mathf.Clamp01(operation.progress / 0.9f));
+                float loadProgress = Mathf.Clamp01(operation.progress / 0.9f);
+                float timeProgress = Mathf.Clamp01((Time.realtimeSinceStartup - shownAt) / minimumDisplayTime);
+                SetProgress(Mathf.Min(loadProgress, timeProgress));
                 yield return null;
             }
 
-            float remaining = minimumDisplayTime - (Time.realtimeSinceStartup - shownAt);
-            if (remaining > 0f) yield return new WaitForSecondsRealtime(remaining);
+            SetProgress(1f);
+            yield return null;
+            operation.allowSceneActivation = true;
         }
 
         public IEnumerator ShowThankYouThenLoad(string mainMenuSceneName)
@@ -180,11 +187,19 @@ namespace EchoRoom.UI
                 yield break;
             }
 
-            while (!operation.isDone)
+            operation.allowSceneActivation = false;
+            float loadingShownAt = Time.realtimeSinceStartup;
+            while (operation.progress < 0.9f || Time.realtimeSinceStartup - loadingShownAt < minimumDisplayTime)
             {
-                SetProgress(Mathf.Clamp01(operation.progress / 0.9f));
+                float loadProgress = Mathf.Clamp01(operation.progress / 0.9f);
+                float timeProgress = Mathf.Clamp01((Time.realtimeSinceStartup - loadingShownAt) / minimumDisplayTime);
+                SetProgress(Mathf.Min(loadProgress, timeProgress));
                 yield return null;
             }
+
+            SetProgress(1f);
+            yield return null;
+            operation.allowSceneActivation = true;
         }
 
         public IEnumerator CoverPrefabSwap(string message, System.Action swapAction)
@@ -201,7 +216,7 @@ namespace EchoRoom.UI
                 yield return null;
                 SetProgress(1f);
 
-                float effectiveMinimum = Mathf.Max(1f, minimumDisplayTime);
+                float effectiveMinimum = Mathf.Max(5f, minimumDisplayTime);
                 float remaining = effectiveMinimum - (Time.realtimeSinceStartup - shownAt);
                 if (remaining > 0f) yield return new WaitForSecondsRealtime(remaining);
             }
@@ -220,6 +235,13 @@ namespace EchoRoom.UI
 
         void PlaceInFrontOfPlayer()
         {
+            if (useFixedWorldPlacement)
+            {
+                transform.SetPositionAndRotation(fixedWorldPosition, Quaternion.Euler(fixedWorldEulerAngles));
+                transform.localScale = new Vector3(-worldScale, worldScale, worldScale);
+                return;
+            }
+
             ResolveCamera();
             if (cameraTransform == null) return;
             transform.position = cameraTransform.position + cameraTransform.forward * distanceFromCamera +

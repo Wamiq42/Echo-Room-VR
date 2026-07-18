@@ -1,0 +1,109 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a65fcca70b5f384ca20ac6793e36dd1, type: 3}
+  m_Name: T_Junction_Tutorial_Lighting
+  m_EditorClassIdentifier: Assembly-CSharp::LevelLightingData
+  lightmapsMode: 1
+  lightmaps:
+  - color: {fileID: 2800000, guid: 87afa74205fa04d4dac2d7db26d90927, type: 3}
+    direction: {fileID: 2800000, guid: 1d024062f8a444f4dabdd56b79cc32ab, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: eb8841825d14ea5428bb3d12f737bbe0, type: 3}
+    direction: {fileID: 2800000, guid: aab568b5ba7ddd64ea19818218ff457d, type: 3}
+    shadowMask: {fileID: 0}
+  - color: {fileID: 2800000, guid: 99928f090e6bf70458abbb93a01da714, type: 3}
+    direction: {fileID: 2800000, guid: 369dc0c9c5d1a8147bb67fb19cbbc8bb, type: 3}
+    shadowMask: {fileID: 0}
+  rendererBindings:
+  - childIndices: 00000000
+    rendererComponentIndex: 0
+    rendererPath: Floor
+    lightmapIndex: 0
+    lightmapScaleOffset: {x: 0.99902344, y: 0.99902344, z: 0.00048828125, w: 0.00048828125}
+  - childIndices: 01000000
+    rendererComponentIndex: 0
+    rendererPath: Wall (1)
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 0.30105522, y: 0.302551, z: 0.3479001, w: 0.32933933}
+  - childIndices: 02000000
+    rendererComponentIndex: 0
+    rendererPath: Interaction Wall
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 0.30105522, y: 0.302551, z: 0.044189148, w: 0.30297214}
+  - childIndices: 03000000
+    rendererComponentIndex: 0
+    rendererPath: Wall With Corridor Face
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 0.8023437, y: 0.8041356, z: -0.015558595, w: -0.015594432}
+  - childIndices: 04000000
+    rendererComponentIndex: 0
+    rendererPath: Long Wall
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.98718745, y: 0.9876202, z: -0.019255469, w: -0.019264124}
+  - childIndices: 05000000
+    rendererComponentIndex: 0
+    rendererPath: Long Wall (2)
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.98718745, y: 0.9876202, z: -0.019255469, w: 0.58913434}
+  - childIndices: 06000000
+    rendererComponentIndex: 0
+    rendererPath: Door Frame
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 0.25437915, y: 0.25432983, z: 0.011025698, w: 0.49833137}
+  - childIndices: 060000000000000000000000
+    rendererComponentIndex: 0
+    rendererPath: Door Frame/Door_3_Brown/Door
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.13872227, y: 0.13664113, z: 0.093722895, w: 0.8501613}
+  - childIndices: 06000000000000000000000000000000
+    rendererComponentIndex: 0
+    rendererPath: Door Frame/Door_3_Brown/Door/Knob
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.00906922, y: 0.0091086915, z: 0.66733223, w: 0.8714315}
+  - childIndices: 060000000000000001000000
+    rendererComponentIndex: 0
+    rendererPath: Door Frame/Door_3_Brown/Frame
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.05705214, y: 0.057185184, z: 0.8635711, w: 0.9209864}
+  - childIndices: 060000000000000002000000
+    rendererComponentIndex: 0
+    rendererPath: Door Frame/Door_3_Brown/Long Wall (1)
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.98718745, y: 0.9876202, z: -0.019255469, w: 0.28542337}
+  - childIndices: 08000000
+    rendererComponentIndex: 0
+    rendererPath: Tutorial Button
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.07870725, y: 0.07977713, z: 0.21696594, w: 0.8868835}
+  - childIndices: 0800000000000000
+    rendererComponentIndex: 0
+    rendererPath: Tutorial Button/Button_Object
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.036402103, y: 0.03763072, z: 0.6673328, w: 0.2679138}
+  - childIndices: 0900000000000000
+    rendererComponentIndex: 0
+    rendererPath: Tutorial Lever/Lever_Body
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.07258282, y: 0.07259054, z: 0.6747667, w: 0.90914154}
+  - childIndices: 090000000200000000000000
+    rendererComponentIndex: 0
+    rendererPath: Tutorial Lever/Lever_Pivot/Lever_Handle
+    lightmapIndex: 1
+    lightmapScaleOffset: {x: 0.015329217, y: 0.01542809, z: 0.43820837, w: 0.9508925}
+  - childIndices: 0a000000
+    rendererComponentIndex: 0
+    rendererPath: Entity wall
+    lightmapIndex: 2
+    lightmapScaleOffset: {x: 0.3217159, y: 0.32211897, z: 0.44840223, w: 0.11734591}
+  sourceScene: Assets/_EchoRoom/Scenes/MainScene.unity
+  sourcePrefab: Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab
+  capturedUtc: 2026-07-18T18:54:47.6858391Z

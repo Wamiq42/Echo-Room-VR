@@ -10,20 +10,17 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
     GameObject levelRoot;
     Transform player;
     Transform interactionWall;
-    Transform warningWall;
+    TMP_Text tutorialPromptText;
     AudioSource entityAudio;
     AudioSource heartbeatAudio;
     PingEmitter pingEmitter;
 
     FieldInfo stepField;
-    FieldInfo readTimerField;
     FieldInfo buttonActivatedField;
     FieldInfo leverActivatedField;
 
     string lastStep;
-    string lastSonarText;
-    string lastInteractionText;
-    string lastWarningText;
+    string lastPromptText;
     bool? lastEntityAudioPlaying;
     bool? lastHeartbeatPlaying;
     float nextHeartbeat;
@@ -72,14 +69,13 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
         director = target;
         System.Type type = typeof(TutorialDirector);
         stepField = type.GetField("step", BindingFlags.Instance | BindingFlags.NonPublic);
-        readTimerField = type.GetField("warningReadTimer", BindingFlags.Instance | BindingFlags.NonPublic);
         buttonActivatedField = type.GetField("buttonActivated", BindingFlags.Instance | BindingFlags.NonPublic);
         leverActivatedField = type.GetField("leverActivated", BindingFlags.Instance | BindingFlags.NonPublic);
 
         levelRoot = ReadField<GameObject>(type, "levelRoot");
         player = ReadField<Transform>(type, "player");
         interactionWall = ReadField<Transform>(type, "interactionWall");
-        warningWall = ReadField<Transform>(type, "warningWall");
+        tutorialPromptText = ReadField<TMP_Text>(type, "tutorialPromptText");
         entityAudio = ReadField<AudioSource>(type, "entityAudio");
         heartbeatAudio = ReadField<AudioSource>(type, "heartbeatAudio");
 
@@ -94,7 +90,7 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
             " levelRoot=" + NameOf(levelRoot) +
             " player=" + NameOf(player) +
             " interactionWall=" + NameOf(interactionWall) +
-            " warningWall=" + NameOf(warningWall) +
+            " tutorialPrompt=" + NameOf(tutorialPromptText) +
             " entityAudio=" + NameOf(entityAudio) +
             " heartbeatAudio=" + NameOf(heartbeatAudio));
 
@@ -125,17 +121,7 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
     {
         string step = stepField != null ? System.Convert.ToString(stepField.GetValue(director)) : "UNKNOWN";
         Track("STEP", ref lastStep, step, force);
-
-        TextMeshPro sonar = levelRoot != null ? FindText(levelRoot.transform, "Sonar Wall Tip") : null;
-        TextMeshPro interaction = levelRoot != null ? FindText(levelRoot.transform, "Interaction Wall Tip") : null;
-        TextMeshPro warningTip = levelRoot != null ? FindText(levelRoot.transform, "Entity Wall Tip") : null;
-
-        string sonarState = TextState(sonar);
-        string interactionState = TextState(interaction);
-        string warningState = TextState(warningTip);
-        Track("TEXT_SONAR", ref lastSonarText, sonarState, force);
-        Track("TEXT_INTERACTION", ref lastInteractionText, interactionState, force);
-        Track("TEXT_WARNING", ref lastWarningText, warningState, force);
+        Track("TEXT_PROMPT", ref lastPromptText, TextState(tutorialPromptText), force);
 
         Track("ENTITY_AUDIO_PLAYING", ref lastEntityAudioPlaying, entityAudio != null && entityAudio.isPlaying, force);
         Track("HEARTBEAT_PLAYING", ref lastHeartbeatPlaying, heartbeatAudio != null && heartbeatAudio.isPlaying, force);
@@ -143,7 +129,6 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
 
     void LogHeartbeat()
     {
-        float readTimer = readTimerField != null ? (float)readTimerField.GetValue(director) : -1f;
         string step = stepField != null ? System.Convert.ToString(stepField.GetValue(director)) : "UNKNOWN";
         bool buttonDone = buttonActivatedField != null && (bool)buttonActivatedField.GetValue(director);
         bool leverDone = leverActivatedField != null && (bool)leverActivatedField.GetValue(director);
@@ -154,8 +139,6 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
             " leverActivated=" + leverDone +
             " player=" + PositionOf(player) +
             " interactionDistance=" + DistanceTo(interactionWall) +
-            " warningWallDistance=" + DistanceTo(warningWall) +
-            " warningReadTimer=" + readTimer.ToString("F2") +
             " entityAudioPlaying=" + (entityAudio != null && entityAudio.isPlaying) +
             " entityVolume=" + (entityAudio != null ? entityAudio.volume.ToString("F2") : "NA") +
             " heartbeatPlaying=" + (heartbeatAudio != null && heartbeatAudio.isPlaying) +
@@ -167,12 +150,11 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
         Check("levelRoot", levelRoot);
         Check("player", player);
         Check("interactionWall", interactionWall);
-        Check("warningWall", warningWall);
+        Check("tutorialPromptText", tutorialPromptText);
         Check("entityAudio", entityAudio);
         Check("heartbeatAudio", heartbeatAudio);
         Check("pingEmitter", pingEmitter);
         Check("stepField", stepField);
-        Check("readTimerField", readTimerField);
         Check("buttonActivatedField", buttonActivatedField);
         Check("leverActivatedField", leverActivatedField);
     }
@@ -228,20 +210,7 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
         return Vector3.Distance(a, b).ToString("F2");
     }
 
-    static TextMeshPro FindText(Transform root, string name)
-    {
-        Transform target = root.Find(name);
-        return target != null ? target.GetComponent<TextMeshPro>() : null;
-    }
-
-    static GameObject FindChild(Transform root, string name)
-    {
-        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
-            if (child.name == name) return child.gameObject;
-        return null;
-    }
-
-    static string TextState(TextMeshPro text)
+    static string TextState(TMP_Text text)
     {
         if (text == null) return "NULL";
         return "active=" + text.gameObject.activeSelf +
@@ -284,7 +253,7 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
         levelRoot = null;
         player = null;
         interactionWall = null;
-        warningWall = null;
+        tutorialPromptText = null;
         entityAudio = null;
         heartbeatAudio = null;
         pingEmitter = null;

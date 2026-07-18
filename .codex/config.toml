@@ -1,18 +1,9 @@
 [mcp_servers.unity-mcp]
-args = [
-    "port=8080",
-    "client-transport=stdio",
-]
-command = 'H:\Echo room\Echo-Room-VR\Library\mcp-server\win-x64\gamedev-mcp-server.exe'
 enabled = true
 startup_timeout_sec = 30
 tool_timeout_sec = 300
+url = "http://127.0.0.1:8080/"
 
-[mcp_servers.ai-game-developer]
-enabled = true
-startup_timeout_sec = 30
-tool_timeout_sec = 300
-url = "http://localhost:26566/p/a679b99a"
 [mcp_servers.ai-game-developer.tools.assets-refresh]
 approval_mode = "approve"
 
@@ -37,3 +28,9 @@ approval_mode = "approve"
 [mcp_servers.blender]
 command = 'C:\Users\wamiq\.local\bin\uvx.exe'
 args = ["blender-mcp"]
+
+[mcp_servers.ai-game-developer]
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 300
+url = "http://localhost:27734/p/f670d6e8"

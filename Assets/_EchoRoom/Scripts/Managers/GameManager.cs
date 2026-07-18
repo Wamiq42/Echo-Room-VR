@@ -40,6 +40,7 @@ public class GameManager : MonoBehaviour
     public int LevelCount => HasValidLevelData() ? levelData.levels.Length : 0;
     public bool IsTutorialLevelActive => _tutorialLevelActive;
     public GameObject CurrentLevelInstance => _currentLevelInstance;
+    public GameObject TutorialLevelPrefab => tutorialLevelPrefab;
 
     public event Action<Level> OnLevelLoaded;
     public event Action<Level> OnLevelCompleted;
@@ -117,6 +118,10 @@ public class GameManager : MonoBehaviour
             : Instantiate(tutorialLevelPrefab);
         _currentLevelInstance.name = tutorialLevelPrefab.name;
         _currentLevelInstance.SetActive(true);
+
+        if (levelData != null && levelData.tutorialBakedLighting != null)
+            PrefabLightmapRuntime.Apply(_currentLevelInstance, levelData.tutorialBakedLighting);
+
         MovePlayerToSpawn(ResolveSpawnPoint(_currentLevelInstance));
         Log("Loaded tutorial through GameManager.");
         GetComponent<EchoFogController>()?.ApplyTutorialFog();

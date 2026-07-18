@@ -18,6 +18,9 @@ namespace EchoRoom.UI
         [SerializeField, Min(0.5f)] float distanceFromCamera = 2.1f;
         [SerializeField] float heightOffset = -0.05f;
         [SerializeField, Min(0.0001f)] float worldScale = 0.0016f;
+        [SerializeField] bool useFixedWorldPlacement = true;
+        [SerializeField] Vector3 fixedWorldPosition = new(-3.04f, 0.95f, -1.342f);
+        [SerializeField] Vector3 fixedWorldEulerAngles = new(0f, 89.752f, 0f);
 
         UIDocument document;
         BoxCollider documentCollider;
@@ -241,6 +244,13 @@ namespace EchoRoom.UI
 
         void PlaceInFrontOfPlayer()
         {
+            if (useFixedWorldPlacement)
+            {
+                transform.SetPositionAndRotation(fixedWorldPosition, Quaternion.Euler(fixedWorldEulerAngles));
+                transform.localScale = new Vector3(-worldScale, worldScale, worldScale);
+                return;
+            }
+
             if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
             if (cameraTransform == null) return;
             transform.position = cameraTransform.position + cameraTransform.forward * distanceFromCamera +

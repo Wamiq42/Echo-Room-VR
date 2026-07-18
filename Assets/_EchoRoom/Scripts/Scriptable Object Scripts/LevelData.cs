@@ -4,6 +4,10 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "LevelData", menuName = "Game/Level Data")]
 public class LevelData : ScriptableObject
 {
+    [Header("Tutorial Baked Lighting")]
+    [Tooltip("Captured lightmaps and renderer bindings for the tutorial prefab.")]
+    public LevelLightingData tutorialBakedLighting;
+
     public Level[] levels;
 }
 

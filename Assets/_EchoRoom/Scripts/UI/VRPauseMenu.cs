@@ -30,6 +30,10 @@ namespace EchoRoom.UI
         [SerializeField] bool useControllerMenuButton = true;
         [SerializeField, Min(0.25f)] float distanceFromCamera = 2.1f;
         [SerializeField] float heightOffset = -0.05f;
+        [SerializeField] bool useFixedStartMenuPlacement = true;
+        [SerializeField] Vector3 fixedStartMenuPosition = new(-3.04f, 0.95f, -1.342f);
+        [SerializeField] Vector3 fixedStartMenuEulerAngles = new(0f, 89.752f, 0f);
+        [SerializeField] Vector3 fixedStartMenuScale = new(-0.002f, 0.002f, 0.002f);
         [SerializeField] bool keepInFrontOfWalls = true;
         [SerializeField, Min(0.01f)] float wallPadding = 0.15f;
         [SerializeField, Min(0.25f)] float minimumDistanceFromCamera = 0.45f;
@@ -334,7 +338,8 @@ namespace EchoRoom.UI
             SetContent(state == MenuState.Start, state == MenuState.Pause, state == MenuState.Captured,
                 state == MenuState.Settings);
             SetVisible(true);
-            PlaceMenuInFrontOfPlayer();
+            if (ShouldUseFixedWorldPlacement(state)) PlaceMenuAtFixedWorldAnchor();
+            else PlaceMenuInFrontOfPlayer();
             PauseTime();
             PauseEnvironmentAudio();
             OnMenuStateChanged?.Invoke(State);
@@ -399,7 +404,8 @@ namespace EchoRoom.UI
             if (!isActiveAndEnabled || !IsOpen || menuRoot == null)
                 yield break;
 
-            PlaceMenuInFrontOfPlayer();
+            if (ShouldUseFixedWorldPlacement(State)) PlaceMenuAtFixedWorldAnchor();
+            else PlaceMenuInFrontOfPlayer();
             menuRoot.MarkDirtyRepaint();
             SetMenuButtonsEnabled(true);
             if (documentCollider != null) documentCollider.enabled = true;
@@ -517,6 +523,19 @@ namespace EchoRoom.UI
             bool thisFrame = pressed && !controllerWasPressed;
             controllerWasPressed = pressed;
             return thisFrame;
+        }
+
+        bool ShouldUseFixedWorldPlacement(MenuState state)
+        {
+            return useFixedStartMenuPlacement &&
+                   (state == MenuState.Start ||
+                    (state == MenuState.Settings && settingsReturnState == MenuState.Start));
+        }
+
+        void PlaceMenuAtFixedWorldAnchor()
+        {
+            transform.SetPositionAndRotation(fixedStartMenuPosition, Quaternion.Euler(fixedStartMenuEulerAngles));
+            transform.localScale = fixedStartMenuScale;
         }
 
         void PlaceMenuInFrontOfPlayer()

@@ -119,22 +119,33 @@ sealed class TutorialMenuPrompt : MonoBehaviour
 [DisallowMultipleComponent]
 public sealed class TutorialDirector : MonoBehaviour
 {
-    enum Step { Ping, SecondReveal, Move, Button, Lever, ReadWarning, Ending, Done }
-    const float WarningReadDistance = 3f;
-    const float WarningReadDuration = 2f;
+    enum Step { Ping, SecondReveal, Move, Button, Lever, Ending, Done }
+    const float WarningHoldDuration = 2f;
     const float TextFadeDuration = 0.65f;
     const float WarningFadeDuration = 2.5f;
     const float ScreenFadeDuration = 5f;
     const float EntitySoundFadeInDuration = 1.5f;
     const float EntitySoundFadeOutDuration = 1.75f;
 
+    const string SonarMessage = "SONAR\nPress the SONAR button to reveal the corridor.";
+    const string MicrophoneMessage = "MICROPHONE\nHold Y and speak for a stronger microphone ping.";
+    const string DirectionMessage = "MOVE\nGo straight, then turn left.";
+    const string InteractionMessage = "INTERACTION\nMove close, aim at the button or lever, and press RIGHT TRIGGER.";
+    const string WarningMessage = "WARNING\nSonar can attract unwanted attention.\nSomething dangerous may be listening.";
+
+    static readonly Vector3 PromptOffsetFromView = new Vector3(-0.13f, 0.035f, 0.015f);
+    const float PromptCanvasScale = 0.0005f;
+    static readonly Vector2 PromptPanelSize = new Vector2(700f, 260f);
+
     Step step;
     GameObject levelRoot;
-    Transform player, startCheckpoint, interactionWall, warningWall;
+    Transform player, startCheckpoint, interactionWall;
+    Transform head, rightController;
     PingEmitter pingEmitter;
     AudioSource entityAudio, heartbeatAudio;
-    TextMeshPro sonarText, microphoneText, directionText, interactionText, warningText;
-    float warningReadTimer;
+    Canvas tutorialPromptCanvas;
+    CanvasGroup tutorialPromptGroup;
+    TextMeshProUGUI tutorialPromptText;
     bool buttonActivated, leverActivated;
     bool activeTutorial;
 
@@ -163,22 +174,21 @@ public sealed class TutorialDirector : MonoBehaviour
         EchoButtonInteractable.OnAnyButtonPressed -= OnButton;
         LeverInteractable.OnAnyLeverTurnedOn -= OnLever;
         if (pingEmitter != null) pingEmitter.OnPingEmitted -= OnPing;
+        if (tutorialPromptCanvas != null) tutorialPromptCanvas.gameObject.SetActive(false);
     }
 
     void Update()
     {
         if (!activeTutorial || player == null) return;
 
+        UpdatePromptPose();
+
         if (step == Step.Move && interactionWall != null && HorizontalDistance(player.position, interactionWall.position) <= 5f)
         {
             step = Step.Button;
             buttonActivated = false;
             leverActivated = false;
-            StartCoroutine(SwapWallText(directionText, interactionText));
-        }
-        else if (step == Step.ReadWarning)
-        {
-            UpdateWarningReading();
+            StartCoroutine(SwapPrompt(InteractionMessage));
         }
     }
 
@@ -199,11 +209,11 @@ public sealed class TutorialDirector : MonoBehaviour
 
         BuildInteractionLesson();
         BuildEndingLesson();
-        BuildWallInstructions();
+        BuildControllerInstructions();
         Darken();
 
         step = Step.Ping;
-        ShowWallText(sonarText);
+        ShowPrompt(SonarMessage);
     }
 
     void DisableOtherLevels()
@@ -252,106 +262,136 @@ public sealed class TutorialDirector : MonoBehaviour
         if (heartbeatAudio == null) Debug.LogError("[Tutorial] Ending Heartbeat AudioSource is missing.");
     }
 
-    void BuildWallInstructions()
+    void BuildControllerInstructions()
     {
         interactionWall = levelRoot.transform.Find("Interaction Wall");
-        warningWall = levelRoot.transform.Find("Entity wall");
+        head = Camera.main != null ? Camera.main.transform : null;
+        if (head == null && player != null)
+            head = player.Find("Camera Offset/Main Camera");
 
-        sonarText = FindPrefabText("Sonar Wall Tip");
-        microphoneText = FindPrefabText("Microphone Wall Tip");
-        directionText = FindPrefabText("Direction Wall Tip");
-        interactionText = FindPrefabText("Interaction Wall Tip");
-        warningText = FindPrefabText("Entity Wall Tip");
+        rightController = player != null ? player.Find("Camera Offset/Right Controller") : null;
 
-        SetTextVisible(sonarText, false);
-        SetTextVisible(microphoneText, false);
-        SetTextVisible(directionText, false);
-        SetTextVisible(interactionText, false);
-        SetTextVisible(warningText, false);
+        if (head == null)
+            Debug.LogError("[Tutorial] Main Camera is missing; controller prompt cannot face the player.");
+        if (rightController == null)
+            Debug.LogError("[Tutorial] Right Controller is missing; controller prompt cannot be positioned.");
+
+        CreateControllerPrompt();
     }
 
-    TextMeshPro FindPrefabText(string objectName)
+    void CreateControllerPrompt()
     {
-        Transform target = levelRoot.transform.Find(objectName);
-        if (target == null)
-        {
-            Debug.LogError("[Tutorial] Prefab text is missing: " + objectName);
-            return null;
-        }
+        GameObject canvasObject = new GameObject(
+            "Tutorial Controller Prompt",
+            typeof(RectTransform),
+            typeof(Canvas),
+            typeof(CanvasGroup));
 
-        TextMeshPro text = target.GetComponent<TextMeshPro>();
-        if (text == null)
-            Debug.LogError("[Tutorial] " + objectName + " has no TextMeshPro component.");
-        return text;
+        canvasObject.transform.SetParent(transform, false);
+        canvasObject.transform.localScale = Vector3.one * PromptCanvasScale;
+
+        RectTransform canvasRect = canvasObject.GetComponent<RectTransform>();
+        canvasRect.sizeDelta = PromptPanelSize;
+
+        tutorialPromptCanvas = canvasObject.GetComponent<Canvas>();
+        tutorialPromptCanvas.renderMode = RenderMode.WorldSpace;
+        tutorialPromptCanvas.sortingOrder = short.MaxValue;
+
+        tutorialPromptGroup = canvasObject.GetComponent<CanvasGroup>();
+        tutorialPromptGroup.alpha = 0f;
+        tutorialPromptGroup.interactable = false;
+        tutorialPromptGroup.blocksRaycasts = false;
+
+
+        GameObject textObject = new GameObject(
+            "Prompt Text",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(canvasObject.transform, false);
+
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(30f, 24f);
+        textRect.offsetMax = new Vector2(-30f, -24f);
+
+        tutorialPromptText = textObject.GetComponent<TextMeshProUGUI>();
+        tutorialPromptText.alignment = TextAlignmentOptions.Center;
+        tutorialPromptText.color = new Color(0.82f, 0.97f, 1f, 1f);
+        tutorialPromptText.fontStyle = FontStyles.Bold;
+        tutorialPromptText.fontSize = 15f;
+        tutorialPromptText.enableAutoSizing = true;
+        tutorialPromptText.fontSizeMin = 10.5f;
+        tutorialPromptText.fontSizeMax = 15f;
+        tutorialPromptText.enableWordWrapping = true;
+        tutorialPromptText.overflowMode = TextOverflowModes.Truncate;
+        tutorialPromptText.outlineWidth = 0.22f;
+        tutorialPromptText.outlineColor = new Color32(0, 6, 10, 255);
+        tutorialPromptText.raycastTarget = false;
+
+        canvasObject.SetActive(false);
+        UpdatePromptPose();
     }
 
-    static void ShowWallText(TextMeshPro text)
+    void UpdatePromptPose()
     {
-        if (text == null) return;
-        text.alpha = 1f;
-        text.gameObject.SetActive(true);
+        if (tutorialPromptCanvas == null || head == null || rightController == null) return;
+
+        Transform prompt = tutorialPromptCanvas.transform;
+        Vector3 offset = head.right * PromptOffsetFromView.x +
+                         head.up * PromptOffsetFromView.y +
+                         head.forward * PromptOffsetFromView.z;
+        prompt.position = rightController.position + offset;
+        prompt.rotation = Quaternion.LookRotation(prompt.position - head.position, head.up);
+        prompt.localScale = Vector3.one * PromptCanvasScale;
     }
 
-    static void SetTextVisible(TextMeshPro text, bool visible)
+    void ShowPrompt(string message)
     {
-        if (text == null) return;
-        text.alpha = visible ? 1f : 0f;
-        text.gameObject.SetActive(visible);
+        if (tutorialPromptCanvas == null || tutorialPromptText == null) return;
+        tutorialPromptText.text = message;
+        tutorialPromptCanvas.gameObject.SetActive(true);
+        tutorialPromptGroup.alpha = 1f;
+        UpdatePromptPose();
     }
 
-    IEnumerator FadeOut(TextMeshPro text, float duration = TextFadeDuration)
+    IEnumerator FadePrompt(float targetAlpha, float duration)
     {
-        if (text == null) yield break;
+        if (tutorialPromptGroup == null) yield break;
 
-        float startAlpha = text.alpha;
+        float startAlpha = tutorialPromptGroup.alpha;
         float elapsed = 0f;
         while (elapsed < duration)
         {
-            elapsed += Time.deltaTime;
-            text.alpha = Mathf.Lerp(startAlpha, 0f, elapsed / duration);
+            elapsed += Time.unscaledDeltaTime;
+            tutorialPromptGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
             yield return null;
         }
 
-        text.alpha = 0f;
-        text.gameObject.SetActive(false);
+        tutorialPromptGroup.alpha = targetAlpha;
+        if (targetAlpha <= 0f && tutorialPromptCanvas != null)
+            tutorialPromptCanvas.gameObject.SetActive(false);
     }
 
-    IEnumerator SwapWallText(TextMeshPro outgoing, TextMeshPro incoming)
+    IEnumerator SwapPrompt(string incoming)
     {
-        if (outgoing != null)
-            yield return FadeOut(outgoing);
+        if (tutorialPromptCanvas == null || tutorialPromptText == null) yield break;
 
-        if (incoming == null) yield break;
+        if (tutorialPromptCanvas.gameObject.activeSelf)
+            yield return FadePrompt(0f, TextFadeDuration);
 
-        incoming.alpha = 0f;
-        incoming.gameObject.SetActive(true);
-        float elapsed = 0f;
-        while (elapsed < TextFadeDuration)
-        {
-            elapsed += Time.deltaTime;
-            incoming.alpha = Mathf.Lerp(0f, 1f, elapsed / TextFadeDuration);
-            yield return null;
-        }
-
-        incoming.alpha = 1f;
+        tutorialPromptText.text = incoming;
+        tutorialPromptCanvas.gameObject.SetActive(true);
+        tutorialPromptGroup.alpha = 0f;
+        UpdatePromptPose();
+        yield return FadePrompt(1f, TextFadeDuration);
     }
 
     static float HorizontalDistance(Vector3 a, Vector3 b)
     {
         a.y = b.y = 0f;
         return Vector3.Distance(a, b);
-    }
-
-    void UpdateWarningReading()
-    {
-        if (warningWall == null) return;
-
-        bool isReading = HorizontalDistance(player.position, warningWall.position) <= WarningReadDistance;
-        warningReadTimer = isReading ? warningReadTimer + Time.deltaTime : 0f;
-        if (warningReadTimer < WarningReadDuration) return;
-
-        step = Step.Ending;
-        StartCoroutine(PlayEnding());
     }
 
     static void Darken()
@@ -369,12 +409,12 @@ public sealed class TutorialDirector : MonoBehaviour
                 return;
 
             step = Step.SecondReveal;
-            StartCoroutine(SwapWallText(sonarText, microphoneText));
+            StartCoroutine(SwapPrompt(MicrophoneMessage));
         }
         else if (step == Step.SecondReveal)
         {
             step = Step.Move;
-            StartCoroutine(SwapWallText(microphoneText, directionText));
+            StartCoroutine(SwapPrompt(DirectionMessage));
         }
 
     }
@@ -405,16 +445,22 @@ public sealed class TutorialDirector : MonoBehaviour
             return;
         }
 
-        step = Step.ReadWarning;
-        warningReadTimer = 0f;
-        StartCoroutine(SwapWallText(interactionText, warningText));
+        step = Step.Ending;
+        StartCoroutine(EndAfterInteraction());
+    }
+
+    IEnumerator EndAfterInteraction()
+    {
+        yield return SwapPrompt(WarningMessage);
+        yield return new WaitForSecondsRealtime(WarningHoldDuration);
+        yield return PlayEnding();
     }
 
     IEnumerator PlayEnding()
     {
         activeTutorial = false;
-        if (warningText != null)
-            yield return FadeOut(warningText, WarningFadeDuration);
+        if (tutorialPromptCanvas != null && tutorialPromptCanvas.gameObject.activeSelf)
+            yield return FadePrompt(0f, WarningFadeDuration);
 
         TutorialProgress.Complete();
         Image fadeImage = CreateFadeOverlay();

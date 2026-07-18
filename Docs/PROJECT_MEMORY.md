@@ -56,6 +56,289 @@ Add verified project paths here as they become relevant to completed changes.
 
 ## Change Journal
 
+### MAINMENU-BAKED-LIGHTING-001 ? Bake tutorial T-junction lighting in main menu
+
+- **Date:** 2026-07-17
+- **Goal:** Make the tutorial T-junction environment in `MainMenuScene` respond to baked lighting.
+- **Result:** Configured `MainMenuScene` with its own lighting settings asset, marked the stripped tutorial environment renderers for baked GI/lightmaps, converted the scene lights outside the XR rig to baked lighting, and baked the scene. `MainMenuScene` now has assigned baked lighting data, two active lightmaps, and all 14 tutorial environment renderers have valid lightmap indices/scale offsets.
+- **Files created:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.meta`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/LightingData.asset`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/LightingData.asset.meta`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-0_comp_dir.png`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-0_comp_dir.png.meta`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-0_comp_light.exr`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-0_comp_light.exr.meta`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-1_comp_dir.png`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-1_comp_dir.png.meta`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-1_comp_light.exr`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-1_comp_light.exr.meta`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-2_comp_dir.png`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-2_comp_dir.png.meta`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-2_comp_light.exr`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-2_comp_light.exr.meta`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-3_comp_dir.png`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-3_comp_dir.png.meta`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-3_comp_light.exr`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-3_comp_light.exr.meta`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene_LightingSettings.lighting`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene_LightingSettings.lighting.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Floor`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Wall (1)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Interaction Wall`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Wall With Corridor Face`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Long Wall`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Long Wall (2)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame/Door_3_Brown/Door`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame/Door_3_Brown/Door/Knob`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame/Door_3_Brown/Frame`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame/Door_3_Brown/Long Wall (1)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/tip`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/tip (1)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Entity wall`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Point Light`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Point Light (1)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Point Light (2)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Directional Light`
+- **Components/assets/settings:** Added `Assets/_EchoRoom/Scenes/MainMenuScene_LightingSettings.lighting` using baked GI, realtime GI disabled, Progressive CPU lightmapper, 16 texels/unit lightmap resolution, 1024 max lightmap size, combined directional lightmaps, ambient occlusion enabled, 2 bounces, normal-quality compression. Set the tutorial renderers to `ContributeGI`, positive scale in lightmap, and serialized lightmap indices/scale offsets. Converted the non-XR scene lights to `LightmapBakeType.Baked` with soft shadows; the XR camera point light was left out because it is inactive and belongs to the rig.
+- **Decisions and assumptions:** Investigation showed the T-junction was already static and marked `ContributeGI`, but `MainMenuScene` had `lightmaps=0`, so there was no baked data for it to use. The fix therefore baked `MainMenuScene` directly instead of adding runtime lighting scripts or re-enabling tutorial systems.
+- **Verification:** MCP verification after baking reported `lightmaps=2`, `lightingData=Assets/_EchoRoom/Scenes/MainMenuScene/LightingData.asset`, `settings=Assets/_EchoRoom/Scenes/MainMenuScene_LightingSettings.lighting`, `renderers=14`, `contribute=14`, `lightmapped=14`, and `scaleOffsets=14`. Every tutorial renderer reported a valid lightmap index (`0` or `1`) and non-zero scale offset. `MainMenuScene` saved with dirty=false. Editor state reported playing=false, paused=false, compiling=false, updating=false. A later console query still included the earlier failed inspection script error caused by using an unavailable `Renderer.receiveGI` API; the successful bake and verification did not report shader or bake failures. Attempting to clear the Unity MCP log cache failed because Unity had the MCP log file open.
+- **Known limitations:** The bake was verified through Editor/MCP data, not a headset visual pass. Unity also produced unused lightmap texture files 2 and 3 in the scene lighting folder even though `LightmapSettings.lightmaps.Length` is 2; they were left untouched because they are Unity-generated bake artifacts.
+- **Follow-up:** Visually inspect `MainMenuScene` in Play Mode/headset to confirm the hallway lighting has the desired contrast and rebake at higher resolution if the menu environment needs a more polished final look.
+
+
+### MAINMENU-TUTORIAL-ENV-001 ? Main menu in tutorial T-junction hallway
+
+- **Date:** 2026-07-17
+- **Goal:** Put the main menu player into the tutorial T-junction environment at the start of the big hallway, facing toward the two arms of the T, with only visual environment geometry and floor/collision support.
+- **Result:** Replaced the prior standalone arrival platform under `Main Menu Environment` with a stripped visual copy of `T_Junction_Tutorial`. The player now starts at `(0.000, -0.180, -12.000)` facing down `+Z` toward the T arms. The `Main Menu` and `VR Loading Screen` are centered ahead in the hallway at `(0.000, 1.150, -8.750)`, rotation `(0.000, 180.000, 0.000)`, with readable negative-X UI scale preserved. Controller menu rays remain active in `MainMenuScene` and hit the menu collider.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Arrival Platform`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Floor`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Wall (1)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Interaction Wall`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Wall With Corridor Face`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Long Wall`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Long Wall (2)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/tip`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/tip (1)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Entity wall`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Point Light`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Point Light (1)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Point Light (2)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray`
+- **Components/assets/settings:** Source prefab was `Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab`, instantiated as a scene-only stripped copy. Tutorial/interactable/text/audio/nav/helper MonoBehaviours were removed from the copied environment, as were objects `StartCheckpoint`, `Tutorial Button`, `Tutorial Lever`, all wall-tip TextMeshPro objects, and `Tutorial Ending Audio`. Verification found `monoBehaviours=0`, `audioSources=0`, `renderers=14`, `enabledColliders=13`, and `floorColliders=1` under the tutorial copy. The menu keeps `MenuRay_AlwaysOnTop` ray material behavior from the prior ray-rendering fix.
+- **Decisions and assumptions:** The start of the big hallway was taken as the corridor near local `z=-12`, before the T opens near `z=14..20`. Facing toward the two arms means player forward is `+Z`. The tutorial copy is intentionally not a prefab instance dependency for gameplay; it is a static menu-scene visual environment with collision, not a live tutorial system.
+- **Verification:** MCP verification opened `MainMenuScene` and reported dirty=false. `Tutorial T Junction Environment` exists, contains zero MonoBehaviours and zero AudioSources, has one enabled non-trigger floor collider, and no removed tutorial extras present. `XR Origin (XR Rig)` is at `(0.000, -0.180, -12.000)`, rotation `(0.000, 0.000, 0.000)`, forward `(0.000, 0.000, 1.000)`. `Main Menu` and `VR Loading Screen` are at `(0.000, 1.150, -8.750)`, rotation `(0.000, 180.000, 0.000)`. Both left and right `Menu UI Ray` objects are active and raycast-hit the `Main Menu` collider at approximately `(0.000, 0.820, -8.753)`. Editor state reported playing=false, paused=false, compiling=false, updating=false. Recent console error query returned no errors.
+- **Known limitations:** Not headset-tested. The exact hallway menu height/distance may need a comfort pass in headset.
+- **Follow-up:** In headset, confirm the player starts at the hallway entrance, sees the T arms beyond the menu, stands on the tutorial floor, and can press menu buttons with both controller rays.
+
+
+### UI-RAY-RENDER-001 ? Render controller menu rays over menu panels
+
+- **Date:** 2026-07-17
+- **Goal:** Fix the visible controller rays appearing behind the main menu panel while preserving menu readability and click hit detection.
+- **Result:** Added an always-on-top transparent shader/material for the `Menu UI Ray` line renderers and assigned it in both menu-related scenes. The controller rays keep their existing raycast hit behavior, but the line visual now renders with `ZTest Always` in the overlay queue so it stays visible over the menu surface instead of being hidden by the panel.
+- **Files created:**
+  - `Assets/_EchoRoom/Shaders/MenuRayAlwaysOnTop.shader`
+  - `Assets/_EchoRoom/Shaders/MenuRayAlwaysOnTop.shader.meta`
+  - `Assets/_EchoRoom/Materials/MainMenu/MenuRay_AlwaysOnTop.mat`
+  - `Assets/_EchoRoom/Materials/MainMenu/MenuRay_AlwaysOnTop.mat.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray`
+- **Components/assets/settings:** Added shader `EchoRoom/UI/MenuRayAlwaysOnTop` with transparent overlay queue, `ZWrite Off`, `ZTest Always`, and vertex-color tint support. Created material `Assets/_EchoRoom/Materials/MainMenu/MenuRay_AlwaysOnTop.mat` with renderQueue `5000`. Assigned that material to each affected `LineRenderer`, set `sortingOrder=5000`, and kept `MainMenuScene` rays active by default while `MainScene` rays remain inactive until the pause menu enables them.
+- **Decisions and assumptions:** Live Play Mode MCP inspection showed both controller rays physically raycast-hit the front of `MainMenuScene :: Main Menu`; the reported problem was visual occlusion behind the panel. Rendering the line visual over the UI fixes the visible ray position without moving the menu, shifting the collider, or weakening button hit detection.
+- **Verification:** MCP live inspection before the fix found `boxRaycastHit=True` for both rays against the main menu front surface. Post-fix MCP verification found both scenes dirty=false; all four `Menu UI Ray` line renderers use material `MenuRay_AlwaysOnTop`, shader `EchoRoom/UI/MenuRayAlwaysOnTop`, renderQueue `5000`, sortingOrder `5000`, and raycast hit=true. Editor state reported playing=false, paused=false, compiling=false, updating=false. Recent console errors were the existing Unity MCP project-path-spaces warning/error and the earlier expected failed attempt to open scenes while Play Mode was active; no shader/material error was reported.
+- **Known limitations:** Not headset-tested after the material assignment. A visual headset check should confirm the red line is drawn over the menu panel and still clicks UI buttons.
+- **Follow-up:** Enter `MainMenuScene`, aim both controllers at the menu, and confirm the rays visibly appear on top of the panel instead of behind it.
+
+
+### UI-READABLE-ORIENTATION-001 ? Restore readable menu UI orientation
+
+- **Date:** 2026-07-17
+- **Goal:** Correct the horizontally flipped visual orientation of the main menu and loading screen in both scenes while preserving world-space placement and controller ray alignment.
+- **Result:** Restored the UI Toolkit-readable negative X scale for `VRMainMenu`, `VRLoadingScreen`, and `VRPauseMenu` fixed menu panels while keeping the corrected `89.752` yaw that faces the player and lets controller rays hit the menu colliders.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/UI/VRMainMenu.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRLoadingScreen.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRPauseMenu.cs`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen`
+- **Components/assets/settings:** `VRMainMenu` and `VRLoadingScreen` again use `new Vector3(-worldScale, worldScale, worldScale)` for their fixed world-space UI panels. `VRPauseMenu.fixedStartMenuScale` is `(-0.002, 0.002, 0.002)`, and `VRPauseMenu.ConfigureDocument` again forces negative X scale for UI Toolkit readability. Scene instances are serialized with negative X scale and yaw `89.752`.
+- **Decisions and assumptions:** MCP transform math showed the panels were facing the player, but the user-visible UI remained horizontally flipped. This indicates the UI Toolkit panel needs the negative X scale for readable left-to-right presentation in this setup. The ray-facing yaw from `UI-RAY-ALIGN-001` was kept so controller rays still intersect the menu surface.
+- **Verification:** MCP verification found `MainMenuScene :: Main Menu` and `MainMenuScene :: VR Loading Screen` at `(-3.040, 0.950, -1.342)`, rotation `(0.000, 89.752, 0.000)`, scale `(-0.001600, 0.001600, 0.001600)`, with both menu rays active and hit=true. `MainScene :: VR Pause Menu` uses scale `(-0.002000, 0.002000, 0.002000)` and `MainScene :: VR Loading Screen` uses scale `(-0.001600, 0.001600, 0.001600)`, both at yaw `89.752`; saved rays are inactive for the hidden pause menu but hit=true in raycast tests. Both scenes reported dirty=false. Editor state reported playing=false, paused=false, compiling=false, updating=false. Recent console errors were only the existing Unity MCP plugin project-path-spaces warning/error.
+- **Known limitations:** Not headset-tested. A headset pass should confirm text reads left-to-right and the controller rays still visually land on the panels.
+- **Follow-up:** In headset, inspect `MainMenuScene` and trigger a loading screen; confirm the text is no longer horizontally flipped and both controllers can click menu buttons.
+
+
+### UI-RAY-ALIGN-001 ? Align controller rays with world-space menus
+
+- **Date:** 2026-07-17
+- **Goal:** Fix controller UI rays not landing on the world-space menus in both the main menu scene and gameplay scene.
+- **Result:** Rotated fixed world-space menu/loading anchors from yaw `269.752` to `89.752` so the UI faces the player and controller rays approach the front side of the panels. `MainMenuScene` now opens with both `Menu UI Ray` objects active. `VRPauseMenu` no longer forces a negative panel X scale and its delayed input activation now respects fixed start-menu placement instead of moving the panel back in front of the camera. The pause menu's controller ray references were serialized so it can enable the correct rays when visible.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/UI/VRMainMenu.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRLoadingScreen.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRPauseMenu.cs`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray`
+- **Components/assets/settings:** `VRMainMenu.fixedWorldEulerAngles`, `VRLoadingScreen.fixedWorldEulerAngles`, and `VRPauseMenu.fixedStartMenuEulerAngles` now use `(0, 89.752, 0)`. `VRPauseMenu.fixedStartMenuScale` is positive, and `ConfigureDocument` preserves positive X scale. `VRPauseMenu.EnableInputAfterLayout` uses fixed placement when the current state requires it. `MainMenuScene` `Menu UI Ray` GameObjects are active by default; `MainScene` rays remain inactive by default because the pause menu starts hidden and enables them when shown.
+- **Decisions and assumptions:** The ray objects were already aimed close enough to the menu collider in both scenes, but the panels were using the old fixed rotation after the mirror-scale fix, meaning the UI face was pointed away from the player. A rotation-only correction preserves the fixed world anchor and avoids reintroducing negative scale.
+- **Verification:** MCP ray verification found `MainMenuScene :: Main Menu` at `(-3.040, 0.950, -1.342)`, rotation `(0.000, 89.752, 0.000)`, scale `(0.001600, 0.001600, 0.001600)`, and both left/right `Menu UI Ray` objects active with raycast hit=true. `MainScene :: VR Pause Menu` reported the same anchor with scale `(0.002000, 0.002000, 0.002000)`; its saved rays were inactive as expected for hidden pause UI, but raycast hit=true and `VRPauseMenu` has valid pointer roots for runtime activation. Both scenes reported dirty=false. Editor state reported playing=false, paused=false, compiling=false, updating=false. Recent console errors were only the existing Unity MCP plugin project-path-spaces warning/error.
+- **Known limitations:** Not headset-tested. Runtime XR controller poses can differ from edit-mode transforms, so a headset check should confirm the visible line ends on the menu surface and UI buttons receive clicks.
+- **Follow-up:** In headset, open `MainMenuScene` and the gameplay pause menu, verify the left and right controller rays visibly land on the panels, and press a menu button from each hand.
+
+
+### UI-FLIP-FIX-001 ? Correct menu and loading UI horizontal mirroring
+
+- **Date:** 2026-07-17
+- **Goal:** Fix the horizontally flipped main menu and loading screen while keeping them fixed in world space.
+- **Result:** Removed the negative X scale used by `VRMainMenu` and `VRLoadingScreen`. The main menu and loading screen now use positive uniform world scale, so their UI should no longer render mirrored while staying at the same fixed anchor.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/UI/VRMainMenu.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRLoadingScreen.cs`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen`
+- **Components/assets/settings:** Replaced `new Vector3(-worldScale, worldScale, worldScale)` with `new Vector3(worldScale, worldScale, worldScale)` in both UI placement scripts. Serialized the affected scene objects with local scale `(0.0016, 0.0016, 0.0016)`.
+- **Decisions and assumptions:** Kept the existing fixed world position and rotation because the reported problem was horizontal mirroring, and MCP inspection showed negative X scale on both menu objects before the fix. The loading screen was corrected in both `MainMenuScene` and `MainScene` so the shared loading UI stays consistent.
+- **Verification:** MCP verification found `VRMainMenu negativeScaleAssignments=0` and `VRLoadingScreen negativeScaleAssignments=0`. `MainMenuScene :: Main Menu` and `MainMenuScene :: VR Loading Screen` both reported scale `(0.001600, 0.001600, 0.001600)` and `mirroredX=False`; `MainScene :: VR Loading Screen` reported the same. Both inspected scenes reported dirty=false after save. Editor state reported playing=false, paused=false, compiling=false, updating=false. Recent console errors were only the existing Unity MCP plugin project-path-spaces warning/error.
+- **Known limitations:** Not headset-tested. If the UI appears to face away after removing the mirror scale, the next adjustment should be a rotation-only correction, not reintroducing negative scale.
+- **Follow-up:** Run `MainMenuScene`, confirm menu text is readable left-to-right, and trigger loading once to confirm the loading UI is also readable left-to-right.
+
+
+### MAINMENU-SCENE-ANCHOR-001 ? Move arrival platform into menu scene
+
+- **Date:** 2026-07-17
+- **Goal:** Remove the standing platform from the gameplay `MainScene`, add it to the actual `MainMenuScene`, and make the main menu scene UI stay fixed in world space.
+- **Result:** Removed `Main Menu Environment/Arrival Platform` from `Assets/_EchoRoom/Scenes/MainScene.unity`. Added the static octagonal arrival platform to `Assets/_EchoRoom/Scenes/MainMenuScene.unity` under the XR rig floor position at approximately `(-0.710, 0.000, -1.070)`. Updated `VRMainMenu` so the `Main Menu` object uses a fixed world anchor by default instead of following the camera in `LateUpdate`. Serialized the `Main Menu` and `VR Loading Screen` objects in `MainMenuScene` at the shared anchor position `(-3.040, 0.950, -1.342)` and rotation `(0.000, 269.752, 0.000)`.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/UI/VRMainMenu.cs`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Main Menu Environment`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Main Menu Environment/Arrival Platform`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Arrival Platform`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Arrival Platform/Octagonal Grounding Pad`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Arrival Platform/Outer Comfort Rim`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Arrival Platform/Inner Footing Ring`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Arrival Platform/Center Balance Ring`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Arrival Platform/Peripheral Grounding Markers`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen`
+- **Components/assets/settings:** `VRMainMenu` now has `useFixedWorldPlacement`, `fixedWorldPosition`, and `fixedWorldEulerAngles` fields. When fixed placement is enabled, its placement method sets the menu transform to the serialized world anchor and returns instead of using `Camera.main.forward`. The arrival platform keeps the existing `ArrivalPlatform_Base`, `ArrivalPlatform_Detail`, and `ArrivalPlatform_Rim` materials, and the grounding pad includes a `MeshCollider`.
+- **Decisions and assumptions:** `MainMenuScene` is the actual menu scene because Unity MCP asset inspection found `Assets/_EchoRoom/Scenes/MainMenuScene.unity`, and scene inspection found the `Main Menu` root there. The gameplay `MainScene` should not contain the standing platform, but its previously fixed `VR Loading Screen` behavior remains unchanged.
+- **Verification:** MCP verification opened both scenes. `MainScene` reported dirty=false, `Main Menu Environment=false`, and `platform=false`. `MainMenuScene` reported dirty=false, `Main Menu Environment=true`, `platform=true`, platform position `(-0.710, 0.000, -1.070)`, and pad collider=true. `MainMenuScene :: Main Menu` reported fixed=true at `(-3.040, 0.950, -1.342)` with rotation `(0.000, 269.752, 0.000)`. `MainMenuScene :: VR Loading Screen` reported fixed=true at the same anchor. Editor state reported playing=false, paused=false, compiling=false, updating=false. Recent console errors were only the existing Unity MCP plugin project-path-spaces warning/error.
+- **Known limitations:** Not headset-tested. The fixed menu anchor and platform placement should be checked in VR to confirm the player stands on the platform and the menu remains comfortably readable while turning the head.
+- **Follow-up:** Run `MainMenuScene` in headset or Play Mode, rotate the head, and confirm the menu and loading screen stay in the room instead of following view direction.
+
+
+### UI-WORLD-ANCHOR-001 ? Fixed main menu and loading UI world anchors
+
+- **Date:** 2026-07-17
+- **Goal:** Stop the main menu UI and loading screen from following the player's head/camera direction, so both remain in a stable world-space location.
+- **Result:** Main menu/start UI now uses a fixed world anchor instead of camera-relative placement. The loading screen also uses the same fixed world anchor whenever shown, including during its visible update loop. The shared anchor matches the existing menu pose at approximately position `(-3.040, 0.950, -1.342)` and rotation `(0.000, 269.752, 0.000)`.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/UI/VRPauseMenu.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRLoadingScreen.cs`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen`
+- **Components/assets/settings:** `VRPauseMenu` now has fixed-start-menu placement fields and uses them for the `Start` state and settings opened from the start menu; pause/captured gameplay menus still use camera-relative placement so they remain usable outside the main menu. `VRLoadingScreen` now has fixed-world-placement fields and uses them instead of camera-relative placement when visible. The scene instances serialize the fixed anchor values.
+- **Decisions and assumptions:** The user's report targeted the main menu and loading screen, not the in-game pause/captured menus. Preserving camera-relative placement for pause/captured states avoids making gameplay failure or pause UI appear back at the main menu location during a maze.
+- **Verification:** Unity MCP inspection showed `VR Pause Menu` at `(-3.040, 0.950, -1.342)`, rotation `(0.000, 269.752, 0.000)`, scale `(-0.0020, 0.0020, 0.0020)`, with `useFixedStartMenuPlacement=True`. `VR Loading Screen` is at the same position and rotation, scale `(-0.0016, 0.0016, 0.0016)`, with `useFixedWorldPlacement=True`. `MainScene` reported dirty=false after save. Editor state reported playing=false, paused=false, compiling=false, updating=false. Recent console query showed no UI/script compile errors; it did show the existing Unity MCP plugin project-path-spaces error.
+- **Known limitations:** Not headset-tested. The fixed anchor should be checked in VR to confirm both panels are comfortably readable from the grounded arrival platform.
+- **Follow-up:** In headset, rotate the head on the main menu and during loading to confirm the panels stay in place in the room instead of following view direction.
+
+
+### MAINMENU-ARRIVAL-001 ? Main menu grounded arrival platform
+
+- **Date:** 2026-07-17
+- **Goal:** Give the player a stable object to stand on in the main menu so the menu no longer feels like a floating void.
+- **Result:** Added a static world-space `Main Menu Environment` with an octagonal arrival platform centered under the active XR rig at approximately `(-0.710, 0.000, -1.070)`. The pad top sits at floor height, with thickness extending downward, a subtle cyan outer rim, two quiet footing rings, and four low peripheral reference markers for comfort grounding.
+- **Files created:**
+  - `Assets/_EchoRoom/Materials/MainMenu.meta`
+  - `Assets/_EchoRoom/Materials/MainMenu/ArrivalPlatform_Base.mat`
+  - `Assets/_EchoRoom/Materials/MainMenu/ArrivalPlatform_Base.mat.meta`
+  - `Assets/_EchoRoom/Materials/MainMenu/ArrivalPlatform_Detail.mat`
+  - `Assets/_EchoRoom/Materials/MainMenu/ArrivalPlatform_Detail.mat.meta`
+  - `Assets/_EchoRoom/Materials/MainMenu/ArrivalPlatform_Rim.mat`
+  - `Assets/_EchoRoom/Materials/MainMenu/ArrivalPlatform_Rim.mat.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Main Menu Environment`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Main Menu Environment/Arrival Platform`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Main Menu Environment/Arrival Platform/Octagonal Grounding Pad`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Main Menu Environment/Arrival Platform/Outer Comfort Rim`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Main Menu Environment/Arrival Platform/Inner Footing Ring`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Main Menu Environment/Arrival Platform/Center Balance Ring`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Main Menu Environment/Arrival Platform/Peripheral Grounding Markers`
+- **Components/assets/settings:** `Octagonal Grounding Pad` uses a custom eight-sided prism mesh with `MeshFilter`, `MeshRenderer`, and `MeshCollider`. The outer rim, inner rings, and peripheral markers use static cube primitives with shared materials. Materials use URP Lit when available: dark matte base, subtle detail material, and cyan-emissive rim material. Platform hierarchy is not parented to the camera or XR rig.
+- **Decisions and assumptions:** Kept the geometry stationary and world-locked to reduce nausea from standing in empty space. The platform top remains at `Y=0` because live MCP inspection showed the active XR rig floor origin near zero. The shape is octagonal instead of a plain plane so the menu spawn feels intentional and has peripheral reference cues.
+- **Verification:** Unity MCP script execution returned `Saved=True` for `Assets/_EchoRoom/Scenes/MainScene.unity`. MCP scene inspection found `Main Menu Environment/Arrival Platform` active with bounds centered near `(-0.710, 0.050, -1.070)` and size about `(5.144, 0.420, 5.144)`. The scene reported `IsDirty=false`. Editor state reported playing=false, paused=false, compiling=false, updating=false. Recent MCP console error query returned no errors.
+- **Known limitations:** No physical headset comfort test was run. The final feel should still be checked in VR to confirm the platform scale, rim brightness, and marker visibility are comfortable in stereo.
+- **Follow-up:** In headset, verify the player starts centered on the pad and the main menu remains readable without the platform edge or markers feeling too close.
+
+
 ### POLISH-INTEGRATION-001 — Complete and audit the coordinated polish wave
 
 - **Date:** 2026-07-15
@@ -2007,3 +2290,451 @@ Verification:
 - **Verification:** No conflict markers remain, and `git diff --check` passes for the conflict-resolution worktree edits. The cached lighting commit retains Unity-generated trailing spaces after empty YAML values, so a whole-index `git diff --cached --check` reports those pre-existing source-branch lines; they were not mass-rewritten during the merge. Static integrity audit passed for all 159 first-parent changed paths: every added Unity asset has its `.meta`, every added `.meta` has its asset, all changed scene/prefab `m_Father` references resolve locally, and all five `LevelData.bakedLighting` GUIDs resolve. Unity successfully performed two AssetDatabase refreshes; the first domain reload compiled the merged scripts with zero assembly errors, and the final refresh imported the restored Development scene file. The Editor log confirmed the hybrid’s broken PPtrs before correction and no such error during the final file import.
 - **Known limitations:** The Unity HTTP/MCP bridge stopped responding after the final domain reload, so the planned live renderer-binding/script/shader audit timed out without a result. Not inspected — Unity connection unavailable for a final live hierarchy readback. This is a verification-tool limitation, not a returned project audit failure.
 - **Follow-up:** Reconnect or restart the Unity MCP bridge, reopen `MainScene`, and run the five-level renderer-binding/missing-script/shader audit before the next release build. A headset smoke test remains appropriate for the imported baked lighting and loading transitions.
+
+## 2026-07-17 ? MAINMENU-LONGWALL2-LIGHTMAP-001
+
+Goal: Fix `Long Wall (2)` in the Main Menu Scene tutorial T-junction copy so it receives baked lighting correctly.
+
+Resulting behavior: `Long Wall (2)` now uses a generated scene-local mesh with secondary lightmap UVs, contributes to baked GI, receives baked GI, and has a normal lightmap allocation after rebake. The matching door-frame `Long Wall (1)` was fixed the same way because it had the same missing-UV2 lightmap issue.
+
+Files created or modified:
+- Modified: `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+- Modified: `Assets/_EchoRoom/Scenes/MainMenuScene/LightingData.asset`
+- Modified/generated by Unity bake: `Assets/_EchoRoom/Scenes/MainMenuScene/Lightmap-*_comp_light.exr`
+- Created: `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes/MainMenu_LongWall2_LightmapUV.asset`
+- Created: `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes/MainMenu_LongWall2_LightmapUV.asset.meta`
+- Created: `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes/MainMenu_LongWall1_LightmapUV.asset`
+- Created: `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes/MainMenu_LongWall1_LightmapUV.asset.meta`
+- Modified: `Docs/PROJECT_MEMORY.md`
+
+Affected Unity objects:
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Long Wall (2)`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame/Door_3_Brown/Long Wall (1)`
+
+Important component, asset, setting, and dependency references:
+- `Long Wall (2)` MeshFilter and MeshCollider now reference `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes/MainMenu_LongWall2_LightmapUV.asset`.
+- `Long Wall (1)` MeshFilter and MeshCollider now reference `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes/MainMenu_LongWall1_LightmapUV.asset`.
+- Both generated meshes have 24 vertices, UV0 count 24, and UV2 count 24 after `Unwrapping.GenerateSecondaryUVSet`.
+- Both renderers remain static / Contribute GI and use Receive GI mode `Lightmaps` (`m_ReceiveGI=1`).
+- Both renderers were set to `m_ScaleInLightmap=8` before rebaking to avoid the previous tiny atlas allocation.
+- Lighting settings remain `Assets/_EchoRoom/Scenes/MainMenuScene_LightingSettings.lighting`.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- Root cause was missing secondary lightmap UVs (`uv2=0`) on `Long Wall (2)`, which previously produced a tiny lightmap scale/offset allocation around `0.01 x 0.01` and made the wall appear unlit.
+- `Long Wall (1)` was updated too because it shared the same missing-UV2 issue, even though the user reported `Long Wall (2)` specifically.
+- No tutorial scripts or gameplay extras were added back to the Main Menu copy; this only changes render/collider mesh references and baked lighting data.
+
+Verification performed:
+- Unity MCP inspection after bake: `Lightmapping.isRunning=False`, active scene `MainMenuScene`, scene dirty `False`, lightmap count `1`.
+- `Long Wall (2)` verification: mesh path `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes/MainMenu_LongWall2_LightmapUV.asset`, `uv2=24`, `lightmapIndex=0`, `lightmapScaleOffset=(1.7379, 1.7391, -0.4340, -0.4274)`, `m_ScaleInLightmap=8`, `m_ReceiveGI=1`.
+- `Long Wall (1)` verification: mesh path `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes/MainMenu_LongWall1_LightmapUV.asset`, `uv2=24`, `lightmapIndex=0`, `lightmapScaleOffset=(1.7379, 1.7391, -0.4340, -0.4343)`, `m_ScaleInLightmap=8`, `m_ReceiveGI=1`.
+
+## 2026-07-17 ? MAINMENU-LONGWALL2-LIGHTMAP-001-CORRECTION
+
+Correction to `MAINMENU-LONGWALL2-LIGHTMAP-001`: the generated mesh folder and its Unity meta file are also part of the change set.
+
+Additional files created or modified:
+- Created/modified: `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes/`
+- Created/modified: `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes.meta`
+
+Verification performed:
+- Unity MCP/AssetDatabase confirmed `Assets/_EchoRoom/Scenes/MainMenuScene/GeneratedMeshes` is a valid AssetDatabase folder containing the generated long-wall lightmap UV mesh assets.
+
+## 2026-07-17 ? MAINMENU-VISIBLE-LOCKED-001
+
+Goal: Make `MainMenuScene` function as a stable menu environment: the tutorial T-junction should be visibly lit/materialed all the time, and the player should not move around from the menu start position. The existing completed lighting/bake was not to be changed.
+
+Resulting behavior: The Main Menu tutorial T-junction renderers now use menu-specific URP Lit materials instead of the sonar-reveal materials, so the environment is visible continuously without needing gameplay echo/reveal behavior. Artificial player movement, teleportation, turn/body locomotion, sprint, and gameplay player-controller movement are disabled in `MainMenuScene`, while the dedicated menu UI rays remain active for menu interaction. Existing light objects and baked lightmap data were preserved; no rebake was started.
+
+Files created:
+- `Assets/_EchoRoom/Materials/MainMenu/MainMenu_Env_Wall_Visible.mat`
+- `Assets/_EchoRoom/Materials/MainMenu/MainMenu_Env_Wall_Visible.mat.meta`
+- `Assets/_EchoRoom/Materials/MainMenu/MainMenu_Env_WallAccent_Visible.mat`
+- `Assets/_EchoRoom/Materials/MainMenu/MainMenu_Env_WallAccent_Visible.mat.meta`
+- `Assets/_EchoRoom/Materials/MainMenu/MainMenu_Env_Floor_Visible.mat`
+- `Assets/_EchoRoom/Materials/MainMenu/MainMenu_Env_Floor_Visible.mat.meta`
+- `Assets/_EchoRoom/Materials/MainMenu/MainMenu_Env_DoorBrown_Visible.mat`
+- `Assets/_EchoRoom/Materials/MainMenu/MainMenu_Env_DoorBrown_Visible.mat.meta`
+- `Assets/_EchoRoom/Materials/MainMenu/MainMenu_Env_DoorSilver_Visible.mat`
+- `Assets/_EchoRoom/Materials/MainMenu/MainMenu_Env_DoorSilver_Visible.mat.meta`
+
+Files modified:
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+- `Docs/PROJECT_MEMORY.md`
+
+Files moved/deleted: None.
+
+Unity objects affected:
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Floor`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Wall (1)`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Interaction Wall`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Wall With Corridor Face`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Long Wall`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Long Wall (2)`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame/Door_3_Brown/Door`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame/Door_3_Brown/Door/Knob`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame/Door_3_Brown/Frame`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Door Frame/Door_3_Brown/Long Wall (1)`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu Environment/Tutorial T Junction Environment/Entity wall`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Locomotion System/Move`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Locomotion System/Teleportation`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/PlayerController`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Teleport Interactor`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Teleport Interactor`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray`
+
+Important component, asset, setting, and dependency references:
+- The 12 tutorial T-junction renderers now use `Universal Render Pipeline/Lit` menu-visible material assets in `Assets/_EchoRoom/Materials/MainMenu/`.
+- Floor uses `MainMenu_Env_Floor_Visible`; primary walls use `MainMenu_Env_Wall_Visible`; interaction/entity walls use `MainMenu_Env_WallAccent_Visible`; door/frame pieces use `MainMenu_Env_DoorBrown_Visible`; the knob uses `MainMenu_Env_DoorSilver_Visible`.
+- Disabled movement-related behaviours: `XRBodyTransformer`, `LocomotionMediator`, `DynamicMoveProvider`, `TeleportLocomotionController`, `EchoTeleportationProvider`, `PlayerController`, `DynamicSprintController`, `UnifiedLocomotionBridge`, and the teleport interactor `XRRayInteractor` / line visual behaviours.
+- Kept menu UI ray objects active: `Left Controller/Menu UI Ray` and `Right Controller/Menu UI Ray` retain enabled `LineRenderer`, `XRRayInteractor`, and `XRInteractorLineVisual` components.
+- Existing lighting was preserved: light count remained 9, including 6 baked spotlights, 1 baked directional light, 1 baked point light, and the inactive realtime camera point light. `LightmapSettings.lightmaps.Length` remained 1 and `Lightmapping.isRunning` remained false.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- The visibility issue was treated as a Main Menu scene presentation problem caused by gameplay sonar-reveal materials being unsuitable for a static menu environment. Menu-only Lit material assets were used so gameplay materials in other scenes are not changed.
+- The player lock disables artificial/controller locomotion and teleportation. It does not forcibly freeze real-world headset movement, because forcing the camera against physical HMD motion can be uncomfortable in VR.
+- Lighting was intentionally not rebaked and no light component settings were intentionally modified.
+
+Verification performed:
+- Unity MCP verification reported `MainMenuScene` dirty `False`, `Lightmapping.isRunning=False`, and `lightmaps=1` after the change.
+- Unity MCP verification reported 12 environment renderers active/enabled, 12 non-sonar material slots, and 0 `EchoRoom/EchoSonarReveal` material slots under the tutorial T-junction copy.
+- Unity MCP verification reported light summary `total=9`, `spots=6`, `baked=8`, `realtime=1`; the six user-added spotlights are present and baked.
+- Unity MCP verification confirmed movement/teleport/gameplay locomotion components are disabled while both `Menu UI Ray` objects remain active with enabled menu ray components.
+
+## 2026-07-17 ? MAINMENU-SIZE-SIDEFADE-001
+
+Goal: Make the `MainMenuScene` main menu slightly larger and add soft fading on the left and right sides of the menu without changing the completed menu environment lighting.
+
+Resulting behavior: `Main Menu` is scaled up by about 15% (`localScale` from `(-0.001600, 0.001600, 0.001600)` to `(-0.001840, 0.001840, 0.001840)`). Two transparent side-fade visual quads are parented under the menu as non-interactive overlays, so the menu edges fade visually while controller ray interaction still goes to the original menu collider/buttons.
+
+Files created:
+- `Assets/_EchoRoom/Shaders/MenuSideFade.shader`
+- `Assets/_EchoRoom/Shaders/MenuSideFade.shader.meta`
+- `Assets/_EchoRoom/Materials/MainMenu/MenuSideFade_Left.mat`
+- `Assets/_EchoRoom/Materials/MainMenu/MenuSideFade_Left.mat.meta`
+- `Assets/_EchoRoom/Materials/MainMenu/MenuSideFade_Right.mat`
+- `Assets/_EchoRoom/Materials/MainMenu/MenuSideFade_Right.mat.meta`
+
+Files modified:
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+- `Docs/PROJECT_MEMORY.md`
+
+Files moved/deleted: None.
+
+Unity objects affected:
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu/Menu Side Fade Left`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu/Menu Side Fade Right`
+
+Important component, asset, setting, and dependency references:
+- `Main Menu` remains at position `(0.0000, 1.1500, -8.7500)` and rotation `(0.000, 180.000, 0.000)`; only local scale changed.
+- `Main Menu` BoxCollider remains a trigger with local size `(900, 560, 4)`; world bounds after scaling verified as approximately `(1.6560, 1.0304, 0.0074)`.
+- `Menu Side Fade Left` local position `(-385, 0, 2)`, local scale `(130, 640, 1)`, material `Assets/_EchoRoom/Materials/MainMenu/MenuSideFade_Left.mat`, no Collider.
+- `Menu Side Fade Right` local position `(385, 0, 2)`, local scale `(130, 640, 1)`, material `Assets/_EchoRoom/Materials/MainMenu/MenuSideFade_Right.mat`, no Collider.
+- Shader `EchoRoom/UI/MenuSideFade` is transparent, `ZWrite Off`, `ZTest Always`, `Cull Off`, and uses UV-based alpha gradient with `renderQueue=5100`.
+- `VR Loading Screen` was intentionally left at its previous scale `(-0.001600, 0.001600, 0.001600)` because the request targeted the main menu.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- A 15% increase was chosen as a 'little bigger' VR-safe bump without pushing the panel too far into the user's view.
+- The fade is implemented as two visual-only overlay quads instead of editing the UI Toolkit document, so it does not alter button layout or block XR UI raycasts.
+- Lighting was intentionally not modified or rebaked.
+- Follow-up: headset check the edge fade intensity; adjust `_MaxAlpha` on the two fade materials if the sides feel too dark or too subtle.
+
+Verification performed:
+- Unity MCP reloaded `MainMenuScene` and verified scene dirty `False`, `Lightmapping.isRunning=False`, and `LightmapSettings.lightmaps.Length=1`.
+- Unity MCP verified `Main Menu` local scale `(-0.001840, 0.001840, 0.001840)` and world collider bounds `(1.6560, 1.0304, 0.0074)`.
+- Unity MCP verified both side-fade objects active, renderer enabled, shader `EchoRoom/UI/MenuSideFade`, renderQueue `5100`, `_MaxAlpha=0.78`, and no colliders.
+- Unity MCP ray checks from both `Left Controller/Menu UI Ray` and `Right Controller/Menu UI Ray` still hit the `Main Menu` BoxCollider at approximately `(0.000, 0.820, -8.754)`.
+
+## 2026-07-17 ? LOADING-FAKE-FIVE-SECONDS-001
+
+Goal: Give every VR loading screen a fake 5-second display duration so transitions do not disappear instantly.
+
+Resulting behavior: `VRLoadingScreen` now defaults to a 5-second minimum display time. Scene-loading transitions delay scene activation until both the real async load reaches ready state and the 5-second fake loading time has elapsed. In-scene prefab/level-swap loading overlays also hold for at least 5 seconds. Existing `VR Loading Screen` scene component instances in both menu and gameplay scenes were updated to serialize `minimumDisplayTime=5`.
+
+Files created/moved/deleted: None.
+
+Files modified:
+- `Assets/_EchoRoom/Scripts/UI/VRLoadingScreen.cs`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+- `Assets/_EchoRoom/Scenes/MainScene.unity`
+- `Docs/PROJECT_MEMORY.md`
+
+Unity objects affected:
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen`
+
+Important component, asset, setting, and dependency references:
+- `VRLoadingScreen.minimumDisplayTime` default changed from `1f` to `5f`.
+- `LoadSceneRoutine` now sets `AsyncOperation.allowSceneActivation=false`, updates progress using the lesser of load progress and elapsed fake-time progress, then sets progress to `100%` and allows activation after the 5-second minimum.
+- `ShowThankYouThenLoad` uses the same delayed scene activation for the loading segment after the thank-you screen.
+- `CoverPrefabSwap` now uses `Mathf.Max(5f, minimumDisplayTime)` so level/prefab swap overlays are also shown for at least 5 seconds.
+- Serialized `minimumDisplayTime` set to `5` on `VR Loading Screen` in both `MainMenuScene` and `MainScene`.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- 'Each loading screen' was interpreted to include Main Menu to gameplay scene loads, gameplay returns to main menu, thank-you-to-main-menu loading, and in-scene level/prefab swap loading overlays.
+- This is a fake minimum display duration; it does not slow asset loading itself, only the visible transition timing/scene activation.
+- Follow-up: headset/play-mode test each transition to make sure the 5-second wait feels intentional and not too long.
+
+Verification performed:
+- Unity MCP verification reported `compiling=False` and `updating=False` after the change.
+- Unity MCP verification found script default `minimumDisplayTime = 5f`, two `operation.allowSceneActivation = false` assignments, two matching `operation.allowSceneActivation = true` assignments, and `Mathf.Max(5f, minimumDisplayTime)` in the prefab-swap path.
+- Unity MCP verification opened both scenes and reported `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen minimumDisplayTime=5 dirty=False` and `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen minimumDisplayTime=5 dirty=False`.
+- Unity MCP console query after the change showed existing project/MCP path-space errors and existing warnings, but no new C# compile error from `VRLoadingScreen.cs`.
+
+## 2026-07-17 ? MAINMENU-PLAYER-CLOSER-001
+
+Goal: Move the Main Menu scene player spawn a little closer to the main menu panel.
+
+Resulting behavior: `XR Origin (XR Rig)` in `MainMenuScene` now starts 0.75m closer to the menu, moving from `(0.0000, -0.1800, -12.0000)` to `(0.0000, -0.1800, -11.2500)`. The player still faces forward toward the T-junction/menu, and the camera-to-menu flat distance is now approximately 2.5m instead of 3.25m.
+
+Files created/moved/deleted: None.
+
+Files modified:
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+- `Docs/PROJECT_MEMORY.md`
+
+Unity objects affected:
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)`
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Main Camera` (world position changes through parent transform)
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray` (world position changes through parent transform)
+- `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray` (world position changes through parent transform)
+
+Important component, asset, setting, and dependency references:
+- `XR Origin (XR Rig)` rotation remains `(0.000, 0.000, 0.000)` and scale remains `(1, 1, 1)`.
+- `Main Menu` remains at `(0.0000, 1.1500, -8.7500)` and was not moved.
+- Lighting was not changed or rebaked; verification reported `Lightmapping.isRunning=False` and `LightmapSettings.lightmaps.Length=1`.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- 'Little closer' was interpreted as 0.75m forward along the hallway, reducing menu distance to a comfortable VR reading/interacting distance of about 2.5m.
+- Follow-up: headset check comfort/readability; if the menu still feels far, move another small step forward rather than jumping too close.
+
+Verification performed:
+- Unity MCP reloaded `MainMenuScene` and reported scene dirty `False`, `Lightmapping.isRunning=False`, and `lightmaps=1`.
+- Unity MCP verified `XR Origin (XR Rig)` position `(0.0000, -0.1800, -11.2500)` and `Main Camera` position `(0.0000, 0.8200, -11.2500)`.
+- Unity MCP verified camera-to-menu flat distance `2.5`.
+- Unity MCP ray checks confirmed both `Left Controller/Menu UI Ray` and `Right Controller/Menu UI Ray` still hit the `Main Menu` BoxCollider at approximately `(0.000, 0.820, -8.754)` with hit distance about `2.496`.
+- One intermediate MCP verification helper failed to compile because it omitted the UnityEditor namespace for `Lightmapping`; the corrected verification helper passed and did not require scene changes.
+
+## 2026-07-18 — MCP-CONNECTION-CONFIG-001
+
+Goal: Correct the project-local Codex MCP configuration so Codex connects to the Unity MCP server that is already running, instead of attempting to launch a second server on the same port.
+
+Resulting behavior: The enabled `unity-mcp` entry now connects to the live streamable-HTTP endpoint at `http://127.0.0.1:8080/`. The stale `ai-game-developer` entry targeting the unavailable port `27734` is disabled, preventing redundant connection failures. A new Codex task/session can load the corrected configuration and expose the Unity MCP tools.
+
+Files created/moved/deleted: None.
+
+Files modified:
+- `.codex/config.toml`
+- `Docs/PROJECT_MEMORY.md`
+
+Unity objects affected: None; this change only updates Codex MCP connection settings.
+
+Important component, asset, setting, and dependency references:
+- `mcp_servers.unity-mcp.enabled = true`
+- `mcp_servers.unity-mcp.url = "http://127.0.0.1:8080/"`
+- Removed the conflicting command/arguments that launched `Library/mcp-server/win-x64/gamedev-mcp-server.exe` with `port=8080` and `client-transport=stdio`.
+- `mcp_servers.ai-game-developer.enabled = false`; its unavailable legacy URL remains documented in the configuration but is no longer started.
+- The running endpoint identifies itself as `gamedev-mcp-server` version `9.0.0.0` using MCP protocol version `2025-03-26`.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- The existing server process was treated as authoritative because it is the project-bundled `gamedev-mcp-server.exe`, is listening on loopback port `8080`, and successfully completes MCP initialization.
+- MCP configuration is loaded when a Codex task/session starts; the current task does not dynamically gain newly configured Unity tools. Open a new task or restart/reload Codex for the tool list to refresh.
+- No Unity scene, prefab, asset, component, or Editor state was changed.
+
+Verification performed:
+- Confirmed the listener on port `8080` is `H:/Echo room/Echo-Room-VR/Library/mcp-server/win-x64/gamedev-mcp-server.exe` running with `client-transport=streamableHttp`.
+- Sent an MCP `initialize` request to `http://127.0.0.1:8080/`; received HTTP `200`, an MCP session ID, and a valid `gamedev-mcp-server` initialization response.
+- Re-read `.codex/config.toml` and confirmed the active Unity URL and disabled legacy connector.
+- Normalized `.codex/config.toml` to UTF-8 without BOM and consistent CRLF line endings.
+
+## 2026-07-18 — TUTORIAL-LIGHT-CAPTURE-001
+
+Goal: Allow the existing prefab baked-lighting tool to capture the baked `T_Junction_Tutorial` staging instance and make the saved capture available when `GameManager` instantiates the tutorial at runtime.
+
+Resulting behavior: `Tools > Echo Room > Prefab Baked Lighting` now accepts either a configured puzzle level or the tutorial prefab referenced by the `GameManager` in the selected root's scene. A tutorial capture is saved under `Assets/_EchoRoom/Lighting/Prefab Lightmaps/T_Junction_Tutorial/`, assigned to the new `LevelData.tutorialBakedLighting` slot, and applied to the instantiated tutorial through the existing `PrefabLightmapRuntime` pipeline. `Bake Selected Level & Capture` no longer incorrectly requires an already-loaded bake before it can start; `Capture Existing Bake` still validates that lightmaps are loaded.
+
+Files created/moved/deleted: None.
+
+Files modified:
+- `Assets/_EchoRoom/Editor/PrefabBakedLightingWindow.cs`
+- `Assets/_EchoRoom/Scripts/Managers/GameManager.cs`
+- `Assets/_EchoRoom/Scripts/Scriptable Object Scripts/LevelData.cs`
+- `Docs/PROJECT_MEMORY.md`
+
+Unity objects affected:
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: GameManager`
+- `Assets/_EchoRoom/Scenes/MainScene.unity :: T_Junction_Tutorial`
+- `Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial`
+
+Important component, asset, setting, and dependency references:
+- `LevelData.tutorialBakedLighting` stores the persistent `LevelLightingData` reference after capture.
+- `GameManager.TutorialLevelPrefab` exposes the configured tutorial prefab read-only so the editor window can match the selected staging instance.
+- `GameManager.LoadTutorialLevel` applies `levelData.tutorialBakedLighting` immediately after the tutorial instance is activated and before the player is moved to its spawn.
+- Tutorial matching prefers the exact prefab source, then permits a unique prefab-name match among `GameManager` components in the selected root's loaded scene.
+- Expected capture asset: `Assets/_EchoRoom/Lighting/Prefab Lightmaps/T_Junction_Tutorial/T_Junction_Tutorial_Lighting.asset`.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- The tutorial lighting reference was added to the shared `LevelData` asset instead of the `MainScene` GameManager component so the capture can save its assignment through `AssetDatabase.SaveAssets` without requiring a scene save.
+- Existing Maze A-E capture behavior and references are unchanged.
+- No capture was executed as part of this code fix, so `tutorialBakedLighting` remains unassigned until the user selects `T_Junction_Tutorial` and presses `Capture Existing Bake` (or rebakes with `Bake Selected Level & Capture`).
+- Existing pipeline limitations remain: light probes, reflection probes, and occlusion data are not captured, and hierarchy/sibling-order, UV, material, lighting, or transform changes require recapture.
+
+Verification performed:
+- Unity MCP confirmed `MainScene` is loaded and clean, `GameManager` exists at the exact root path above, and the active `T_Junction_Tutorial` staging instance is active with its inspected hierarchy and baked-light group.
+- Unity MCP compilation completed with `IsCompiling=False` and `IsUpdating=False`.
+- A non-destructive MCP dry test resolved the selected scene root to `Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab`, reported 3 loaded lightmaps and 19 valid baked renderer bindings, and confirmed the compiled tutorial data slot and runtime prefab property.
+- MCP source read-back confirmed tutorial capture assignment, runtime application, and corrected first-bake validation. An intermediate MCP patch retry and an early dry test produced tooling-only Console errors; the final source correction compiled successfully. The remaining fresh Editor error is the existing Unity MCP warning about spaces in the project path, not a C# compiler error.
+
+## 2026-07-18 - TUTORIAL-CONTROLLER-PROMPT-001
+
+Goal: Replace the tutorial's wall-mounted instructions with a larger, clearer prompt beside the right controller at the same presentation location used by the maze timer.
+
+Resulting behavior: The tutorial now creates one world-space controller prompt at runtime and reuses it for the sonar, microphone, movement, interaction, and warning steps. The prompt follows the right controller using the maze timer's view-relative offset, faces the headset, fades between messages, and uses larger cyan-white bold text with a dark translucent background and strong outline. The five former wall-mounted TextMeshPro instruction objects were removed from the tutorial prefab and its MainScene staging instance. Tutorial sequencing, proximity gates, button/lever completion, warning timing, ending audio, and return-to-menu behavior are unchanged.
+
+Files created/moved/deleted: None created or moved. The five tutorial wall-text GameObjects listed below were deleted from the prefab and scene hierarchy.
+
+Files modified:
+- Assets/_EchoRoom/Scripts/Tutorial/TutorialDirector.cs
+- Assets/_EchoRoom/Scripts/Tutorial/TutorialRuntimeObserver.cs
+- Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab
+- Assets/_EchoRoom/Scenes/MainScene.unity
+- Docs/PROJECT_MEMORY.md
+
+Unity objects affected:
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System
+- Assets/_EchoRoom/Scenes/MainScene.unity :: T_Junction_Tutorial/Sonar Wall Tip
+- Assets/_EchoRoom/Scenes/MainScene.unity :: T_Junction_Tutorial/Microphone Wall Tip
+- Assets/_EchoRoom/Scenes/MainScene.unity :: T_Junction_Tutorial/Direction Wall Tip
+- Assets/_EchoRoom/Scenes/MainScene.unity :: T_Junction_Tutorial/Interaction Wall Tip
+- Assets/_EchoRoom/Scenes/MainScene.unity :: T_Junction_Tutorial/Entity Wall Tip
+- Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Sonar Wall Tip
+- Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Microphone Wall Tip
+- Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Direction Wall Tip
+- Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Interaction Wall Tip
+- Assets/_EchoRoom/Prefabs/Level prefabs/T_Junction_Tutorial.prefab :: T_Junction_Tutorial/Entity Wall Tip
+
+Important component, asset, setting, and dependency references:
+- TutorialDirector creates a runtime world-space Canvas named Tutorial Controller Prompt under Tutorial System, containing a dark Image background, CanvasGroup, and TextMeshProUGUI Prompt Text child.
+- Prompt positioning matches MazeLevelTimer's view-relative right-controller offset: (-0.13, 0.035, 0.015). The panel is 700 x 260 canvas units at 0.0005 world scale.
+- Prompt text is bold, centered, cyan-white, auto-sized from 25 to 36, word wrapped, and uses a 0.22 dark outline. The background alpha is 0.90 and does not receive raycasts.
+- TutorialRuntimeObserver now monitors the single runtime prompt through tutorialPromptText and TEXT_PROMPT instead of searching for removed wall labels.
+- Assets/_EchoRoom/Lighting/Prefab Lightmaps/T_Junction_Tutorial/T_Junction_Tutorial_Lighting.asset remains assigned with 3 lightmaps and 19 renderer bindings; no rebake or recapture was performed.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- "Same place as the timer" was implemented by copying MazeLevelTimer's right-controller/head-relative positioning calculation. The maze timer remains disabled during the tutorial, so the two displays do not overlap.
+- A single reusable prompt avoids duplicate visible instructions and keeps all presentation close to the player's controller.
+- Interaction Wall and Entity wall remain in the prefab as geometry/proximity landmarks; only their TextMeshPro instruction children were removed.
+- No Play Mode or headset visual pass was performed. Prompt size, offset, binocular readability, and hand occlusion should be checked in headset and tuned if needed.
+- The previously identified active MainScene tutorial staging root versus runtime-instantiated tutorial duplication risk was not changed by this presentation task.
+
+Verification performed:
+- Unity compilation completed with EditorUtility.scriptCompilationFailed=False, EditorApplication.isCompiling=False, and EditorApplication.isUpdating=False.
+- MCP source verification found the new controller-prompt creation, positioning, fade, and diagnostic code and found no remaining references to the five wall text names or the old SwapWallText/BuildWallInstructions path.
+- MCP prefab inspection reported prefabWallTexts=0 for all five removed objects.
+- MCP live MainScene inspection reported sceneWallTexts=0 on the T_Junction_Tutorial staging instance.
+- The tutorial lighting capture still reports lightmaps=3 and rendererBindings=19.
+- MainScene was saved through MCP after prefab propagation and finished clean.
+
+
+## 2026-07-18 - TUTORIAL-PROMPT-SIZE-001
+
+Goal: Make the new right-controller tutorial text 50 percent smaller.
+
+Resulting behavior: Tutorial Controller Prompt text now uses an initial and maximum font size of 18 instead of 36, with its auto-size minimum reduced from 25 to 12.5. The prompt position, 700 x 260 panel size, dark translucent background, outline, fades, wording, and tutorial sequence are unchanged.
+
+Files created/moved/deleted: None.
+
+Files modified:
+- Assets/_EchoRoom/Scripts/Tutorial/TutorialDirector.cs
+- Assets/_EchoRoom/Scenes/MainScene.unity
+- Docs/PROJECT_MEMORY.md
+
+Unity objects affected:
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System
+
+Important component, asset, setting, and dependency references:
+- TutorialDirector.CreateControllerPrompt configures TextMeshProUGUI fontSize=18, fontSizeMin=12.5, and fontSizeMax=18.
+- PromptCanvasScale remains 0.0005 and PromptPanelSize remains 700 x 260.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- "Text 50% smaller" was applied to all three font-size values only. The background panel and controller-relative placement were intentionally left unchanged.
+- No Play Mode or headset visual pass was performed; controller-distance readability should be confirmed in headset.
+
+Verification performed:
+- MCP source readback confirmed fontSize=18, fontSizeMin=12.5, and fontSizeMax=18.
+- Unity compilation completed with scriptCompilationFailed=False and isCompiling=False.
+- MainScene was saved after Unity's script reload marked it dirty.
+
+
+## 2026-07-18 - TUTORIAL-PROMPT-STYLE-001
+
+Goal: Remove the right-controller tutorial prompt background and make its text slightly smaller.
+
+Resulting behavior: Tutorial Controller Prompt now displays floating outlined text with no Image background or CanvasRenderer on the prompt canvas. Its initial and maximum font size changed from 18 to 15, and its auto-size minimum changed from 12.5 to 10.5. Controller-relative placement, panel layout area, cyan-white color, bold styling, outline, fades, wording, and tutorial sequence are unchanged.
+
+Files created/moved/deleted: None.
+
+Files modified:
+- Assets/_EchoRoom/Scripts/Tutorial/TutorialDirector.cs
+- Docs/PROJECT_MEMORY.md
+
+Unity objects affected:
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System
+
+Important component, asset, setting, and dependency references:
+- TutorialDirector.CreateControllerPrompt now creates the world-space Canvas with CanvasGroup only; the Prompt Text child retains its TextMeshProUGUI and CanvasRenderer.
+- TextMeshProUGUI settings are fontSize=15, fontSizeMin=10.5, fontSizeMax=15, bold, centered, cyan-white, and outlined.
+- PromptCanvasScale remains 0.0005 and PromptPanelSize remains 700 x 260.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- "A bit smaller" was interpreted as approximately 17 percent smaller than the prior size of 18.
+- The background was removed completely rather than made transparent.
+- No Play Mode or headset visual pass was performed; floating-text contrast against bright sonar reveals should be checked in headset.
+
+Verification performed:
+- MCP source verification confirmed the prompt Image/background setup is absent and the canvas creation ends with CanvasGroup.
+- MCP source readback confirmed fontSize=15, fontSizeMin=10.5, and fontSizeMax=15.
+- Unity compilation completed with scriptCompilationFailed=False and isCompiling=False.
+- MainScene remained clean; no scene serialization change was required.
+
+
+## 2026-07-19 - TUTORIAL-INTERACTION-END-001
+
+Goal: Trigger the tutorial's final warning and existing audio/fade ending as soon as the player completes the button-and-lever interaction sequence.
+
+Resulting behavior: When both Tutorial Button and Tutorial Lever have been activated in either order, TutorialDirector now enters Ending immediately, fades to the final warning prompt, holds the warning fully visible for two seconds, and then runs the existing warning fade, black screen fade, heartbeat, Entity sound, completion save, and return to MainMenuScene. The player no longer needs to approach or remain near Entity wall to trigger the ending.
+
+Files created/moved/deleted: None.
+
+Files modified:
+- Assets/_EchoRoom/Scripts/Tutorial/TutorialDirector.cs
+- Assets/_EchoRoom/Scripts/Tutorial/TutorialRuntimeObserver.cs
+- Assets/_EchoRoom/Scenes/MainScene.unity
+- Docs/PROJECT_MEMORY.md
+
+Unity objects affected:
+- Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System
+
+Important component, asset, setting, and dependency references:
+- TutorialDirector.Step no longer contains ReadWarning.
+- WarningHoldDuration is 2 seconds and is applied with WaitForSecondsRealtime after SwapPrompt(WarningMessage).
+- TryCompleteInteractionLesson starts EndAfterInteraction only after buttonActivated and leverActivated are both true.
+- PlayEnding remains the existing ending implementation with the 2.5-second warning fade, five-second screen fade, Entity Sound, Heartbeat, TutorialProgress.Complete, and MainMenuScene load.
+- TutorialRuntimeObserver no longer reflects or logs warningWall, warningReadTimer, readTimerField, or warning-wall distance.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- The final warning retains a two-second fully visible reading period before the existing ending fade begins.
+- Entity wall geometry remains in the tutorial prefab but is no longer an ending trigger or diagnostic dependency.
+- No Play Mode or headset run was performed; the combined interaction-to-warning-to-audio timing should be confirmed in a user playtest.
+
+Verification performed:
+- MCP source verification confirmed TryCompleteInteractionLesson starts EndAfterInteraction after both interaction flags are true.
+- MCP source verification confirmed EndAfterInteraction swaps to WarningMessage, waits WarningHoldDuration, and yields to PlayEnding.
+- MCP source and observer verification found no remaining ReadWarning, warningWall, warningReadTimer, or readTimerField dependency.
+- Unity compilation completed with scriptCompilationFailed=False, isCompiling=False, and isUpdating=False.
+- MainScene was saved after the script reload and finished clean.

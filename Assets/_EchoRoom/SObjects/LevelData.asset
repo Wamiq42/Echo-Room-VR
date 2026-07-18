@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e90b2358ea986245857770b5e2c09c0, type: 3}
   m_Name: LevelData
   m_EditorClassIdentifier: 
+  tutorialBakedLighting: {fileID: 11400000, guid: 3689d50ffd401ea4587872733edecf59, type: 2}
   levels:
   - puzzleId: Maze_A
     levelName: Maze A
