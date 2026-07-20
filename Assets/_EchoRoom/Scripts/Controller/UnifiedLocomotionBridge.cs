@@ -1,11 +1,6 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
-
-#if UNITY_EDITOR
-using UnityEngine.XR.Interaction.Toolkit.Inputs.Simulation;
-#endif
 
 /// <summary>
 /// Feeds desktop and VR movement through one DynamicMoveProvider so the XR Origin,
@@ -19,10 +14,13 @@ public sealed class UnifiedLocomotionBridge : MonoBehaviour
     [SerializeField] private DynamicMoveProvider moveProvider;
 
     [Header("Editor Simulation")]
-    [Tooltip("Stops Unity's XR simulator from also translating the tracked headset with WASD. Mouse look and simulated controller interactions remain enabled.")]
+    [Tooltip("Stops Unity's XR simulator from also translating the tracked headset with WASD. Mouse look and simulated controller interactions remain enabled. Applied by SimulatorTranslationSuppressor, which also runs when this component is disabled.")]
     [SerializeField] private bool suppressSimulatorTranslation = true;
 
     private bool _isConfigured;
+
+    // Read by the editor-only SimulatorTranslationSuppressor, which owns the actual suppression.
+    public bool SuppressSimulatorTranslation => suppressSimulatorTranslation;
 
     private void Awake()
     {
@@ -32,11 +30,6 @@ public sealed class UnifiedLocomotionBridge : MonoBehaviour
     private void OnEnable()
     {
         ConfigureMoveProvider();
-
-#if UNITY_EDITOR
-        if (suppressSimulatorTranslation)
-            StartCoroutine(SuppressSimulatorTranslationWhenReady());
-#endif
     }
 
     private void Update()
@@ -68,47 +61,4 @@ public sealed class UnifiedLocomotionBridge : MonoBehaviour
         moveProvider.rightHandMoveInput.manualValue = Vector2.zero;
         _isConfigured = true;
     }
-
-#if UNITY_EDITOR
-    private IEnumerator SuppressSimulatorTranslationWhenReady()
-    {
-        const int maxFramesToWait = 120;
-
-        for (int frame = 0; frame < maxFramesToWait; frame++)
-        {
-            bool foundSimulator = false;
-
-            XRInteractionSimulator interactionSimulator = FindFirstObjectByType<XRInteractionSimulator>();
-            if (interactionSimulator != null)
-            {
-                SetManualZero(interactionSimulator.translateXInput);
-                SetManualZero(interactionSimulator.translateYInput);
-                SetManualZero(interactionSimulator.translateZInput);
-                foundSimulator = true;
-            }
-
-#pragma warning disable CS0618
-            XRDeviceSimulator deviceSimulator = FindFirstObjectByType<XRDeviceSimulator>();
-            if (deviceSimulator != null)
-            {
-                deviceSimulator.keyboardXTranslateSpeed = 0f;
-                deviceSimulator.keyboardYTranslateSpeed = 0f;
-                deviceSimulator.keyboardZTranslateSpeed = 0f;
-                foundSimulator = true;
-            }
-#pragma warning restore CS0618
-
-            if (foundSimulator)
-                yield break;
-
-            yield return null;
-        }
-    }
-
-    private static void SetManualZero(XRInputValueReader<float> inputReader)
-    {
-        inputReader.inputSourceMode = XRInputValueReader.InputSourceMode.ManualValue;
-        inputReader.manualValue = 0f;
-    }
-#endif
 }
