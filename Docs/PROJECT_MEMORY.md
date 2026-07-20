@@ -39,6 +39,19 @@ No scene hierarchy has been recorded yet. Populate this section only from a live
 
 Add verified project paths here as they become relevant to completed changes.
 
+### Unity MCP connection
+
+| Purpose | Value |
+| --- | --- |
+| Integration | Ivan Murzak Unity-MCP / AI Game Developer |
+| Unity Connection window server URL | `http://localhost:26566` |
+| Codex project MCP endpoint | `http://localhost:26566/p/a679b99a` |
+| Transport | `http` |
+| Local authorization | `none` (no authorization token) |
+| Codex configuration | `.codex/config.toml` under `[mcp_servers.ai-game-developer]` |
+
+Connection procedure: open this Unity project, open the Ivan Murzak AI Game Developer/Connection window, select **Custom**, use `http://localhost:26566`, select **http** transport, set Authorization Token to **none**, and start the MCP server. Wait until the window reports **Unity: Connected** and **MCP server: Running (http)**. Codex should then use the project-scoped endpoint recorded above. The orange **AI agent** indicator only means that an MCP client is not currently attached; it should change after the client connects.
+
 ## Active Decisions and Conventions
 
 | ID | Decision | Reason | Status |
@@ -46,6 +59,7 @@ Add verified project paths here as they become relevant to completed changes.
 | DEC-0001 | Use `Docs/PROJECT_MEMORY.md` as the canonical project-local memory. | It is versionable, human-readable, and available across sessions and tools. | Active |
 | DEC-0002 | Track only files and Unity objects affected by documented work, not every third-party asset in the repository. | A complete inventory would be noisy and would not describe change history. | Active |
 | DEC-0003 | Direct Unity inspection is authoritative for scene, prefab, GameObject, and component paths. | It prevents stale or invented hierarchy references. | Active |
+| DEC-0004 | Use the loopback Ivan Murzak Unity-MCP server at `http://localhost:26566` with HTTP transport and no local authorization token; Codex uses the configured project route. | This matches the Unity Connection window and the repository-local Codex MCP configuration. | Active |
 
 ## Open Work and Known Limitations
 
@@ -2738,3 +2752,18 @@ Verification performed:
 - MCP source and observer verification found no remaining ReadWarning, warningWall, warningReadTimer, or readTimerField dependency.
 - Unity compilation completed with scriptCompilationFailed=False, isCompiling=False, and isUpdating=False.
 - MainScene was saved after the script reload and finished clean.
+
+### MCP-MEMORY-001 — Record the Ivan Murzak Unity-MCP connection
+
+- **Date:** 2026-07-16
+- **Goal:** Make the local Ivan Murzak Unity-MCP connection settings durable and easy for future project sessions and agents to find.
+- **Result:** Added a current-index connection section and active decision describing how to start the Unity-side HTTP server and which project-scoped endpoint Codex uses.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Docs/PROJECT_MEMORY.md`
+- **Unity objects affected:** None — documentation-only change; no scene or prefab object was changed.
+- **Components/assets/settings:** Unity Connection window: Custom server URL `http://localhost:26566`, HTTP transport, authorization `none`; Codex project configuration: `.codex/config.toml` section `[mcp_servers.ai-game-developer]`, endpoint `http://localhost:26566/p/a679b99a`.
+- **Decisions and assumptions:** The loopback endpoint is local to the machine and does not require a token. The `/p/a679b99a` suffix is the already-configured project route used by the MCP client, while the Unity window displays the base server URL. No credentials or secrets were added to project memory.
+- **Verification:** Read the supplied Unity Connection screenshot, which shows `Unity: Connected`, `MCP server: Running (http)`, base URL `http://localhost:26566`, HTTP transport, and authorization `none`. Read `.codex/config.toml` and confirmed the enabled `ai-game-developer` MCP entry uses `http://localhost:26566/p/a679b99a`.
+- **Known limitations:** The screenshot's orange AI agent status indicates no client was attached at the instant captured; this documentation change does not itself start Unity or establish a live client session. The project route may need to be regenerated if the Unity-MCP package/configuration is reset.
+- **Follow-up:** When connecting, start the server in Unity first, then launch/reload the Codex project session and confirm the AI agent indicator becomes connected or run a Unity-MCP readiness probe.
