@@ -51,7 +51,7 @@ Ordered by dependency, not by issue number. Each row is one commit.
 | W5 | Editor authoring parity | 1 | W1 | ⬜ |
 | W6 | Tutorial prompt: anchoring + styling | 3, 11 | — | ⬜ |
 | W7 | Timer fairness: warnings + tutorial teaching | 10 | W2 | ⬜ |
-| W8 | Main menu: block simulator WASD | 9 | — | ⬜ |
+| W8 | Main menu: block simulator WASD | 9 | — | ✅ Done (`8bcecdc`) |
 | W9 | Interaction-layer reconciliation + safe cleanup | adjacent | W1 | ⬜ |
 
 **Parallel-safe groups.** W1, W6 and W8 touch disjoint files and can run concurrently. W2 and W3 are
@@ -355,6 +355,38 @@ and confirm it highlights and activates.
    prefab has 20 lights and 20 matching light-data components, so nothing was lost. It was a stale
    reference Unity garbage-collected. **Expect this diff to reappear whenever anyone saves that
    scene** — it is not caused by this work.
+
+### W8 — Simulator WASD ✅
+
+- **Commit:** `8bcecdc`
+- **New:** `Assets/_EchoRoom/Scripts/Controller/SimulatorTranslationSuppressor.cs` (entirely inside
+  `#if UNITY_EDITOR`). Bootstraps via `RuntimeInitializeOnLoadMethod(AfterSceneLoad)` onto a hidden
+  `DontDestroyOnLoad` host and re-applies on `sceneLoaded`, so suppression no longer depends on
+  `UnifiedLocomotionBridge` being enabled.
+- **Modified:** `UnifiedLocomotionBridge.cs` — its own suppression path removed so there is exactly
+  one owner and the two cannot fight. Keeps the serialized `suppressSimulatorTranslation` flag
+  (**no scene data changed** — both scenes already serialize `1`) and exposes it read-only.
+- Only translate inputs / keyboard translate speeds are zeroed, so **mouse look and simulated
+  controller interaction still work** — you need those to test menus.
+
+**QA status:** ✅ Unity recompiled clean — verified the only `error CS` entries in the console were
+from my own earlier throwaway audit script, none from these files; `.meta` generated.
+⚠️ **`PENDING-PLAYTEST`** — I could not press WASD in Play Mode to confirm the behaviour end to end.
+**Check on waking:** enter Play Mode in MainMenuScene, press WASD → you should not translate; mouse
+look should still work.
+
+**Judgment calls made** (you can overrule any of these):
+- Chose a separate bootstrap component over `[ExecuteAlways]` or re-enabling the bridge, because
+  re-enabling the bridge would have re-enabled locomotion — the thing you asked to stay off.
+- Widened the simulator lookup to `FindObjectsInactive.Include`. Intentional (an inactive simulator
+  should still be suppressed) but it *is* a behaviour change from the previous exclude-inactive
+  lookup.
+- `IsSuppressionRequested()` reads the **first** `UnifiedLocomotionBridge` found. Correct today (one
+  per scene); would be wrong if a scene ever had two with different flags.
+
+**Unrelated noise spotted:** the console is full of `[PlayerInputManager] Move: (-0.71, 0.71)` debug
+logs every frame. Left-over debug logging — worth silencing, but it's outside this UI pass so I have
+not touched it.
 
 ### Reversal — W6 styling approach (was: port to UI Toolkit)
 
