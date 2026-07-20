@@ -1,0 +1,305 @@
+# Echo Room VR — UI Fix Work Plan
+
+Execution plan for the issues catalogued in [`UI_ISSUES_2026-07-20.md`](UI_ISSUES_2026-07-20.md).
+Investigation lives in that document; **this** document is the plan of record and the running log.
+
+**Owner:** Claude (lead). Work is delegated to subagents where it parallelises safely; every change
+is reviewed by the lead before commit.
+
+## Ground rules agreed with Wamiq (2026-07-20)
+
+| Decision | Value |
+| --- | --- |
+| Issue 8 architecture | **A+** — persistent `GameManager` + loading screen + screen fade. No additive scenes. |
+| Git | **One commit per issue**, directly on `Development-Phase`. No branches. No push. |
+| Conflicts | Resolved before any work. ✅ Done — commit `9886acd`. |
+| Ambiguity | **Decide and document.** Record rationale; skip only genuinely irreversible actions. |
+| Unity | Stays open. **Power cuts are a real risk** → commit per issue, save scenes eagerly, never leave an unsaved multi-step edit. |
+| QA | Screenshot before/after where visual; otherwise a written check. Recorded below. |
+| Out of scope | Issues **12** and **14** (in-game HUD / wrist panel) and **7a** (panel resolution reflow). |
+
+### Screenshot tooling
+
+`node .claude/tools/unity-shot.js <out.png> [tool] [inputJson]` — wraps `unity-mcp-cli`, extracts the
+base64 payload and writes a PNG. Verified working. Captures land in `Docs/QA/`.
+
+```
+node .claude/tools/unity-shot.js Docs/QA/issue-04-after.png                    # game view
+node .claude/tools/unity-shot.js Docs/QA/issue-04-after.png screenshot-scene-view
+```
+
+### Verification ceiling — read this before trusting any "done"
+
+I can verify: compilation, serialized values via MCP readback, Editor Play Mode behaviour, and Game
+View screenshots. **I cannot wear the headset.** Anything about comfort, stereo convergence, apparent
+distance, or physical reachability is marked **`PENDING-HEADSET`** and is explicitly *not* claimed as
+done. Those need your eyes.
+
+---
+
+## Execution order
+
+Ordered by dependency, not by issue number. Each row is one commit.
+
+| # | Work | Issues | Depends on | Status |
+| --- | --- | --- | --- | --- |
+| W0 | Resolve merge conflicts | — | — | ✅ Done (`9886acd`) |
+| W1 | Ray→UI input fix (trigger interaction) | 2 | — | ⬜ |
+| W2 | Transition ownership: persist GameManager + loading + fade | 8, 5, 6, 13 | — | ⬜ |
+| W3 | Consolidate the hard-coded world anchor | 13 | W2 | ⬜ |
+| W4 | Menu placement: wall occlusion + distance | 4, 7b | W1 | ⬜ |
+| W5 | Editor authoring parity | 1 | W1 | ⬜ |
+| W6 | Tutorial prompt: anchoring + styling | 3, 11 | — | ⬜ |
+| W7 | Timer fairness: warnings + tutorial teaching | 10 | W2 | ⬜ |
+| W8 | Main menu: block simulator WASD | 9 | — | ⬜ |
+| W9 | Interaction-layer reconciliation + safe cleanup | adjacent | W1 | ⬜ |
+
+**Parallel-safe groups.** W1, W6 and W8 touch disjoint files and can run concurrently. W2 and W3 are
+strictly sequential (same files). W4 and W5 both wait on W1's outcome.
+
+**File contention map** — no two concurrent workers may hold the same file:
+
+| File | Claimed by |
+| --- | --- |
+| `VRPauseMenu.cs` | W4 |
+| `VRMainMenu.cs` | W2 → W3 → W5 |
+| `VRLoadingScreen.cs` | W2 → W3 |
+| `GameManager.cs` | W2, then W7 |
+| `TutorialDirector.cs` | W6, then W7 |
+| `MazeLevelTimer.cs` | W7 |
+| `UnifiedLocomotionBridge.cs` | W8 |
+| `MainMenuScene.unity` / `MainScene.unity` | W1, W2, W8 — **serialise these, never concurrent** |
+
+Scenes are the bottleneck. Only one worker may hold a scene at a time, and the lead serialises all
+scene writes through MCP rather than editing YAML on disk.
+
+---
+
+## W1 — Ray→UI input
+
+**Root cause (confirmed).** All four `XRRayInteractor`s have `m_RaycastTriggerInteraction: 1`.
+Unity's `QueryTriggerInteraction` is `UseGlobal=0, Ignore=1, Collide=2` — so they are set to
+**Ignore triggers**. The UI Toolkit panel's only collider *is* a trigger
+(`VRMenuPanelSettings.asset:20`, `m_ColliderIsTrigger: 1`). Rays pass straight through.
+
+> Corrects my earlier claim that `1` meant Collide. It does not. This, not the mirrored transform,
+> is why rays did nothing. Confirmed by Wamiq: rays pass through, collider is correctly sized, and
+> removing the 180° rotation changed nothing.
+
+**Approach.** Prefer changing the *panel*, not the interactors: set `m_ColliderIsTrigger: 0` so the
+panel presents a solid collider. Setting interactors to `Collide` would make rays snag on every
+gameplay trigger volume in the maze — a wider blast radius for the same result.
+
+**Risk to check:** a solid panel collider could physically block the player or interact with physics.
+Mitigate by confirming the panel sits on a layer excluded from player/physics collision. If that
+proves messy, fall back to interactor-side `Collide` **plus** a narrowed raycast mask.
+
+**Acceptance:** ray hover highlights a menu button; trigger press activates it; no new console
+errors; player cannot be physically blocked by a panel. Screenshot before/after.
+
+**QA:** ⬜ pending
+
+---
+
+## W2 — Transition ownership (the structural one)
+
+**Root cause (confirmed).** `GameManager` and `VRLoadingScreen` are both **scene-local**. Two copies
+of each exist (`MainMenuScene.unity:2515` / `MainScene.unity:7907`). The menu-side loading screen is
+destroyed mid-coroutine at `allowSceneActivation = true`, and MainScene's separate copy then shows
+*after* the maze is visible.
+
+**Approach (option A+).**
+
+1. Introduce a persistent transition owner (`DontDestroyOnLoad`) holding the loading screen, screen
+   fade, and transition state, with a single `IsTransitioning` flag.
+2. Make `GameManager` persistent so the "two instances, one per scene" pattern is gone at the root.
+3. While `IsTransitioning`: disable UI ray pointers and suppress other UI (fixes 5 and 6).
+4. Reorder `GameManager.InitializeGame()` — the current code calls `screenFade.SetOpacity(0f)` on the
+   line *before* showing the loading screen (`GameManager.cs:98`), clearing the only thing masking
+   the seam. Fade must stay up until the destination is ready.
+5. Gate `MazeWorldTextController`'s intro on "transition complete" rather than `OnEnable`, so the
+   "LEVEL 1 / Find the exit." banner is actually seen. It currently never is.
+6. Retune total loading time — presently ~10 s split across the boundary (5 s each side).
+
+**Care required.** Making the XR Rig's neighbours persistent while the rig itself is per-scene means
+camera references must be re-resolved after each load. `VRLoadingScreen.ResolveCamera()` already
+handles a null camera; verify it re-resolves rather than caching a destroyed transform.
+
+**Acceptance:** loading screen appears *before* the maze is visible, stays through activation, and
+hides only once the level is ready. Pause menu is hidden and rays are dead for the whole transition.
+Level intro banner visible after the screen clears. `PENDING-HEADSET` for comfort of the transition.
+
+**QA:** ⬜ pending
+
+---
+
+## W3 — Consolidate the hard-coded anchor
+
+`(-3.04, 0.95, -1.342)` is copy-pasted into `VRLoadingScreen.cs:17`, `VRMainMenu.cs:22`, and
+`VRPauseMenu.cs:34`, plus serialized copies in both scenes. It is a *main-menu hallway* coordinate,
+which is why the loading panel renders where the player isn't (Issue 13).
+
+**Approach.** The loading screen is a full-screen cover and has no business being world-anchored at a
+fixed point — make it head-relative. For the menus, replace the three literals with a single owned
+anchor so the value exists once.
+
+**Acceptance:** loading screen visible from wherever the player stands, including immediately after
+`MovePlayerToSpawn`. Verified by screenshot from inside a maze.
+
+**QA:** ⬜ pending
+
+---
+
+## W4 — Menu placement: occlusion and distance
+
+**Occlusion (Issue 4).** `VRPauseMenu.cs:547-553` casts a single centre ray against a ~1.8 m-wide
+panel, so corners punch through walls. Three defects: single ray, `wallMask = ~0` (hits props and
+triggers), and the fixed-anchor path skips the check entirely.
+
+**Approach.** `BoxCast` sized to the panel, on an explicit geometry layer mask, applied on **both**
+the dynamic and fixed paths — treating the fixed anchor as a preferred position that gets pulled in
+when blocked.
+
+**Distance (Issue 7b).** Panel is 1.44 m wide; main menu uses a fixed anchor. Target ~1.5 m viewing
+distance (comfort band is 1.2–2.0 m; below ~1 m causes vergence strain).
+
+**Acceptance:** menu never intersects wall geometry from any approach angle — verified from several
+positions by screenshot. Distance change is `PENDING-HEADSET`; I'll set a defensible starting value
+and you adjust to taste.
+
+**QA:** ⬜ pending
+
+---
+
+## W5 — Editor authoring parity
+
+**Root cause.** Stylesheets are attached in `Awake()` (`VRLoadingScreen.cs:61-62`), screens are
+hidden in `Awake()` (`:82`), and document sizing is assigned in `Awake()` (`:53-58`). Edit mode never
+runs `Awake()`, so every screen renders at once, unstyled — see
+`Docs/QA/issue-01-before-editmode-stacking.png`.
+
+**Approach (option A).** Move authoring data into the assets: `<Style src="..."/>` in each UXML,
+`display: none` as the USS default for non-active screens, and serialized `UIDocument` fields
+matching what `Awake()` assigns. Code then only *changes* state, never *establishes* it. Deliberately
+**not** `[ExecuteAlways]`, which would run `Awake`/`Update` in the Editor and risk scene-dirtying.
+
+**Sequenced after W1** so we don't bake the current mirrored-transform hack into serialized assets.
+
+**Acceptance:** Scene/Game view outside Play Mode shows a single correctly-styled screen. Runtime
+behaviour unchanged. Before/after screenshots.
+
+**QA:** ⬜ pending
+
+---
+
+## W6 — Tutorial prompt: anchoring and styling
+
+**Anchoring (Issue 3).** `TutorialDirector.cs:345` re-drives the prompt from
+`rightController.position` every frame. Wamiq asked for "best possible UX" → **head-relative,
+world-locked on show**: placed once in front of the player when it appears, then frozen. Always
+visible on arrival, never chases the player (chasing UI is a leading cause of VR discomfort), and
+consistent with how the pause menu already behaves.
+
+**Styling (Issue 11).** The prompt is the only UI outside the UI Toolkit stack — a runtime-built uGUI
+`Canvas` with a bare `TextMeshPro` and hard-coded font values (`:325-331`). It cannot inherit
+`VRMenu.uss`. Port to UI Toolkit and reuse the menu stylesheet so it matches for free.
+
+**Also fix here:** `TutorialDirector.cs:528` falls back to `RenderMode.ScreenSpaceOverlay` when
+`Camera.main` is null — the only such case in the project, and it will not composite correctly in
+stereo. Should fail loudly instead.
+
+**Acceptance:** prompt appears in front of the player, stays put, matches menu styling. Screenshots
+of each tutorial prompt state. `PENDING-HEADSET` for readability.
+
+**QA:** ⬜ pending
+
+---
+
+## W7 — Timer fairness
+
+**Root cause.** 180 s per maze; display is controller-parented and alpha-0 unless the A button is
+pressed. The only unprompted warning is a 4-flash at level start — which currently fires *behind the
+loading screen*, so it is never seen. Hence "no indication of time anywhere."
+
+**Approach — options A + C, keeping the manual reveal (as agreed).**
+
+1. Escalating auto-reveals at 60 s / 30 s / 10 s remaining, with audio. Prefer a signal-decay or
+   heartbeat cue over a beep — it fits the fiction and the game is audio-first.
+2. Teach the reveal button in the tutorial. `TutorialDirector` already has a prompt-slot pattern.
+3. Keep A / keyboard `T` manual reveal exactly as-is.
+
+**Depends on W2** — the level-start flash only becomes visible once the loading screen stops covering
+it.
+
+**Open question I will decide and document:** `GetDuration` returns `-1` for unmatched level names,
+so **Maze E currently has no time limit**. I'll leave that behaviour alone (changing it is a design
+call, not a bug fix) and flag it for you.
+
+**Tutorial copy** will be drafted to match the existing voice (`SonarMessage` et al., `:130-134`) and
+flagged for your approval — it's player-facing text and it should sound like you wrote it.
+
+**Acceptance:** warnings fire at the right thresholds and are visible; tutorial teaches the reveal;
+manual reveal still works. `PENDING-HEADSET` for whether the warnings read clearly in-headset.
+
+**QA:** ⬜ pending
+
+---
+
+## W8 — Main menu: block simulator WASD
+
+**Root cause (confirmed, and self-inflicted).** The WASD movement is Unity's **XR Device Simulator**,
+not the game's locomotion. The component that suppresses simulator translation —
+`UnifiedLocomotionBridge`, via `suppressSimulatorTranslation` in `OnEnable` (`:22, 36-38`) — is the
+same component that was **disabled** in `MainMenuScene` to turn locomotion off. Disabling locomotion
+is precisely what *enabled* the WASD movement.
+
+**Scope note.** This is `#if UNITY_EDITOR` only and never ships to Quest. It's a playtest-fidelity
+problem, not player-facing — but it matters because it makes Editor sessions misrepresent the build.
+
+**Approach.** Move simulator suppression somewhere that does not depend on locomotion being enabled.
+
+**Acceptance:** WASD does not translate the player in `MainMenuScene`; mouse look and simulated
+controller interaction still work (needed for testing the menu). Gameplay locomotion unaffected.
+
+**QA:** ⬜ pending
+
+---
+
+## W9 — Interaction layers and safe cleanup
+
+1. **Reconcile `PanelInputConfiguration.m_InteractionLayers`** — `4294967291` in `MainMenuScene.unity:1122-1131`
+   vs `1075` in `MainScene.unity:4113-4116`. Drift, not design. Align to one value.
+2. **Replace name-string lookups.** Three places match GameObjects by literal name and silently break
+   on rename: `VRMainMenu.cs:262-268` (`"Menu UI Ray"`, plus a full-scene `FindObjectsOfType` scan),
+   `MazeLevelTimer.cs:273-285` (`"Right Controller"`), and the tutorial prompt. Replace with
+   serialized references.
+
+**Deliberately NOT doing without your say-so** (recorded, not actioned):
+
+- **Deleting `VRFrontEndMenu.cs`** — duplicates `VRMainMenu.cs` against the same UXML IDs, and only
+  `VRMainMenu` appears wired into a scene. Deleting a script is irreversible enough that I want your
+  confirmation, and "appears unused" is not proof.
+- **Deleting `Resources/UI/VRGameplayMenu.uxml`** — zero references, but it may be groundwork for the
+  Issue 14 wrist panel. Leaving it.
+- **`EchoPuzzleController`'s per-frame `GetComponentsInChildren`** (`:98`, called from `Update` `:20`)
+  — a real performance smell on Quest, but it's gameplay code outside this UI pass.
+
+**QA:** ⬜ pending
+
+---
+
+## Running log
+
+Appended as work completes — what changed, what was verified, what is still `PENDING-HEADSET`, and
+every judgment call made while you were asleep.
+
+### W0 — Merge conflict resolution ✅
+
+- **Commit:** `9886acd`
+- **`Docs/PROJECT_MEMORY.md`** — real conflict. Both sides were *distinct append-only journal
+  entries*, not competing versions of the same entry: upstream held
+  `MAINMENU-LONGWALL2-LIGHTMAP-001` plus tutorial entries, stashed held `MCP-MEMORY-001`. Resolved as
+  a union (removed the three marker lines only). **No content discarded.**
+- **`Packages/manifest.json`** — had **no conflict markers**; already resolved in the working tree and
+  merely unstaged. Validated as parseable JSON, then staged.
+- **Verified:** zero conflict markers remain in the repo; both paths report clean.
