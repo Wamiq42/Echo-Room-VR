@@ -44,7 +44,7 @@ Ordered by dependency, not by issue number. Each row is one commit.
 | # | Work | Issues | Depends on | Status |
 | --- | --- | --- | --- | --- |
 | W0 | Resolve merge conflicts | — | — | ✅ Done (`9886acd`) |
-| W1 | Ray→UI input fix (trigger interaction) | 2 | — | ⬜ |
+| W1 | Ray→UI input fix (trigger interaction) | 2 | — | ✅ Done (`052bb7c`) |
 | W2 | Transition ownership: persist GameManager + loading + fade | 8, 5, 6, 13 | — | ⬜ |
 | W3 | Consolidate the hard-coded world anchor | 13 | W2 | ⬜ |
 | W4 | Menu placement: wall occlusion + distance | 4, 7b | W1 | ⬜ |
@@ -303,3 +303,76 @@ every judgment call made while you were asleep.
 - **`Packages/manifest.json`** — had **no conflict markers**; already resolved in the working tree and
   merely unstaged. Validated as parseable JSON, then staged.
 - **Verified:** zero conflict markers remain in the repo; both paths report clean.
+
+### W1 — Ray→UI input ✅
+
+- **Commit:** `052bb7c`
+- **Change:** `m_RaycastTriggerInteraction` `1` → `2` (Collide) on the four `Menu UI Ray`
+  interactors, both scenes. `Teleport Interactor`s deliberately left at `Ignore` — they have
+  `enableUIInteraction=false` and are not UI rays.
+
+**Live audit before the change** (read back from the running Editor):
+
+```
+RAY Teleport Interactor | trigger=Ignore  | mask=-5 | enableUI=False | active=False
+RAY Menu UI Ray         | trigger=Ignore  | mask=1  | enableUI=True  | active=True
+RAY Teleport Interactor | trigger=Ignore  | mask=-5 | enableUI=False | active=False
+RAY Menu UI Ray         | trigger=Ignore  | mask=1  | enableUI=True  | active=True
+DOC Main Menu | localScale=-0.00184,0.00184,0.00184 | collider size=(900,560,4) isTrigger=True
+PanelSettings: colliderIsTrigger=True renderMode=1
+```
+
+**Proof the fix is causal** — same ray, same mask, only the trigger setting varied:
+
+```
+QueryTriggerInteraction.Ignore  -> hit=False   (NOTHING - this was the bug)
+QueryTriggerInteraction.Collide -> hit=True on Main Menu
+VERDICT: CONFIRMED - trigger setting was the blocker.
+```
+
+**QA status:** ✅ physics layer proven in-Editor. ⚠️ **`PENDING-HEADSET`/play-test for the last
+step** — I proved the ray now *reaches* the panel; I have not proven `XRUIInputModule` then converts
+that hit into a hover/click, because driving XR controller aim in Play Mode isn't something I can do
+reliably. **This is the first thing to check when you wake up:** point a controller at a menu button
+and confirm it highlights and activates.
+
+**Three things found while doing this, worth your attention:**
+
+1. **Unity is warning about the negative scale.** Console:
+   `"BoxCollider does not support negative scale or size. The effective box size has been forced
+   positive and is likely to give unexpected collision geometry. Scene hierarchy path 'Main Menu'"`
+   The collider's world bounds do come out correct (1.66 × 1.03) because the box is centred and
+   symmetric, so this did **not** cause Issue 2. But if clicks land on the *wrong button* once rays
+   work, this mirroring is the reason. Flagged for W5.
+2. **The main menu is 2.5 m from the player** — measured from the actual interactor origin
+   `(0, 0.82, -11.25)` to panel centre `(0, 1.15, -8.75)`. That confirms your "it is very far"
+   complaint quantitatively; comfortable reading is 1.2–2.0 m. Feeds W4/Issue 7b.
+   Also note the panel's real position is **not** the `(-3.04, 0.95, -1.342)` script default — the
+   scene serializes a different value. W3 must read live values, not the source defaults.
+3. **Unity normalized a dangling override on save.** `MainMenuScene` dropped an `m_AddedComponents`
+   entry for a `UniversalAdditionalLightData` on prefab GameObject `4953029835817543307` — an ID
+   that **no longer exists** in `T_Junction_Tutorial.prefab`. I checked before accepting it: that
+   prefab has 20 lights and 20 matching light-data components, so nothing was lost. It was a stale
+   reference Unity garbage-collected. **Expect this diff to reappear whenever anyone saves that
+   scene** — it is not caused by this work.
+
+### Reversal — W6 styling approach (was: port to UI Toolkit)
+
+Detailed scoping turned up a blocker I did not know about when I recommended the port, so I am
+**changing my recommendation** and will not port unless you overrule me:
+
+- `TutorialRuntimeObserver.cs:78` reads TutorialDirector's private field **by reflection**:
+  `ReadField<TMP_Text>(type, "tutorialPromptText")`. A UI Toolkit `Label` **is not** a `TMP_Text`, so
+  the port makes this return null, and `:153` then emits a hard `Debug.LogError` every tutorial run.
+  The diagnostic channel at `:124, 213-219` goes permanently dead too.
+- **TMP features with no USS equivalent:** text outline (`outlineWidth 0.22`) and auto-sizing
+  (`fontSizeMin 10.5` / `fontSizeMax 15`). Auto-sizing matters — `InteractionMessage` is 76
+  characters and *will* clip at a fixed font size.
+- The world-space transform math would need re-deriving, since UI Toolkit here needs the negative-X
+  mirror and a 180° flip that the uGUI prompt does not.
+
+**Revised plan for W6:** keep the prompt as uGUI, and restyle it by hand to match the menu's visual
+language (panel frame, corner brackets, `--echo-cyan`/`--echo-white` palette, `.signal-line`
+divider). You lose single-source-of-truth styling, which is a real cost — but you keep working
+diagnostics, text auto-fit, and the existing pose math. **The anchoring fix (Issue 3) is unaffected
+and proceeds as planned.** Say the word if you'd rather take the port and its costs.
