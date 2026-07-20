@@ -1,13 +1,23 @@
-﻿using System.Collections;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 namespace EchoRoom.UI
 {
     [DisallowMultipleComponent, RequireComponent(typeof(UIDocument))]
     public sealed class VRLoadingScreen : MonoBehaviour
     {
+        [System.Serializable]
+        public struct SceneAnchor
+        {
+            public string sceneName;
+            public Vector3 position;
+            public Vector3 eulerAngles;
+        }
+
         [SerializeField] VisualTreeAsset loadingLayout;
         [SerializeField] StyleSheet loadingStyles;
         [SerializeField] Transform cameraTransform;
@@ -16,10 +26,28 @@ namespace EchoRoom.UI
         [SerializeField] bool useFixedWorldPlacement = true;
         [SerializeField] Vector3 fixedWorldPosition = new(-3.04f, 0.95f, -1.342f);
         [SerializeField] Vector3 fixedWorldEulerAngles = new(0f, 89.752f, 0f);
-        [SerializeField, Min(0.1f)] float minimumDisplayTime = 5f;
+        [SerializeField] SceneAnchor[] sceneAnchors =
+        {
+            new SceneAnchor
+            {
+                sceneName = "MainMenuScene",
+                position = new Vector3(0f, 1.15f, -8.75f),
+                eulerAngles = new Vector3(0f, 180f, 0f)
+            },
+            new SceneAnchor
+            {
+                sceneName = "MainScene",
+                position = new Vector3(-3.04f, 0.95f, -1.342f),
+                eulerAngles = new Vector3(0f, 89.752f, 0f)
+            }
+        };
+        [SerializeField, Min(0.1f)] float minimumDisplayTime = 4f;
         [SerializeField, Min(0.1f)] float thankYouDuration = 5f;
         [SerializeField, Min(0.0001f)] float worldScale = 0.0016f;
+        [SerializeField, Min(1f)] float transitionWatchdogSeconds = 25f;
+        [SerializeField] string uiPointerFallbackName = "Menu UI Ray";
 
+        readonly List<GameObject> suppressedPointers = new List<GameObject>();
         UIDocument document;
         VisualElement root;
         VisualElement loadingScreen;
@@ -30,15 +58,32 @@ namespace EchoRoom.UI
         Label loadingMessage;
         Label progressLabel;
         Label returnCountdown;
+        Coroutine watchdogRoutine;
+        string activeSceneName;
         bool visible;
         bool busy;
+        bool transitioning;
         float spin;
 
+        public static VRLoadingScreen Instance { get; private set; }
         public bool IsVisible => visible;
         public bool IsBusy => busy;
+        public bool IsTransitioning => transitioning;
 
         void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            if (transform.parent != null) transform.SetParent(null, true);
+            DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            activeSceneName = SceneManager.GetActiveScene().name;
+
             document = GetComponent<UIDocument>();
             if (loadingLayout == null) loadingLayout = Resources.Load<VisualTreeAsset>("UI/VRLoadingScreen");
             if (loadingStyles == null) loadingStyles = Resources.Load<StyleSheet>("UI/VRLoadingScreen");
@@ -82,6 +127,13 @@ namespace EchoRoom.UI
             HideImmediate();
         }
 
+        void OnDestroy()
+        {
+            if (Instance != this) return;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            Instance = null;
+        }
+
         void Update()
         {
             if (!visible) return;
@@ -92,11 +144,30 @@ namespace EchoRoom.UI
 
         void LateUpdate()
         {
+            if (transitioning) SuppressPauseMenu();
+            if (visible) PlaceInFrontOfPlayer();
+        }
+
+        void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            activeSceneName = SceneManager.GetActiveScene().name;
+
+            // Camera.main from the previous scene is gone; never trust the cached transform across a load.
+            cameraTransform = null;
+            ResolveCamera();
+
+            if (!transitioning) return;
+
+            // Anything captured before the load belonged to the unloaded scene.
+            suppressedPointers.Clear();
+            SuppressUiPointers();
+            SuppressPauseMenu();
             if (visible) PlaceInFrontOfPlayer();
         }
 
         public void ShowLoading(string message)
         {
+            if (root == null) return;
             visible = true;
             root.style.display = DisplayStyle.Flex;
             loadingScreen.style.display = DisplayStyle.Flex;
@@ -118,6 +189,26 @@ namespace EchoRoom.UI
             visible = false;
             busy = false;
             if (root != null) root.style.display = DisplayStyle.None;
+            EndTransitionState();
+        }
+
+        public void BeginTransition(string message)
+        {
+            if (!transitioning)
+            {
+                transitioning = true;
+                SuppressUiPointers();
+                if (watchdogRoutine != null) StopCoroutine(watchdogRoutine);
+                watchdogRoutine = StartCoroutine(TransitionWatchdogRoutine());
+            }
+
+            SuppressPauseMenu();
+            ShowLoading(message);
+        }
+
+        public void CompleteTransition()
+        {
+            Hide();
         }
 
         public void LoadScene(string sceneName, string message)
@@ -125,10 +216,15 @@ namespace EchoRoom.UI
             if (!busy) StartCoroutine(LoadSceneRoutine(sceneName, message));
         }
 
+        public void ShowThankYouThenLoadScene(string mainMenuSceneName)
+        {
+            if (!busy) StartCoroutine(ShowThankYouThenLoad(mainMenuSceneName));
+        }
+
         public IEnumerator LoadSceneRoutine(string sceneName, string message)
         {
             busy = true;
-            ShowLoading(message);
+            BeginTransition(message);
             float shownAt = Time.realtimeSinceStartup;
             yield return null;
 
@@ -136,7 +232,7 @@ namespace EchoRoom.UI
             if (operation == null)
             {
                 Debug.LogError("[VRLoadingScreen] Could not load scene '" + sceneName + "'.", this);
-                Hide();
+                CompleteTransition();
                 yield break;
             }
 
@@ -151,14 +247,21 @@ namespace EchoRoom.UI
 
             SetProgress(1f);
             yield return null;
+
+            // The screen stays up past activation. The destination owner calls CompleteTransition().
             operation.allowSceneActivation = true;
         }
 
         public IEnumerator ShowThankYouThenLoad(string mainMenuSceneName)
         {
             busy = true;
-            visible = true;
-            root.style.display = DisplayStyle.Flex;
+            BeginTransition("RETURNING TO MAIN MENU");
+            if (root == null)
+            {
+                CompleteTransition();
+                yield break;
+            }
+
             loadingScreen.style.display = DisplayStyle.None;
             thankYouScreen.style.display = DisplayStyle.Flex;
             PlaceInFrontOfPlayer();
@@ -183,7 +286,7 @@ namespace EchoRoom.UI
             if (operation == null)
             {
                 Debug.LogError("[VRLoadingScreen] Could not load main menu scene '" + mainMenuSceneName + "'.", this);
-                Hide();
+                CompleteTransition();
                 yield break;
             }
 
@@ -205,7 +308,7 @@ namespace EchoRoom.UI
         public IEnumerator CoverPrefabSwap(string message, System.Action swapAction)
         {
             busy = true;
-            ShowLoading(message);
+            BeginTransition(message);
             float shownAt = Time.realtimeSinceStartup;
             try
             {
@@ -216,14 +319,77 @@ namespace EchoRoom.UI
                 yield return null;
                 SetProgress(1f);
 
-                float effectiveMinimum = Mathf.Max(5f, minimumDisplayTime);
-                float remaining = effectiveMinimum - (Time.realtimeSinceStartup - shownAt);
+                float remaining = minimumDisplayTime - (Time.realtimeSinceStartup - shownAt);
                 if (remaining > 0f) yield return new WaitForSecondsRealtime(remaining);
             }
             finally
             {
-                Hide();
+                CompleteTransition();
             }
+        }
+
+        IEnumerator TransitionWatchdogRoutine()
+        {
+            yield return new WaitForSecondsRealtime(transitionWatchdogSeconds);
+            watchdogRoutine = null;
+            if (!transitioning) yield break;
+
+            Debug.LogError("[VRLoadingScreen] No owner completed the transition within " +
+                           transitionWatchdogSeconds + "s. Hiding the loading screen.", this);
+            Hide();
+        }
+
+        void EndTransitionState()
+        {
+            if (watchdogRoutine != null)
+            {
+                StopCoroutine(watchdogRoutine);
+                watchdogRoutine = null;
+            }
+
+            if (!transitioning) return;
+            transitioning = false;
+            RestoreUiPointers();
+        }
+
+        void SuppressUiPointers()
+        {
+            XRRayInteractor[] rays = FindObjectsByType<XRRayInteractor>(FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+            for (int i = 0; i < rays.Length; i++)
+            {
+                XRRayInteractor ray = rays[i];
+                if (ray == null || !ray.enableUIInteraction) continue;
+                SuppressPointerObject(ray.gameObject);
+            }
+
+            if (string.IsNullOrEmpty(uiPointerFallbackName)) return;
+            Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+            for (int i = 0; i < transforms.Length; i++)
+                if (transforms[i] != null && transforms[i].name == uiPointerFallbackName)
+                    SuppressPointerObject(transforms[i].gameObject);
+        }
+
+        void SuppressPointerObject(GameObject pointer)
+        {
+            if (pointer == null || !pointer.activeSelf) return;
+            if (suppressedPointers.Contains(pointer)) return;
+            suppressedPointers.Add(pointer);
+            pointer.SetActive(false);
+        }
+
+        void RestoreUiPointers()
+        {
+            for (int i = 0; i < suppressedPointers.Count; i++)
+                if (suppressedPointers[i] != null) suppressedPointers[i].SetActive(true);
+            suppressedPointers.Clear();
+        }
+
+        static void SuppressPauseMenu()
+        {
+            VRPauseMenu pauseMenu = VRPauseMenu.Instance;
+            if (pauseMenu != null && pauseMenu.IsOpen) pauseMenu.HideMenu(true);
         }
 
         void HideImmediate()
@@ -237,7 +403,8 @@ namespace EchoRoom.UI
         {
             if (useFixedWorldPlacement)
             {
-                transform.SetPositionAndRotation(fixedWorldPosition, Quaternion.Euler(fixedWorldEulerAngles));
+                ResolveSceneAnchor(out Vector3 anchorPosition, out Vector3 anchorEulerAngles);
+                transform.SetPositionAndRotation(anchorPosition, Quaternion.Euler(anchorEulerAngles));
                 transform.localScale = new Vector3(-worldScale, worldScale, worldScale);
                 return;
             }
@@ -250,9 +417,32 @@ namespace EchoRoom.UI
             transform.localScale = new Vector3(-worldScale, worldScale, worldScale);
         }
 
+        void ResolveSceneAnchor(out Vector3 position, out Vector3 eulerAngles)
+        {
+            if (sceneAnchors != null)
+            {
+                for (int i = 0; i < sceneAnchors.Length; i++)
+                {
+                    if (!string.Equals(sceneAnchors[i].sceneName, activeSceneName, System.StringComparison.Ordinal))
+                        continue;
+                    position = sceneAnchors[i].position;
+                    eulerAngles = sceneAnchors[i].eulerAngles;
+                    return;
+                }
+            }
+
+            position = fixedWorldPosition;
+            eulerAngles = fixedWorldEulerAngles;
+        }
+
         void ResolveCamera()
         {
-            if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
+            // A cached transform survives Destroy only as a fake-null, but a camera that is merely
+            // deactivated by a scene swap still compares non-null. Re-resolve in both cases.
+            if (cameraTransform != null && cameraTransform.gameObject.activeInHierarchy) return;
+            cameraTransform = null;
+            Camera main = Camera.main;
+            if (main != null) cameraTransform = main.transform;
         }
     }
 }

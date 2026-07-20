@@ -7930,9 +7930,18 @@ MonoBehaviour:
   useFixedWorldPlacement: 1
   fixedWorldPosition: {x: -3.04, y: 0.95, z: -1.342}
   fixedWorldEulerAngles: {x: 0, y: 89.752, z: 0}
-  minimumDisplayTime: 5
+  sceneAnchors:
+  - sceneName: MainMenuScene
+    position: {x: 0, y: 1.15, z: -8.75}
+    eulerAngles: {x: 0, y: 180, z: 0}
+  - sceneName: MainScene
+    position: {x: -3.04, y: 0.95, z: -1.342}
+    eulerAngles: {x: 0, y: 89.752, z: 0}
+  minimumDisplayTime: 4
   thankYouDuration: 5
   worldScale: 0.0016
+  transitionWatchdogSeconds: 25
+  uiPointerFallbackName: Menu UI Ray
 --- !u!114 &1156458652
 MonoBehaviour:
   m_ObjectHideFlags: 0

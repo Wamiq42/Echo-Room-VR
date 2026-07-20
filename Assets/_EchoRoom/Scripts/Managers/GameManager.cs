@@ -57,7 +57,14 @@ public class GameManager : MonoBehaviour
         PrefabLightmapRuntime.InitializeSceneLighting();
         if (screenFade == null) screenFade = GetComponent<VRScreenFade>();
         if (screenFade == null) screenFade = gameObject.AddComponent<VRScreenFade>();
-        if (loadingScreen == null) loadingScreen = FindObjectOfType<VRLoadingScreen>(true);
+        loadingScreen = ResolveLoadingScreen();
+    }
+
+    private VRLoadingScreen ResolveLoadingScreen()
+    {
+        if (VRLoadingScreen.Instance != null) return VRLoadingScreen.Instance;
+        if (loadingScreen != null) return loadingScreen;
+        return FindObjectOfType<VRLoadingScreen>(true);
     }
 
     private void Start()
@@ -73,6 +80,8 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator InitializeGame()
     {
+        loadingScreen = ResolveLoadingScreen();
+
         if (TutorialProgress.IsTutorialRequested)
         {
             if (tutorialLevelPrefab == null)
@@ -81,11 +90,7 @@ public class GameManager : MonoBehaviour
                 yield break;
             }
 
-            if (screenFade != null) screenFade.SetOpacity(0f);
-            if (loadingScreen != null)
-                yield return loadingScreen.CoverPrefabSwap("ENTERING TUTORIAL", LoadTutorialLevel);
-            else
-                LoadTutorialLevel();
+            yield return RunEntryLoad("ENTERING TUTORIAL", LoadTutorialLevel);
             yield break;
         }
 
@@ -95,13 +100,39 @@ public class GameManager : MonoBehaviour
             : PuzzleProgressSaveSystem.CreateNew(firstPuzzleId);
 
         int levelIndex = ResolveSavedLevelIndex();
-        if (screenFade != null) screenFade.SetOpacity(0f);
+        yield return RunEntryLoad("ENTERING " + GetLevelDisplayName(levelIndex).ToUpperInvariant(),
+            () => LoadLevel(levelIndex));
+    }
 
-        if (loadingScreen != null)
-            yield return loadingScreen.CoverPrefabSwap("ENTERING " + GetLevelDisplayName(levelIndex).ToUpperInvariant(),
-                () => LoadLevel(levelIndex));
-        else
-            LoadLevel(levelIndex);
+    private IEnumerator RunEntryLoad(string message, Action loadAction)
+    {
+        if (loadingScreen == null)
+        {
+            loadAction();
+            yield return null;
+            if (screenFade != null) screenFade.SetOpacity(0f);
+            yield break;
+        }
+
+        if (loadingScreen.IsTransitioning)
+        {
+            // The menu started this transition and the persistent loading screen is still covering the
+            // view. Finish that single sequence here instead of starting a second, independent one.
+            loadAction();
+            yield return null;
+            if (screenFade != null) screenFade.SetOpacity(0f);
+            loadingScreen.CompleteTransition();
+            yield break;
+        }
+
+        // Play started directly in this scene. Hold the fade opaque until the loading screen renders,
+        // otherwise the seam is unmasked for the frames before the world-space panel appears.
+        if (screenFade != null) screenFade.SetOpacity(1f);
+        loadingScreen.BeginTransition(message);
+        yield return null;
+        yield return null;
+        if (screenFade != null) screenFade.SetOpacity(0f);
+        yield return loadingScreen.CoverPrefabSwap(message, loadAction);
     }
 
     private void LoadTutorialLevel()
@@ -238,7 +269,8 @@ public class GameManager : MonoBehaviour
             Log("All configured puzzles are complete.");
             if (loadingScreen != null)
             {
-                yield return loadingScreen.ShowThankYouThenLoad(mainMenuSceneName);
+                // Runs on the persistent loading screen so it survives the scene swap.
+                loadingScreen.ShowThankYouThenLoadScene(mainMenuSceneName);
                 yield break;
             }
 
@@ -333,7 +365,8 @@ public class GameManager : MonoBehaviour
 
         if (loadingScreen != null)
         {
-            yield return loadingScreen.LoadSceneRoutine(mainMenuSceneName, "RETURNING TO MAIN MENU");
+            // Runs on the persistent loading screen so it survives the scene swap.
+            loadingScreen.LoadScene(mainMenuSceneName, "RETURNING TO MAIN MENU");
             yield break;
         }
 

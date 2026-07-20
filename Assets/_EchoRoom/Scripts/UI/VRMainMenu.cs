@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -42,7 +43,8 @@ namespace EchoRoom.UI
             documentCollider = GetComponent<BoxCollider>();
             if (menuLayout == null) menuLayout = Resources.Load<VisualTreeAsset>("UI/VRMenu");
             if (menuStyles == null) menuStyles = Resources.Load<StyleSheet>("UI/VRMenu");
-            if (loadingScreen == null) loadingScreen = FindObjectOfType<VRLoadingScreen>(true);
+            if (VRLoadingScreen.Instance != null) loadingScreen = VRLoadingScreen.Instance;
+            else if (loadingScreen == null) loadingScreen = FindObjectOfType<VRLoadingScreen>(true);
 
             if (menuLayout == null || levelData == null)
             {
@@ -100,6 +102,18 @@ namespace EchoRoom.UI
         {
             ShowStartPanel();
             PlaceInFrontOfPlayer();
+
+            if (VRLoadingScreen.Instance != null && VRLoadingScreen.Instance.IsTransitioning)
+                StartCoroutine(CompleteArrivalTransition());
+        }
+
+        IEnumerator CompleteArrivalTransition()
+        {
+            // World-space UI Toolkit geometry is zero-sized on the frame a screen is first shown.
+            // Let the menu lay out before uncovering it.
+            yield return null;
+            yield return null;
+            if (VRLoadingScreen.Instance != null) VRLoadingScreen.Instance.CompleteTransition();
         }
 
         void LateUpdate()
