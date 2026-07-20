@@ -45,7 +45,7 @@ Ordered by dependency, not by issue number. Each row is one commit.
 | --- | --- | --- | --- | --- |
 | W0 | Resolve merge conflicts | — | — | ✅ Done (`9886acd`) |
 | W1 | Ray→UI input fix (trigger interaction) | 2 | — | ✅ Done (`052bb7c`) |
-| W2 | Transition ownership: persist GameManager + loading + fade | 8, 5, 6, 13 | — | ⬜ |
+| W2 | Transition ownership: persist loading screen + fade | 8, 5, 6 | — | ✅ Done (`b78075f`) |
 | W3 | Consolidate the hard-coded world anchor | 13 | W2 | ⬜ |
 | W4 | Menu placement: wall occlusion + distance | 4, 7b | W1 | ⬜ |
 | W5 | Editor authoring parity | 1 | W1 | ⬜ |
@@ -387,6 +387,47 @@ look should still work.
 **Unrelated noise spotted:** the console is full of `[PlayerInputManager] Move: (-0.71, 0.71)` debug
 logs every frame. Left-over debug logging — worth silencing, but it's outside this UI pass so I have
 not touched it.
+
+### W2 — Transition ownership ✅
+
+- **Commit:** `b78075f`
+- **Design correction made during the work.** The agreed A+ plan said "make `GameManager`
+  persistent." That turned out to be **wrong**: `GameManager` exists *only* in MainScene (zero
+  occurrences in `MainMenuScene.unity`), so it does not exist when the menu→game transition starts
+  and could never own it. The persistent owner had to be `VRLoadingScreen` itself. Same outcome,
+  correct mechanism.
+- `VRLoadingScreen` is now a `DontDestroyOnLoad` singleton owning `IsTransitioning`; re-resolves
+  `Camera.main` on `sceneLoaded` (treating a cached-but-deactivated camera as stale, not just a
+  destroyed one); suppresses UI ray pointers and keeps `VRPauseMenu` hidden while transitioning →
+  **this is what fixes Issues 5 and 6**.
+- `GameManager.InitializeGame` now detects an in-flight transition and completes it instead of
+  starting a second sequence. The fade is no longer cleared before the loading screen is up.
+- Loading time: one 4 s window instead of two 5 s windows.
+- Added `sceneAnchors` so the persistent panel uses the right per-scene anchor.
+- 25 s watchdog logs an error and hides if nothing completes a transition.
+
+**QA status:**
+- ✅ Compiles clean — verified the new API is genuinely present in the **rebuilt** `Assembly-CSharp`
+  (timestamp checked, 70 s old), and every pre-existing public method survives. This matters because
+  a *failed* compile also leaves `IsCompiling: false` with stale assemblies loaded.
+- ✅ Play Mode smoke test in MainMenuScene: no exceptions, menu renders correctly —
+  `Docs/QA/w2-playmode-mainmenu.png`.
+- ⚠️ **`PENDING-PLAYTEST` — the actual menu→maze transition is NOT verified.** This is the big one.
+  **Check on waking:** press NEW GAME and confirm the loading screen appears *before* the maze is
+  visible, stays up across the swap, and hides only once you're in the maze — with no pause menu
+  visible and rays dead throughout.
+
+**Subagent claims I checked rather than trusted:**
+- It assumed `VRPauseMenu.Instance`, `.IsOpen`, `.HideMenu(bool)` were public — verified, all three
+  exist (`VRPauseMenu.cs:78, 80, 324`).
+- It flagged `sceneAnchors` deserialization as its "biggest guess" — verified in the live Editor,
+  populated correctly (size 2, right values) in both scenes.
+- It asked whether MainScene's `VRPauseMenu.showOnStart` was true, which would have made its
+  every-frame re-hide a behaviour regression — verified `showOnStart=False`, so the concern is moot.
+
+**Known limitation carried forward:** the MainScene anchor is still `(-3.04, 0.95, -1.342)`, the
+main-menu hallway coordinate from Issue 13. W2 preserves that deliberately; **W3 fixes it** by making
+the loading screen head-relative, at which point the anchors become redundant.
 
 ### Reversal — W6 styling approach (was: port to UI Toolkit)
 
