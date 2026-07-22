@@ -2767,3 +2767,25 @@ Verification performed:
 - **Verification:** Read the supplied Unity Connection screenshot, which shows `Unity: Connected`, `MCP server: Running (http)`, base URL `http://localhost:26566`, HTTP transport, and authorization `none`. Read `.codex/config.toml` and confirmed the enabled `ai-game-developer` MCP entry uses `http://localhost:26566/p/a679b99a`.
 - **Known limitations:** The screenshot's orange AI agent status indicates no client was attached at the instant captured; this documentation change does not itself start Unity or establish a live client session. The project route may need to be regenerated if the Unity-MCP package/configuration is reset.
 - **Follow-up:** When connecting, start the server in Unity first, then launch/reload the Codex project session and confirm the AI agent indicator becomes connected or run a Unity-MCP readiness probe.
+
+### UI-W3-HEAD-RELATIVE-001 — Keep the loading cover centered on the active XR camera
+
+- **Date:** 2026-07-23
+- **Goal:** Complete UI work item W3 / Issue 13 by preventing the persistent loading screen from remaining at a main-menu hallway coordinate after the player is moved to a maze spawn.
+- **Result:** `VRLoadingScreen` now has one placement model: while visible, it follows the currently active `Camera.main` at the configured 1.15-metre forward distance and zero height offset. The persistent screen re-resolves the destination scene camera and is correctly repositioned after scene activation and player teleport. The main menu and pause menu retain their separate fixed-placement behavior.
+- **Files created:**
+  - `Docs/QA/w3-head-relative-main-scene.png`
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/UI/VRLoadingScreen.cs`
+  - `Docs/UI_FIX_PLAN.md`
+  - `Docs/HANDOFF.md`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen` (runtime behavior through `VRLoadingScreen`; scene serialization unchanged)
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen` (runtime behavior through `VRLoadingScreen`; scene serialization unchanged)
+- **Components/assets/settings:** Removed `VRLoadingScreen.SceneAnchor`, `sceneAnchors`, `useFixedWorldPlacement`, `fixedWorldPosition`, `fixedWorldEulerAngles`, `activeSceneName`, and `ResolveSceneAnchor()`. `PlaceInFrontOfPlayer()` always uses the active camera pose, `distanceFromCamera=1.15`, `heightOffset=0`, camera rotation plus 180° yaw, and the existing `(-worldScale, worldScale, worldScale)` UI Toolkit scale. W2's persistent singleton, scene-camera re-resolution, transition watchdog, pause-menu suppression, and UI-ray suppression remain intact.
+- **Decisions and assumptions:** Removed the obsolete mode instead of changing its initializer because live/source inspection confirmed both scene instances serialize the old boolean as true; serialized overrides would have defeated a default-only change. The scene files were not saved, matching W3's script-only scope. Their legacy unrecognized YAML keys are ignored by the compiled component and may be removed automatically by a future intentional Unity scene save. The W2 test invoked `VRMainMenu.BeginGameplay(0)` through a temporary runtime reflection harness instead of pressing New Game, so no existing save data was deleted or changed.
+- **Verification:** Unity rebuilt `Library/ScriptAssemblies/Assembly-CSharp.dll`; at verification it was 29.4 seconds old, `EditorUtility.scriptCompilationFailed=False`, and the Editor was neither compiling nor updating. Reflection plus `SerializedObject` readback in both scenes found all obsolete placement properties absent and `distanceFromCamera=1.15`, `heightOffset=0`. Before W3, a logged W2 Play Mode run kept one loading-screen instance in `DontDestroyOnLoad` for about 5.2 seconds across `MainMenuScene` → `MainScene`, with both UI rays disabled and the pause menu closed. After W3, every visible sample before and after scene activation/player spawn measured distance `1.1500 m`, position error `0.00000 m`, and rotation error `0.0000°`; the same persistent instance survived the swap and W2 completed normally. `Docs/QA/w3-head-relative-main-scene.png` was captured in `MainScene` after activation and visually confirms panel centering. The final five-minute Console query returned zero Errors and zero Exceptions. Live Unity inspection confirmed both exact object paths above, and both scenes remained clean.
+- **Known limitations:** `PENDING-HEADSET` for continuous head-tracking smoothness, possible late-update jitter, stereo comfort, and whether the 1.44 m × 0.896 m panel covers enough peripheral headset field of view. A screenshot proves centering but not motion comfort.
+- **Follow-up:** Run the W3/W2 transition once on Quest while moving the head gently. Continue the plan with W4 (menu wall occlusion and viewing distance) after that comfort check, or proceed with the Editor-safe portion and retain the headset gate.

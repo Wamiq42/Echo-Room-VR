@@ -10,37 +10,11 @@ namespace EchoRoom.UI
     [DisallowMultipleComponent, RequireComponent(typeof(UIDocument))]
     public sealed class VRLoadingScreen : MonoBehaviour
     {
-        [System.Serializable]
-        public struct SceneAnchor
-        {
-            public string sceneName;
-            public Vector3 position;
-            public Vector3 eulerAngles;
-        }
-
         [SerializeField] VisualTreeAsset loadingLayout;
         [SerializeField] StyleSheet loadingStyles;
         [SerializeField] Transform cameraTransform;
         [SerializeField, Min(0.5f)] float distanceFromCamera = 1.15f;
         [SerializeField] float heightOffset;
-        [SerializeField] bool useFixedWorldPlacement = true;
-        [SerializeField] Vector3 fixedWorldPosition = new(-3.04f, 0.95f, -1.342f);
-        [SerializeField] Vector3 fixedWorldEulerAngles = new(0f, 89.752f, 0f);
-        [SerializeField] SceneAnchor[] sceneAnchors =
-        {
-            new SceneAnchor
-            {
-                sceneName = "MainMenuScene",
-                position = new Vector3(0f, 1.15f, -8.75f),
-                eulerAngles = new Vector3(0f, 180f, 0f)
-            },
-            new SceneAnchor
-            {
-                sceneName = "MainScene",
-                position = new Vector3(-3.04f, 0.95f, -1.342f),
-                eulerAngles = new Vector3(0f, 89.752f, 0f)
-            }
-        };
         [SerializeField, Min(0.1f)] float minimumDisplayTime = 4f;
         [SerializeField, Min(0.1f)] float thankYouDuration = 5f;
         [SerializeField, Min(0.0001f)] float worldScale = 0.0016f;
@@ -59,7 +33,6 @@ namespace EchoRoom.UI
         Label progressLabel;
         Label returnCountdown;
         Coroutine watchdogRoutine;
-        string activeSceneName;
         bool visible;
         bool busy;
         bool transitioning;
@@ -82,7 +55,6 @@ namespace EchoRoom.UI
             if (transform.parent != null) transform.SetParent(null, true);
             DontDestroyOnLoad(gameObject);
             SceneManager.sceneLoaded += OnSceneLoaded;
-            activeSceneName = SceneManager.GetActiveScene().name;
 
             document = GetComponent<UIDocument>();
             if (loadingLayout == null) loadingLayout = Resources.Load<VisualTreeAsset>("UI/VRLoadingScreen");
@@ -150,8 +122,6 @@ namespace EchoRoom.UI
 
         void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            activeSceneName = SceneManager.GetActiveScene().name;
-
             // Camera.main from the previous scene is gone; never trust the cached transform across a load.
             cameraTransform = null;
             ResolveCamera();
@@ -401,38 +371,12 @@ namespace EchoRoom.UI
 
         void PlaceInFrontOfPlayer()
         {
-            if (useFixedWorldPlacement)
-            {
-                ResolveSceneAnchor(out Vector3 anchorPosition, out Vector3 anchorEulerAngles);
-                transform.SetPositionAndRotation(anchorPosition, Quaternion.Euler(anchorEulerAngles));
-                transform.localScale = new Vector3(-worldScale, worldScale, worldScale);
-                return;
-            }
-
             ResolveCamera();
             if (cameraTransform == null) return;
             transform.position = cameraTransform.position + cameraTransform.forward * distanceFromCamera +
                                  cameraTransform.up * heightOffset;
             transform.rotation = cameraTransform.rotation * Quaternion.Euler(0f, 180f, 0f);
             transform.localScale = new Vector3(-worldScale, worldScale, worldScale);
-        }
-
-        void ResolveSceneAnchor(out Vector3 position, out Vector3 eulerAngles)
-        {
-            if (sceneAnchors != null)
-            {
-                for (int i = 0; i < sceneAnchors.Length; i++)
-                {
-                    if (!string.Equals(sceneAnchors[i].sceneName, activeSceneName, System.StringComparison.Ordinal))
-                        continue;
-                    position = sceneAnchors[i].position;
-                    eulerAngles = sceneAnchors[i].eulerAngles;
-                    return;
-                }
-            }
-
-            position = fixedWorldPosition;
-            eulerAngles = fixedWorldEulerAngles;
         }
 
         void ResolveCamera()

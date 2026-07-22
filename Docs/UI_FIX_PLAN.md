@@ -46,7 +46,7 @@ Ordered by dependency, not by issue number. Each row is one commit.
 | W0 | Resolve merge conflicts | — | — | ✅ Done (`9886acd`) |
 | W1 | Ray→UI input fix (trigger interaction) | 2 | — | ✅ Done (`052bb7c`) |
 | W2 | Transition ownership: persist loading screen + fade | 8, 5, 6 | — | ✅ Done (`b78075f`) |
-| W3 | Consolidate the hard-coded world anchor | 13 | W2 | ⬜ |
+| W3 | Consolidate the hard-coded world anchor | 13 | W2 | ✅ Done |
 | W4 | Menu placement: wall occlusion + distance | 4, 7b | W1 | ⬜ |
 | W5 | Editor authoring parity | 1 | W1 | ⬜ |
 | W6 | Tutorial prompt: anchoring + styling | 3, 11 | — | ⬜ |
@@ -419,10 +419,12 @@ not touched it.
   a *failed* compile also leaves `IsCompiling: false` with stale assemblies loaded.
 - ✅ Play Mode smoke test in MainMenuScene: no exceptions, menu renders correctly —
   `Docs/QA/w2-playmode-mainmenu.png`.
-- ⚠️ **`PENDING-PLAYTEST` — the actual menu→maze transition is NOT verified.** This is the big one.
-  **Check on waking:** press NEW GAME and confirm the loading screen appears *before* the maze is
-  visible, stays up across the swap, and hides only once you're in the maze — with no pause menu
-  visible and rays dead throughout.
+- ✅ **Menu→maze transition verified in Editor Play Mode (2026-07-23).** A runtime observer sampled
+  the transition from `MainMenuScene` through `MainScene`: the same loading-screen instance remained
+  in `DontDestroyOnLoad`, visible and transitioning for about 5.2 seconds, reached 100% before scene
+  activation, remained visible through activation, then hid only after the destination initialized.
+  Both UI rays stayed inactive and the pause menu stayed closed throughout. The test invoked the
+  menu's internal level-start routine to avoid deleting or changing the user's save data.
 
 **Subagent claims I checked rather than trusted:**
 - It assumed `VRPauseMenu.Instance`, `.IsOpen`, `.HideMenu(bool)` were public — verified, all three
@@ -435,6 +437,36 @@ not touched it.
 **Known limitation carried forward:** the MainScene anchor is still `(-3.04, 0.95, -1.342)`, the
 main-menu hallway coordinate from Issue 13. W2 preserves that deliberately; **W3 fixes it** by making
 the loading screen head-relative, at which point the anchors become redundant.
+
+### W3 — Loading screen head-relative ✅
+
+- **Commit:** the W3 commit containing this log entry.
+- **Changed:** `VRLoadingScreen` no longer exposes or executes fixed loading-screen placement.
+  Removed `SceneAnchor`, `sceneAnchors`, the fixed position/rotation fields, the fixed-mode switch,
+  and the active-scene anchor resolver. `PlaceInFrontOfPlayer()` now has one authoritative path:
+  `camera position + camera forward * 1.15 m + camera up * heightOffset`, with the existing
+  camera-relative rotation and world scale preserved.
+- **Why the switch was removed instead of defaulted off:** both scene instances serialized
+  `useFixedWorldPlacement=true`, which overrides a C# field initializer. Changing only the default
+  would have left Issue 13 unfixed. Removing the obsolete schema also prevents the two placement
+  systems from drifting back apart.
+- **Scope:** script-only runtime behavior. `VRMainMenu` and `VRPauseMenu` fixed placement were not
+  changed. Scene assets were inspected live and left clean/unsaved; their old unrecognized YAML keys
+  are ignored by Unity and can be normalized by a future intentional scene save.
+
+**QA status:**
+- ✅ Fresh Unity compilation: `scriptCompilationFailed=false`; rebuilt `Assembly-CSharp.dll` was
+  29 seconds old at verification. Reflection and `SerializedObject` readback confirmed every
+  obsolete loading-screen placement field is absent and the placement method remains present.
+- ✅ Cross-scene Play Mode measurement: the same persistent instance stayed exactly `1.1500 m` from
+  `Camera.main` before and after activation/player spawn, with `0.00000 m` position error and
+  `0.0000°` rotation error at every recorded sample. UI rays stayed suppressed and the pause menu
+  stayed closed until W2 completed the transition.
+- ✅ In-maze Game View evidence: `Docs/QA/w3-head-relative-main-scene.png`.
+- ✅ Final five-minute Unity Console query returned zero Errors and zero Exceptions; both inspected
+  scenes were clean after the test.
+- ⚠️ **`PENDING-HEADSET`:** continuous head tracking, peripheral coverage, and any perceived
+  late-update jitter still require a physical Quest comfort check.
 
 ### Reversal — W6 styling approach (was: port to UI Toolkit)
 

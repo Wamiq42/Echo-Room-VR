@@ -3,7 +3,7 @@
 **Purpose.** Everything a fresh Claude Code session — or a different AI model — needs to continue this
 UI-fix pass without re-discovering what's already known. Read this top to bottom before touching code.
 
-**Last updated:** after W2 committed (`068dee8`). Branch: `Development-Phase`. No pushes made.
+**Last updated:** after W3 completion and QA (2026-07-23). Branch: `Development-Phase`. No pushes made.
 
 ---
 
@@ -119,8 +119,8 @@ Then `Read` the PNG to view it. Screenshots land in `Docs/QA/`.
 | W1 | Ray→UI input (trigger enum) | 2 | ✅ `052bb7c` |
 | W8 | Main-menu simulator WASD | 9 | ✅ `8bcecdc` |
 | W2 | Persistent transition owner | 8, 5, 6 | ✅ `b78075f` |
-| **W3** | Loading screen head-relative | 13 | ⬜ next |
-| **W4** | Menu occlusion + distance | 4, 7b | ⬜ |
+| W3 | Loading screen head-relative | 13 | ✅ completed and QA-verified |
+| **W4** | Menu occlusion + distance | 4, 7b | ⬜ next |
 | **W5** | Editor authoring parity | 1 | ⬜ |
 | **W6** | Tutorial prompt anchor + style | 3, 11 | ⬜ |
 | **W7** | Timer fairness | 10 | ⬜ |
@@ -131,26 +131,19 @@ and Issue 7a (panel resolution reflow to 1920×1080). Don't start these without 
 
 ## 6. ⏳ Pending playtest checks — THE USER MUST DO THESE
 
-None of the three shipped fixes are fully verified, because driving a VR controller in Play Mode isn't
-reliably scriptable. Ask the user to confirm, in a headset or the XR simulator:
+W2's complete menu→maze lifecycle and W3's exact head-relative placement are now verified in Editor
+Play Mode. The remaining physical-input/comfort checks are:
 
-1. **W2 (highest priority):** press NEW GAME → the loading screen appears *before* the maze is visible,
-   stays up across the scene swap, and hides only once inside the maze — with no pause menu visible and
-   controller rays dead for the whole transition.
-2. **W1:** point a controller ray at a menu button → it highlights and the trigger activates it.
-3. **W8:** in the main menu, press WASD (XR simulator) → the player does NOT translate, but mouse-look
+1. **W1:** point a controller ray at a menu button → it highlights and the trigger activates it.
+2. **W8:** in the main menu, press WASD (XR simulator) → the player does NOT translate, but mouse-look
    still works.
-
-If W2 misbehaves, **stop and fix it before building W3/W4** — both build directly on it.
+3. **W3/W2 headset pass:** start a maze and confirm the loading cover remains centered while moving
+   the head, does not visibly jitter, covers enough peripheral view, and stays up across activation.
 
 ## 7. Remaining work — how to execute each
 
 Full specs are in `UI_FIX_PLAN.md` under each `W#`. Condensed here with the dependency order.
 
-- **W3 — loading screen head-relative** (do next; small). Switch `VRLoadingScreen` to its non-fixed
-  placement branch so it follows the head instead of the `(-3.04, 0.95, -1.342)` hallway anchor; then
-  remove the now-redundant `sceneAnchors` W2 added. Depends on W2's camera re-resolution. Script-only;
-  loading-screen file only.
 - **W4 — menu occlusion + distance** (Issues 4, 7b). `VRPauseMenu.cs:547-553`: replace the single
   centre `Physics.Raycast` with a `BoxCast` sized to the panel on an explicit geometry layer mask,
   applied on both the fixed and dynamic paths; pull menu viewing distance toward ~1.5 m (measured
@@ -175,10 +168,10 @@ Full specs are in `UI_FIX_PLAN.md` under each `W#`. Condensed here with the depe
   `VRGameplayMenu.uxml` (unused, but possible groundwork for the out-of-scope wrist panel) without the
   user — flag them instead.
 
-**Parallelisation & contention:** W3, W6 touch disjoint files and can run alongside others. **Scene
-files are the bottleneck** — only one worker may hold `MainMenuScene.unity` / `MainScene.unity` at a
-time, and the lead should serialise all scene writes through `script-execute` rather than hand-editing
-YAML. Full contention map is in the plan.
+**Parallelisation & contention:** W4, W5, and W6 own distinct primary code/assets, but **scene files
+are the bottleneck** — only one worker may hold `MainMenuScene.unity` / `MainScene.unity` at a time,
+and the lead should serialise all scene writes through `script-execute` rather than hand-editing YAML.
+Full contention map is in the plan.
 
 **Delegation pattern that worked:** give a subagent a self-contained spec that says SCRIPT FILES ONLY /
 no scene edits / no MCP / no commit / minimal diff / match existing style, and list the exact files it
@@ -206,7 +199,7 @@ and commits. (W2 and W8 were done this way.)
 2. Confirm Unity is alive: `npx unity-mcp-cli run-system-tool ping --input '{}'`.
 3. Verify the working tree matches the plan: `git log --oneline -8` should end at the commit named in
    §5. Ignore the non-ours churn in §4.8.
-4. Pick the next `⬜` item in dependency order (W3 next). Read the files it owns *fully* before editing.
+4. Pick the next `⬜` item in dependency order (W4 next). Read the files it owns *fully* before editing.
 5. Make the change (delegate if it parallelises), **compile-verify per §4.1**, screenshot if visual,
    review, commit one-per-issue, update the plan's running log with what was done and what's still
    `PENDING-HEADSET`/`PENDING-PLAYTEST`.
