@@ -133,18 +133,25 @@ Level intro banner visible after the screen clears. `PENDING-HEADSET` for comfor
 
 ---
 
-## W3 — Consolidate the hard-coded anchor
+## W3 — Loading screen: head-relative placement (Issue 13)
 
-`(-3.04, 0.95, -1.342)` is copy-pasted into `VRLoadingScreen.cs:17`, `VRMainMenu.cs:22`, and
-`VRPauseMenu.cs:34`, plus serialized copies in both scenes. It is a *main-menu hallway* coordinate,
-which is why the loading panel renders where the player isn't (Issue 13).
+**Scope reduced by W2.** W2 added `sceneAnchors` so the persistent loading screen at least uses the
+correct *per-scene* anchor. But the MainScene anchor is still `(-3.04, 0.95, -1.342)` — the main-menu
+hallway coordinate — while the player is teleported to the maze spawn. So the loading panel can still
+render where the player isn't. W3 finishes the job.
 
-**Approach.** The loading screen is a full-screen cover and has no business being world-anchored at a
-fixed point — make it head-relative. For the menus, replace the three literals with a single owned
-anchor so the value exists once.
+**Approach.** The loading screen is a full-screen cover; it should follow the head, not sit at a world
+point. `VRLoadingScreen.PlaceInFrontOfPlayer()` already has a non-fixed branch
+(`cameraTransform.position + forward * distanceFromCamera`) — switch the loading screen to use it by
+default (`useFixedWorldPlacement = false`), verify the camera re-resolution from W2 keeps it correct
+after the scene swap, and confirm it tracks smoothly rather than jitters. The `sceneAnchors` mechanism
+becomes dead weight once this works and should be removed to avoid two placement systems.
 
-**Acceptance:** loading screen visible from wherever the player stands, including immediately after
-`MovePlayerToSpawn`. Verified by screenshot from inside a maze.
+**Do NOT** change the *menu* anchors (main menu / pause) to head-relative here — those are handled by
+W4 (distance) and are a different UX decision. W3 is loading-screen-only.
+
+**Acceptance:** enter a maze via NEW GAME; the loading screen is centred in front of the player the
+whole time, including immediately after `MovePlayerToSpawn`. Screenshot from inside a maze.
 
 **QA:** ⬜ pending
 
