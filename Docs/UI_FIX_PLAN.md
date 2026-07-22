@@ -48,7 +48,7 @@ Ordered by dependency, not by issue number. Each row is one commit.
 | W2 | Transition ownership: persist loading screen + fade | 8, 5, 6 | — | ✅ Done (`b78075f`) |
 | W3 | Consolidate the hard-coded world anchor | 13 | W2 | ✅ Done |
 | W4 | Menu placement: wall occlusion + distance | 4, 7b | W1 | ✅ Done |
-| W5 | Editor authoring parity | 1 | W1 | ⬜ |
+| W5 | Editor authoring parity | 1 | W1 | ✅ Done |
 | W6 | Tutorial prompt: anchoring + styling | 3, 11 | — | ⬜ |
 | W7 | Timer fairness: warnings + tutorial teaching | 10 | W2 | ⬜ |
 | W8 | Main menu: block simulator WASD | 9 | — | ✅ Done (`8bcecdc`) |
@@ -189,15 +189,18 @@ runs `Awake()`, so every screen renders at once, unstyled — see
 
 **Approach (option A).** Move authoring data into the assets: `<Style src="..."/>` in each UXML,
 `display: none` as the USS default for non-active screens, and serialized `UIDocument` fields
-matching what `Awake()` assigns. Code then only *changes* state, never *establishes* it. Deliberately
-**not** `[ExecuteAlways]`, which would run `Awake`/`Update` in the Editor and risk scene-dirtying.
+matching what `Awake()` assigns. Serialized assets establish the authored view; the existing runtime
+assignments remain as idempotent fallbacks. Deliberately **not** `[ExecuteAlways]`, which would run
+`Awake`/`Update` in the Editor and risk scene-dirtying.
 
-**Sequenced after W1** so we don't bake the current mirrored-transform hack into serialized assets.
+**Sequenced after W1.** Prior runtime visual evidence showed that simply making the scale positive
+flips the readable face, so W5 normalizes the magnitude to the established runtime value while
+retaining the negative-X convention as a separately documented limitation.
 
 **Acceptance:** Scene/Game view outside Play Mode shows a single correctly-styled screen. Runtime
 behaviour unchanged. Before/after screenshots.
 
-**QA:** ⬜ pending
+**QA:** ✅ complete in Editor/Play Mode; `PENDING-HEADSET` for physical controller/readability checks
 
 ---
 
@@ -352,7 +355,9 @@ and confirm it highlights and activates.
    positive and is likely to give unexpected collision geometry. Scene hierarchy path 'Main Menu'"`
    The collider's world bounds do come out correct (1.66 × 1.03) because the box is centred and
    symmetric, so this did **not** cause Issue 2. But if clicks land on the *wrong button* once rays
-   work, this mirroring is the reason. Flagged for W5.
+   work, this mirroring is the reason. W5 later normalized the scale magnitude but retained the
+   negative-X convention because a positive-scale conversion flipped the readable face; the
+   orientation/collider architecture remains separate follow-up work.
 2. **The main menu is 2.5 m from the player** — measured from the actual interactor origin
    `(0, 0.82, -11.25)` to panel centre `(0, 1.15, -8.75)`. That confirms your "it is very far"
    complaint quantitatively; comfortable reading is 1.2–2.0 m. Feeds W4/Issue 7b.
@@ -519,6 +524,48 @@ the loading screen head-relative, at which point the anchors become redundant.
 on `Default` can still shorten placement. Placement remains world-locked after opening and is not
 continuously rechecked against moving geometry. The main menu itself has no runtime occlusion cast;
 its static authored anchor was verified clear and locomotion remains disabled.
+
+### W5 — Editor authoring parity ✅
+
+- **Commit:** the W5 commit containing this log entry.
+- **Authoring assets:** `VRMenu.uxml` and `VRLoadingScreen.uxml` now embed their matching USS with
+  `<Style src="..."/>`. The existing `hidden` classes and `.hidden { display: none; }` rules now
+  apply outside Play Mode, so inactive screens no longer stack as unstyled content.
+- **UIDocument parity:** the four scene UIDocuments now serialize the assets and layout values their
+  runtime scripts expect. Both `VR Loading Screen` documents use `VRLoadingScreen.uxml`,
+  `Position.Absolute`, fixed 900 × 560 size, centred pivot, and sorting order 1000. `Main Menu` and
+  `VR Pause Menu` use `VRMenu.uxml`, the same position/size/pivot settings, and sorting order 100.
+  MainScene's pause document previously referenced `VRGameplayMenu.uxml`.
+- **Scale parity:** MainMenuScene's authored `Main Menu` scale changed from
+  `(-0.00184, 0.00184, 0.00184)` to the established runtime value
+  `(-0.0016, 0.0016, 0.0016)`. Its W4 position remains `(0, 1.15, -9.75)`.
+- **Scope:** asset and scene serialization only. No C# or `[ExecuteAlways]` behavior was added.
+  Existing runtime setup remains as an idempotent fallback and was verified not to duplicate the
+  UXML-linked stylesheet.
+
+**QA status:**
+- ✅ Unity imported both UXML assets with zero warnings/errors and exactly one serialized
+  stylesheet reference each. XML parsing and `git diff --check` also passed.
+- ✅ Live cross-scene Edit Mode audit validated the four exact UIDocument records, the shared
+  `VRMenuPanelSettings.asset`, one stylesheet per complete visual tree, Start=`Flex`, every other
+  menu screen=`None`, and both loading roots hidden. Both scenes stayed clean.
+- ✅ Non-Play Game View before/after evidence shows the former stacked default controls replaced by
+  one fully styled Start screen: `Docs/QA/issue-01-before-editmode-stacking.png` and
+  `Docs/QA/w5-after-editmode-mainmenu.png`.
+- ✅ Play Mode regression exercised Start/Level/Settings switching, loading 0%→50%→hidden,
+  MainMenuScene→MainScene loading persistence, and Pause/Settings/Captured/Time Up/hidden cleanup.
+  The persistent loading owner count stayed one, delayed pause input enabled correctly, and runtime
+  stylesheet counts remained one per document.
+- ✅ Final fresh one-minute Unity Console query returned zero Errors and zero Exceptions;
+  `MainMenuScene` was restored active, valid, and clean.
+- ⚠️ **`PENDING-HEADSET`:** confirm physical controller-ray interaction, stereo readability,
+  perceived scale, and transition comfort on Quest.
+
+**Known limitations:** because `VRMenu.uxml` is shared, MainScene intentionally shows the
+representative Start screen in Edit Mode; runtime still selects Pause/Settings/Captured states. W5
+normalizes the negative-X scale magnitude but does not remove the existing mirrored/back-facing
+transform convention or its collider warning. Issue 7a's 1920 × 1080 reflow and deletion of the
+unused `VRGameplayMenu.uxml` remain out of scope.
 
 ### Reversal — W6 styling approach (was: port to UI Toolkit)
 

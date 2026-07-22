@@ -33,11 +33,22 @@ This is a maintained summary of important known locations. Add entries when a fi
 
 ### Unity scenes and objects
 
-No scene hierarchy has been recorded yet. Populate this section only from a live Unity inspection or direct inspection of a serialized scene/prefab asset.
+| Purpose | Unity object |
+| --- | --- |
+| Main-menu world-space UI document | `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu` |
+| Main-menu persistent loading UI document | `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen` |
+| Gameplay pause/failure world-space UI document | `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu` |
+| Gameplay loading UI document | `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen` |
 
 ### Important code and assets
 
-Add verified project paths here as they become relevant to completed changes.
+| Purpose | Path |
+| --- | --- |
+| Shared menu authoring layout | `Assets/_EchoRoom/Resources/UI/VRMenu.uxml` |
+| Shared menu stylesheet | `Assets/_EchoRoom/Resources/UI/VRMenu.uss` |
+| Loading authoring layout | `Assets/_EchoRoom/Resources/UI/VRLoadingScreen.uxml` |
+| Loading stylesheet | `Assets/_EchoRoom/Resources/UI/VRLoadingScreen.uss` |
+| Shared world-space UI Toolkit panel settings | `Assets/_EchoRoom/Resources/UI/VRMenuPanelSettings.asset` |
 
 ### Unity MCP connection
 
@@ -66,7 +77,7 @@ Connection procedure: open this Unity project, open the Ivan Murzak AI Game Deve
 - The memory is persistent within this repository, but it is not an automatic account-wide memory. A person or agent must read this file to use it.
 - Changes made by tools or people who do not update this file will not appear automatically.
 - History before 2026-07-05 has not yet been reconstructed.
-- The initial live Unity scene/object index is pending a successful Unity Editor inspection.
+- The live Unity scene/object index is intentionally partial and should be expanded only from verified work.
 
 ## Change Journal
 
@@ -2816,3 +2827,30 @@ Verification performed:
 - **Decisions and assumptions:** Used the existing `Default` and `Echoable` geometry layers instead of adding a dedicated project layer and relayering every level/prefab, which would have expanded W4 substantially. The XR body collider is on `Ignore Raycast`, so mask 1025 excludes it. Pause distance was deliberately left at 2.1 m because its 1.8 m-wide panel is larger than the 1.44 m-wide main menu. The closer main-menu anchor preserves its existing height and hallway alignment. The `keepInFrontOfWalls` toggle now bypasses all cast, overlap, and scale behavior when disabled. Saving the scenes removed the W3-era `useFixedWorldPlacement`, fixed-anchor, and `sceneAnchors` YAML keys from `VRLoadingScreen`; those members no longer exist and Unity was expected to normalize them on the next intentional save.
 - **Known limitations and follow-up:** Mask 1025 is explicit but not semantically geometry-only; solid props/interactables on `Default` may still shorten placement. Pause placement is world-locked after opening and is not continuously revalidated against moving geometry. The emergency fallback may reduce the panel to 10% linear scale; this avoids intersection but may be unreadable. If no clear pose exists even then, the prior pose is retained and an Error asks the player/tester to move away from the wall and reopen. The static main menu has no runtime occlusion cast; this was accepted because locomotion is disabled and the authored anchor was verified clear. `PENDING-HEADSET` for the new main-menu comfort/readability/controller reach and emergency scale-to-fit behavior.
 - **Verification:** Unity rebuilt `Library/ScriptAssemblies/Assembly-CSharp.dll`; final readback reported `EditorUtility.scriptCompilationFailed=False`, the assembly was 41.8 seconds old, and reflection found `PlaceMenu`, `GetOcclusionAdjustedPosition`, and `IsPanelPositionClear`. Deterministic Play Mode cases passed for clear space, centred wall, side/corner-only wall, fixed-anchor obstruction, close wall, ignored trigger, excluded layer, and avoidance disabled; every selected panel volume had zero wall-mask overlaps. A 24-pose sweep across three player positions and eight yaw angles returned 24/24 clear volumes; deliberately cramped cross-corridor poses exercised scale-to-fit, and one extreme pose remained at 0.43 m because no scale met the 0.45 m minimum. Normal pause placement remained full-size at 2.101 m with zero overlaps. Runtime main-menu readback measured camera `(0, 0.82, -11.25)`, panel `(0, 1.15, -9.75)`, 1.500 m forward depth, 1.536 m centre distance, and runtime scale `(-0.0016, 0.0016, 0.0016)`. All three QA images were captured and visually inspected. Final Console query for the last minute returned zero Errors. Live readback confirmed both scene values and exact object paths, both scenes were clean, and `MainMenuScene` was restored active.
+
+### UI-W5-EDITOR-AUTHORING-PARITY-001 — Make Edit Mode UI match runtime authoring
+
+- **Date:** 2026-07-23
+- **Goal:** Complete UI work item W5 / Issue 1 by making UI Toolkit styles, default visibility, document assets, dimensions, and main-menu scale available in serialized authoring data instead of depending on `Awake()`.
+- **Result:** The menu and loading UXML assets now load their matching stylesheets directly. Their existing hidden-state classes therefore work outside Play Mode, replacing the former flat stack of all screens with one fully styled representative Start screen. The four scene UIDocuments now match their runtime asset/layout matrix, and MainMenuScene's authored main-menu scale matches `VRMainMenu.worldScale=0.0016`. Runtime screen switching and loading behavior remain unchanged.
+- **Files created:**
+  - `Docs/QA/w5-after-editmode-mainmenu.png`
+- **Files modified:**
+  - `Assets/_EchoRoom/Resources/UI/VRLoadingScreen.uxml`
+  - `Assets/_EchoRoom/Resources/UI/VRMenu.uxml`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Docs/UI_FIX_PLAN.md`
+  - `Docs/HANDOFF.md`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen`
+- **Components/assets/settings:** `VRMenu.uxml` embeds `VRMenu.uss`; `VRLoadingScreen.uxml` embeds `VRLoadingScreen.uss`. Both loading UIDocuments use `VRLoadingScreen.uxml`, `Position.Absolute`, fixed 900 × 560 size, centred pivot, sorting order 1000, and `VRMenuPanelSettings.asset`. Both menu UIDocuments use `VRMenu.uxml`, the same position/size/pivot/panel settings, and sorting order 100. MainScene's pause UIDocument previously referenced `VRGameplayMenu.uxml`. MainMenuScene's `Main Menu` local scale is now `(-0.0016, 0.0016, 0.0016)` while its W4 world position remains `(0, 1.15, -9.75)`.
+- **Decisions and assumptions:** Used asset-first authoring and did not introduce `[ExecuteAlways]`, avoiding edit-time lifecycle behavior and scene dirtying. Existing UXML `hidden` classes and USS rules were sufficient once the stylesheets were embedded. Runtime asset/document setup remains as an idempotent fallback; complete-tree inspection confirmed it does not duplicate either stylesheet. No C#, PanelSettings resolution, or runtime menu-state logic changed. The shared menu layout exposes one representative Start screen in Edit Mode. The established negative-X/180° orientation convention remains because a positive-scale conversion previously flipped the readable face and requires separate collider/ray/headset work. `VRGameplayMenu.uxml` was not deleted.
+- **Verification:** Unity imported both UXMLs with `m_ImportedWithErrors=false`, `m_ImportedWithWarnings=false`, and one linked stylesheet each. A live cross-scene Edit Mode audit opened both scene assets through Unity and verified all four exact objects, source assets, shared PanelSettings, Absolute/Fixed 900 × 560 settings, centred pivots, sorting orders, and one stylesheet reference across each full visual tree. After a real UI Toolkit repaint, Start resolved to `Flex`; Level/Warning/Pause/Settings/Captured, both loading roots, and Thank You resolved to `None`. The after-image `Docs/QA/w5-after-editmode-mainmenu.png` was captured with `EditorApplication.isPlaying=false` and visually compared with `Docs/QA/issue-01-before-editmode-stacking.png`. Play Mode tests exercised Start/Level/Settings switching, loading 0%→50%→hidden, a real MainMenuScene→MainScene transition with exactly one persistent loading owner, and Pause/Settings/Captured/Time Up/hidden cleanup. Delayed pause input activated after layout, and hiding restored collider, time, and audio. Runtime stylesheet counts remained one per document. The final fresh one-minute Console query returned zero Errors and zero Exceptions. Both scenes were read back clean, and `MainMenuScene` was restored active and clean.
+- **Known limitations:** `PENDING-HEADSET` for physical controller-ray hover/trigger behavior, stereo readability, perceived scale, and transition comfort. MainScene's Edit Mode representative Start screen is not its runtime Pause state. W5 does not resolve the pre-existing negative-scale collider warning or Issue 7a's deferred 1920 × 1080 reflow.
+- **Follow-up:** Run the existing W1/W4/W5 Quest checks, address the transform convention separately if controller targeting remains incorrect, and continue the UI plan with W6.

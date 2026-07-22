@@ -1,4 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <Style src="project://database/Assets/_EchoRoom/Resources/UI/VRMenu.uss?fileID=7433441132597879392&amp;guid=2becd1cdd6fe8ee4ab3ad33fdeaecfa9&amp;type=3#VRMenu" />
   <ui:VisualElement name="menu-root" class="menu-root">
     <ui:VisualElement class="background-dim" picking-mode="Ignore" />
     <ui:VisualElement class="sonar-ring sonar-ring-outer" picking-mode="Ignore" />

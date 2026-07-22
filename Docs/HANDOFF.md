@@ -3,7 +3,7 @@
 **Purpose.** Everything a fresh Claude Code session — or a different AI model — needs to continue this
 UI-fix pass without re-discovering what's already known. Read this top to bottom before touching code.
 
-**Last updated:** after W3 completion and QA (2026-07-23). Branch: `Development-Phase`. No pushes made.
+**Last updated:** after W5 completion and QA (2026-07-23). Branch: `Development-Phase`. No pushes made.
 
 ---
 
@@ -97,7 +97,9 @@ Then `Read` the PNG to view it. Screenshots land in `Docs/QA/`.
    plus a 180° rotation, so panels are geometrically back-facing/mirrored. Unity even warns:
    *"BoxCollider does not support negative scale."* This is why Scene view shows mirrored text
    ("ЈАИDIƧ"). It did NOT cause the ray bug (that was the trigger enum, W1 — fixed), but if clicks
-   ever land on the wrong button, this is why. Untangling it is part of W5; don't bake it into assets.
+   ever land on the wrong button, this is why. W5 normalized the authored scale magnitude to the
+   existing runtime value but deliberately retained this orientation convention; untangling it now
+   requires a separate collider/orientation/controller-targeting pass with headset verification.
 4. **`QueryTriggerInteraction` enum is `UseGlobal=0, Ignore=1, Collide=2`.** Easy to get backwards.
 5. **Three separate name-string GameObject lookups exist** and silently break on rename:
    `VRMainMenu.cs` (`"Menu UI Ray"`), `MazeLevelTimer.cs` (`"Right Controller"`), and the tutorial
@@ -121,8 +123,8 @@ Then `Read` the PNG to view it. Screenshots land in `Docs/QA/`.
 | W2 | Persistent transition owner | 8, 5, 6 | ✅ `b78075f` |
 | W3 | Loading screen head-relative | 13 | ✅ completed and QA-verified |
 | W4 | Menu occlusion + distance | 4, 7b | ✅ completed and QA-verified |
-| **W5** | Editor authoring parity | 1 | ⬜ next |
-| **W6** | Tutorial prompt anchor + style | 3, 11 | ⬜ |
+| W5 | Editor authoring parity | 1 | ✅ completed and QA-verified |
+| **W6** | Tutorial prompt anchor + style | 3, 11 | ⬜ next |
 | **W7** | Timer fairness | 10 | ⬜ |
 | **W9** | Interaction layers + safe cleanup | adjacent | ⬜ |
 
@@ -139,6 +141,16 @@ world-locked after opening. Saving both scenes normalized W3's obsolete loading-
 QA images: `Docs/QA/w4-main-menu-distance.png`, `Docs/QA/w4-pause-clear-main-scene.png`, and
 `Docs/QA/w4-pause-side-wall-main-scene.png`.
 
+**W5 result worth carrying forward:** `VRMenu.uxml` and `VRLoadingScreen.uxml` now link their
+matching stylesheets directly, so Edit Mode no longer depends on `Awake()` for styling or hidden
+screen defaults. Both loading UIDocuments serialize Absolute/Fixed 900×560 layouts; MainScene's
+pause UIDocument now serializes `VRMenu.uxml`; and the MainMenuScene `Main Menu` authored scale now
+matches runtime at `(-0.0016, 0.0016, 0.0016)`. Runtime setup remains as an idempotent fallback and
+was verified to leave exactly one stylesheet attached. MainScene intentionally shows the shared
+UXML's representative Start screen in Edit Mode; runtime state selection is unchanged. Before/after
+evidence: `Docs/QA/issue-01-before-editmode-stacking.png` and
+`Docs/QA/w5-after-editmode-mainmenu.png`.
+
 ## 6. ⏳ Pending playtest checks — THE USER MUST DO THESE
 
 W2's complete menu→maze lifecycle and W3's exact head-relative placement are now verified in Editor
@@ -152,16 +164,13 @@ Play Mode. The remaining physical-input/comfort checks are:
 4. **W4:** confirm the closer main menu (1.500 m forward / 1.536 m centre distance) is comfortable,
    readable, and still easy to target with controller rays. Open Pause while close to/looking across
    a wall and confirm the emergency pull-in/scale-to-fit behavior is preferable to clipping.
+5. **W5:** confirm the authoring changes did not alter perceived scale, stereo readability, or
+   physical controller-ray hover/trigger behavior on Quest.
 
 ## 7. Remaining work — how to execute each
 
 Full specs are in `UI_FIX_PLAN.md` under each `W#`. Condensed here with the dependency order.
 
-- **W5 — editor authoring parity** (Issue 1). Move UI Toolkit authoring data into assets: `<Style>` in
-  UXML, `display:none` USS defaults for inactive screens, serialized `UIDocument` fields matching what
-  `Awake()` assigns — so the editor shows one styled screen instead of all screens stacked unstyled
-  (`Docs/QA/issue-01-before-editmode-stacking.png` is the "before"). Do NOT use `[ExecuteAlways]`.
-  Sequence after W1 (done) so the mirrored-transform hack isn't codified.
 - **W6 — tutorial prompt** (Issues 3, 11). **Anchor:** `TutorialDirector.cs:345` re-drives the prompt
   from the controller every frame → make it head-relative, world-locked on show (place once in front
   of the player, then freeze). **Style: DECISION PENDING (see §8)** — recommended path is restyle the
@@ -208,7 +217,7 @@ and commits. (W2 and W8 were done this way.)
 2. Confirm Unity is alive: `npx unity-mcp-cli run-system-tool ping --input '{}'`.
 3. Verify the working tree matches the plan: `git log --oneline -8` should end at the commit named in
    §5. Ignore the non-ours churn in §4.8.
-4. Pick the next `⬜` item in dependency order (W5 next). Read the files it owns *fully* before editing.
+4. Pick the next `⬜` item in dependency order (W6 next). Read the files it owns *fully* before editing.
 5. Make the change (delegate if it parallelises), **compile-verify per §4.1**, screenshot if visual,
    review, commit one-per-issue, update the plan's running log with what was done and what's still
    `PENDING-HEADSET`/`PENDING-PLAYTEST`.

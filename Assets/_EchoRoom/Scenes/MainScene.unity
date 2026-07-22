@@ -7948,10 +7948,10 @@ MonoBehaviour:
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: 93a94c98f8d609f4a98661e769072a6e, type: 3}
   m_SortingOrder: 1000
-  m_Position: 0
+  m_Position: 1
   m_WorldSpaceSizeMode: 1
-  m_WorldSpaceWidth: 1920
-  m_WorldSpaceHeight: 1080
+  m_WorldSpaceWidth: 900
+  m_WorldSpaceHeight: 560
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
@@ -9927,7 +9927,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
   m_PanelSettings: {fileID: 11400000, guid: ee83195acb0a412498e926648526fa72, type: 2}
   m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: 4f0b0a75a708925498c46d34c83f67ba, type: 3}
+  sourceAsset: {fileID: 9197481963319205126, guid: 29a147394fe1c7548bbd761c54f34ca6, type: 3}
   m_SortingOrder: 100
   m_Position: 1
   m_WorldSpaceSizeMode: 1

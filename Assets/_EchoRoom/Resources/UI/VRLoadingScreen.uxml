@@ -1,4 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <Style src="project://database/Assets/_EchoRoom/Resources/UI/VRLoadingScreen.uss?fileID=7433441132597879392&amp;guid=dc228cac53d5b004ba0c79a935845fdf&amp;type=3#VRLoadingScreen" />
   <ui:VisualElement name="loading-root" class="loading-root hidden">
     <ui:VisualElement class="veil" />
     <ui:VisualElement class="loading-card">
