@@ -37,7 +37,7 @@ namespace EchoRoom.UI
         [SerializeField] bool keepInFrontOfWalls = true;
         [SerializeField, Min(0.01f)] float wallPadding = 0.15f;
         [SerializeField, Min(0.25f)] float minimumDistanceFromCamera = 0.45f;
-        [SerializeField] LayerMask wallMask = ~0;
+        [SerializeField] LayerMask wallMask = (1 << 0) | (1 << 10);
         [SerializeField] KeyCode keyboardPauseKey = KeyCode.Escape;
 
         [Header("Return To Menu")]
@@ -63,6 +63,7 @@ namespace EchoRoom.UI
         float previousTimeScale = 1f;
         bool ownsAudioPause;
         bool previousAudioPause;
+        Vector3 dynamicMenuScale;
         Coroutine enableInputRoutine;
 #if ENABLE_INPUT_SYSTEM
         InputAction pauseAction;
@@ -90,6 +91,7 @@ namespace EchoRoom.UI
             documentCollider = GetComponent<BoxCollider>();
             ResolveAssets();
             ConfigureDocument();
+            dynamicMenuScale = transform.localScale;
             ResolveVisualElements();
             BindCoreButtons();
             ResolveCamera();
@@ -534,8 +536,8 @@ namespace EchoRoom.UI
 
         void PlaceMenuAtFixedWorldAnchor()
         {
-            transform.SetPositionAndRotation(fixedStartMenuPosition, Quaternion.Euler(fixedStartMenuEulerAngles));
-            transform.localScale = fixedStartMenuScale;
+            PlaceMenu(fixedStartMenuPosition, Quaternion.Euler(fixedStartMenuEulerAngles),
+                fixedStartMenuScale);
         }
 
         void PlaceMenuInFrontOfPlayer()
@@ -544,14 +546,143 @@ namespace EchoRoom.UI
             ResolveCamera();
             if (cameraTransform == null) return;
 
-            float placementDistance = distanceFromCamera;
-            if (keepInFrontOfWalls && Physics.Raycast(cameraTransform.position, cameraTransform.forward,
-                    out RaycastHit hit, distanceFromCamera, wallMask, QueryTriggerInteraction.Ignore))
-                placementDistance = Mathf.Max(minimumDistanceFromCamera, hit.distance - wallPadding);
+            Vector3 preferredPosition = cameraTransform.position + cameraTransform.forward * distanceFromCamera +
+                                        cameraTransform.up * heightOffset;
+            PlaceMenu(preferredPosition, cameraTransform.rotation * Quaternion.Euler(0f, 180f, 0f),
+                dynamicMenuScale);
+        }
 
-            transform.position = cameraTransform.position + cameraTransform.forward * placementDistance +
-                                 cameraTransform.up * heightOffset;
-            transform.rotation = cameraTransform.rotation * Quaternion.Euler(0f, 180f, 0f);
+        void PlaceMenu(Vector3 preferredPosition, Quaternion rotation, Vector3 localScale)
+        {
+            if (!keepInFrontOfWalls || cameraTransform == null || documentCollider == null)
+            {
+                transform.SetPositionAndRotation(preferredPosition, rotation);
+                transform.localScale = localScale;
+                return;
+            }
+
+            Vector3 position = GetOcclusionAdjustedPosition(preferredPosition, rotation, localScale);
+            Vector3 placementScale = localScale;
+            Vector3 halfExtents = GetPanelHalfExtents(placementScale);
+            bool positionIsClear = IsPanelPositionClear(position, rotation, halfExtents);
+            bool foundClearPlacement = positionIsClear;
+            float placementDistance = cameraTransform != null
+                ? Vector3.Distance(cameraTransform.position, position)
+                : 0f;
+            if (!positionIsClear || placementDistance < minimumDistanceFromCamera)
+            {
+                Vector3 bestPosition = position;
+                Vector3 bestScale = placementScale;
+                float bestDistance = positionIsClear ? placementDistance : -1f;
+                for (int step = 1; step <= 9; step++)
+                {
+                    float scaleFactor = 1f - step * 0.1f;
+                    Vector3 candidateScale = localScale * scaleFactor;
+                    Vector3 candidatePosition = GetOcclusionAdjustedPosition(preferredPosition, rotation,
+                        candidateScale);
+                    Vector3 candidateHalfExtents = GetPanelHalfExtents(candidateScale);
+                    if (!IsPanelPositionClear(candidatePosition, rotation, candidateHalfExtents)) continue;
+
+                    float candidateDistance = cameraTransform != null
+                        ? Vector3.Distance(cameraTransform.position, candidatePosition)
+                        : 0f;
+                    foundClearPlacement = true;
+                    if (candidateDistance > bestDistance + 0.01f)
+                    {
+                        bestPosition = candidatePosition;
+                        bestScale = candidateScale;
+                        bestDistance = candidateDistance;
+                    }
+
+                    if (candidateDistance < minimumDistanceFromCamera) continue;
+                    bestPosition = candidatePosition;
+                    bestScale = candidateScale;
+                    bestDistance = candidateDistance;
+                    break;
+                }
+
+                position = bestPosition;
+                placementScale = bestScale;
+                placementDistance = bestDistance;
+            }
+
+            halfExtents = GetPanelHalfExtents(placementScale);
+            if (!foundClearPlacement || !IsPanelPositionClear(position, rotation, halfExtents))
+            {
+                Debug.LogError("[VRPauseMenu] No wall-free placement exists at this viewpoint, even at the " +
+                               "minimum fallback scale. Move away from the wall and reopen the menu.", this);
+                return;
+            }
+
+            float scaleRatio = Mathf.Abs(localScale.x) > Mathf.Epsilon
+                ? Mathf.Abs(placementScale.x / localScale.x)
+                : 1f;
+            if (scaleRatio < 0.999f)
+                Debug.LogWarning($"[VRPauseMenu] The full-size panel does not fit comfortably at this viewpoint; " +
+                                 $"temporarily scaled it to {scaleRatio:P0} to prevent wall clipping.", this);
+
+            if (placementDistance < minimumDistanceFromCamera)
+                Debug.LogWarning($"[VRPauseMenu] Wall geometry leaves only {placementDistance:F2} m for the " +
+                                 "menu; placing it closer than the configured comfort minimum to prevent " +
+                                 "clipping.", this);
+
+            transform.SetPositionAndRotation(position, rotation);
+            transform.localScale = placementScale;
+        }
+
+        Vector3 GetOcclusionAdjustedPosition(Vector3 preferredPosition, Quaternion rotation, Vector3 localScale)
+        {
+            if (!keepInFrontOfWalls || cameraTransform == null || documentCollider == null)
+                return preferredPosition;
+
+            Vector3 offset = preferredPosition - cameraTransform.position;
+            float preferredDistance = offset.magnitude;
+            if (preferredDistance <= Mathf.Epsilon) return preferredPosition;
+
+            Vector3 direction = offset / preferredDistance;
+            Vector3 halfExtents = GetPanelHalfExtents(localScale);
+            float safeDistance = preferredDistance;
+            RaycastHit[] hits = Physics.BoxCastAll(cameraTransform.position, halfExtents, direction, rotation,
+                preferredDistance, wallMask, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < hits.Length; i++)
+                if (hits[i].collider != documentCollider)
+                    safeDistance = Mathf.Min(safeDistance, Mathf.Max(0f, hits[i].distance - wallPadding));
+
+            Vector3 position = cameraTransform.position + direction * safeDistance;
+            if (!IsPanelPositionClear(position, rotation, halfExtents))
+            {
+                const float searchStep = 0.05f;
+                for (float distance = safeDistance - searchStep; distance >= 0f; distance -= searchStep)
+                {
+                    Vector3 candidate = cameraTransform.position + direction * distance;
+                    if (!IsPanelPositionClear(candidate, rotation, halfExtents)) continue;
+                    safeDistance = distance;
+                    position = candidate;
+                    break;
+                }
+            }
+
+            return position;
+        }
+
+        bool IsPanelPositionClear(Vector3 position, Quaternion rotation, Vector3 halfExtents)
+        {
+            Collider[] overlaps = Physics.OverlapBox(position, halfExtents, rotation, wallMask,
+                QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < overlaps.Length; i++)
+                if (overlaps[i] != documentCollider) return false;
+            return true;
+        }
+
+        Vector3 GetPanelHalfExtents(Vector3 localScale)
+        {
+            Vector3 parentScale = transform.parent != null ? transform.parent.lossyScale : Vector3.one;
+            Vector3 worldScale = Vector3.Scale(parentScale, localScale);
+            worldScale = new Vector3(Mathf.Abs(worldScale.x), Mathf.Abs(worldScale.y),
+                Mathf.Abs(worldScale.z));
+            Vector3 halfExtents = Vector3.Scale(documentCollider.size, worldScale) * 0.5f;
+            halfExtents.z = Mathf.Max(halfExtents.z, 0.005f);
+            return halfExtents;
         }
 
         void ResolveCamera()

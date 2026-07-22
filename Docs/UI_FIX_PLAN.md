@@ -47,7 +47,7 @@ Ordered by dependency, not by issue number. Each row is one commit.
 | W1 | Ray→UI input fix (trigger interaction) | 2 | — | ✅ Done (`052bb7c`) |
 | W2 | Transition ownership: persist loading screen + fade | 8, 5, 6 | — | ✅ Done (`b78075f`) |
 | W3 | Consolidate the hard-coded world anchor | 13 | W2 | ✅ Done |
-| W4 | Menu placement: wall occlusion + distance | 4, 7b | W1 | ⬜ |
+| W4 | Menu placement: wall occlusion + distance | 4, 7b | W1 | ✅ Done |
 | W5 | Editor authoring parity | 1 | W1 | ⬜ |
 | W6 | Tutorial prompt: anchoring + styling | 3, 11 | — | ⬜ |
 | W7 | Timer fairness: warnings + tutorial teaching | 10 | W2 | ⬜ |
@@ -68,7 +68,7 @@ strictly sequential (same files). W4 and W5 both wait on W1's outcome.
 | `TutorialDirector.cs` | W6, then W7 |
 | `MazeLevelTimer.cs` | W7 |
 | `UnifiedLocomotionBridge.cs` | W8 |
-| `MainMenuScene.unity` / `MainScene.unity` | W1, W2, W8 — **serialise these, never concurrent** |
+| `MainMenuScene.unity` / `MainScene.unity` | W1, W2, W4, W8 — **serialise these, never concurrent** |
 
 Scenes are the bottleneck. Only one worker may hold a scene at a time, and the lead serialises all
 scene writes through MCP rather than editing YAML on disk.
@@ -160,8 +160,9 @@ whole time, including immediately after `MovePlayerToSpawn`. Screenshot from ins
 ## W4 — Menu placement: occlusion and distance
 
 **Occlusion (Issue 4).** `VRPauseMenu.cs:547-553` casts a single centre ray against a ~1.8 m-wide
-panel, so corners punch through walls. Three defects: single ray, `wallMask = ~0` (hits props and
-triggers), and the fixed-anchor path skips the check entirely.
+panel, so corners punch through walls. Three defects: single ray, `wallMask = ~0` (hits solid props,
+interactables, and player colliders), and the fixed-anchor path skips the check entirely. Trigger
+volumes were already excluded by `QueryTriggerInteraction.Ignore`.
 
 **Approach.** `BoxCast` sized to the panel, on an explicit geometry layer mask, applied on **both**
 the dynamic and fixed paths — treating the fixed anchor as a preferred position that gets pulled in
@@ -174,7 +175,8 @@ distance (comfort band is 1.2–2.0 m; below ~1 m causes vergence strain).
 positions by screenshot. Distance change is `PENDING-HEADSET`; I'll set a defensible starting value
 and you adjust to taste.
 
-**QA:** ⬜ pending
+**QA:** ✅ Editor Play Mode and physics-volume checks complete. `PENDING-HEADSET` for main-menu
+distance/readability and emergency scale-to-fit comfort.
 
 ---
 
@@ -467,6 +469,56 @@ the loading screen head-relative, at which point the anchors become redundant.
   scenes were clean after the test.
 - ⚠️ **`PENDING-HEADSET`:** continuous head tracking, peripheral coverage, and any perceived
   late-update jitter still require a physical Quest comfort check.
+
+### W4 — Menu occlusion and viewing distance ✅
+
+- **Commit:** the W4 commit containing this log entry.
+- **Occlusion:** `VRPauseMenu` now routes fixed Start/Start→Settings and dynamic
+  Pause/Captured/Time Up/Pause→Settings placement through one volume-aware path. It casts the
+  oriented world-space `BoxCollider` footprint instead of one centre ray, takes the nearest hit,
+  backs off by the existing 0.15 m padding, and validates the final pose with an overlap check.
+- **Mask:** `wallMask` is now explicit `Default | Echoable` (`1025`) instead of `~0`. This matches
+  the live maze geometry layers, excludes the XR body on `Ignore Raycast`, and continues to ignore
+  triggers through `QueryTriggerInteraction.Ignore`.
+- **No-fit fallback:** if the 1.8 m × 1.12 m pause panel cannot fit anywhere along the preferred
+  line, placement retries from 90% down to 10% scale, selecting the largest scale that reaches the
+  0.45 m comfort minimum when possible. The authored full scale is restored and recalculated every
+  time the menu opens. If even 10% has no clear pose, the previous pose is retained and an Error
+  tells the player/tester to move away from the wall and reopen the menu.
+- **Distance:** the main-menu fixed anchor moved from `(0, 1.15, -8.75)` to
+  `(0, 1.15, -9.75)`. Runtime measurement changed from 2.522 m to **1.536 m centre distance**
+  (1.500 m forward depth). The dormant camera-relative fallback is also 1.5 m. Gameplay pause-menu
+  distance deliberately remains 2.1 m because its panel is wider (1.8 m versus 1.44 m).
+- **Scene normalization:** saving both scenes intentionally removed W3's obsolete serialized
+  loading-screen anchor keys. Those fields no longer exist in `VRLoadingScreen`; this is schema
+  cleanup only, not a W4 loading-screen behavior change.
+
+**QA status:**
+- ✅ Fresh Unity compilation with `scriptCompilationFailed=false`; reflection found the new
+  placement/overlap helpers in a freshly rebuilt `Assembly-CSharp.dll`.
+- ✅ Deterministic physics cases passed for clear space, centred obstruction, side/corner-only
+  obstruction missed by the old ray, fixed-anchor obstruction, close wall, ignored trigger, and an
+  excluded-layer collider. Final overlap count was zero in every case.
+- ✅ A 24-pose maze sweep across three player positions and eight yaw angles produced 24/24 clear
+  final panel volumes. Scale-to-fit was required in the deliberately narrow cross-corridor cases.
+  Final targeted regression checks also confirmed avoidance-on pulls the panel to 1.345 m while
+  avoidance-off preserves the exact preferred pose and scale.
+- ✅ Normal gameplay pause pose remained full-size at 2.101 m with no geometry overlap. Evidence:
+  `Docs/QA/w4-pause-clear-main-scene.png`. Side-only obstruction evidence:
+  `Docs/QA/w4-pause-side-wall-main-scene.png`.
+- ✅ Main-menu runtime readback measured 1.500 m forward / 1.536 m centre distance at full authored
+  runtime scale. Evidence: `Docs/QA/w4-main-menu-distance.png`.
+- ✅ Final one-minute Unity Console query returned zero Errors; both scenes read back clean and
+  `MainMenuScene` was restored as the active scene.
+- ⚠️ **`PENDING-HEADSET`:** confirm the closer main menu is readable/comfortable and controller rays
+  still feel natural. Also test the emergency scale-to-fit behavior near a wall; one deliberately
+  extreme sweep pose remained at 0.43 m because no scale could meet the 0.45 m minimum, although it
+  was geometry-clear.
+
+**Known limitations:** the explicit mask is practical, not semantically geometry-only—solid props
+on `Default` can still shorten placement. Placement remains world-locked after opening and is not
+continuously rechecked against moving geometry. The main menu itself has no runtime occlusion cast;
+its static authored anchor was verified clear and locomotion remains disabled.
 
 ### Reversal — W6 styling approach (was: port to UI Toolkit)
 

@@ -120,14 +120,24 @@ Then `Read` the PNG to view it. Screenshots land in `Docs/QA/`.
 | W8 | Main-menu simulator WASD | 9 | ✅ `8bcecdc` |
 | W2 | Persistent transition owner | 8, 5, 6 | ✅ `b78075f` |
 | W3 | Loading screen head-relative | 13 | ✅ completed and QA-verified |
-| **W4** | Menu occlusion + distance | 4, 7b | ⬜ next |
-| **W5** | Editor authoring parity | 1 | ⬜ |
+| W4 | Menu occlusion + distance | 4, 7b | ✅ completed and QA-verified |
+| **W5** | Editor authoring parity | 1 | ⬜ next |
 | **W6** | Tutorial prompt anchor + style | 3, 11 | ⬜ |
 | **W7** | Timer fairness | 10 | ⬜ |
 | **W9** | Interaction layers + safe cleanup | adjacent | ⬜ |
 
 **Out of scope this pass (user's call):** Issue 12 / Issue 14 (in-game HUD / wrist objective panel)
 and Issue 7a (panel resolution reflow to 1920×1080). Don't start these without the user.
+
+**W4 result worth carrying forward:** `VRPauseMenu` now uses an oriented panel-volume cast plus final
+overlap validation on `Default | Echoable` (`1025`) for both fixed and dynamic paths. If no full-size
+pose fits, it temporarily scales down in 10% steps; it restores the authored full scale on the next
+open. The normal pause pose remains 2.1 m. Main-menu placement is still a static authored anchor,
+now 1.500 m forward / 1.536 m centre distance and verified clear with locomotion disabled. The mask
+is practical rather than semantic—solid `Default` props can affect placement—and the menu remains
+world-locked after opening. Saving both scenes normalized W3's obsolete loading-anchor YAML keys.
+QA images: `Docs/QA/w4-main-menu-distance.png`, `Docs/QA/w4-pause-clear-main-scene.png`, and
+`Docs/QA/w4-pause-side-wall-main-scene.png`.
 
 ## 6. ⏳ Pending playtest checks — THE USER MUST DO THESE
 
@@ -139,15 +149,14 @@ Play Mode. The remaining physical-input/comfort checks are:
    still works.
 3. **W3/W2 headset pass:** start a maze and confirm the loading cover remains centered while moving
    the head, does not visibly jitter, covers enough peripheral view, and stays up across activation.
+4. **W4:** confirm the closer main menu (1.500 m forward / 1.536 m centre distance) is comfortable,
+   readable, and still easy to target with controller rays. Open Pause while close to/looking across
+   a wall and confirm the emergency pull-in/scale-to-fit behavior is preferable to clipping.
 
 ## 7. Remaining work — how to execute each
 
 Full specs are in `UI_FIX_PLAN.md` under each `W#`. Condensed here with the dependency order.
 
-- **W4 — menu occlusion + distance** (Issues 4, 7b). `VRPauseMenu.cs:547-553`: replace the single
-  centre `Physics.Raycast` with a `BoxCast` sized to the panel on an explicit geometry layer mask,
-  applied on both the fixed and dynamic paths; pull menu viewing distance toward ~1.5 m (measured
-  current main-menu distance is 2.5 m). Distance is `PENDING-HEADSET`. Owns `VRPauseMenu.cs`.
 - **W5 — editor authoring parity** (Issue 1). Move UI Toolkit authoring data into assets: `<Style>` in
   UXML, `display:none` USS defaults for inactive screens, serialized `UIDocument` fields matching what
   `Awake()` assigns — so the editor shows one styled screen instead of all screens stacked unstyled
@@ -199,7 +208,7 @@ and commits. (W2 and W8 were done this way.)
 2. Confirm Unity is alive: `npx unity-mcp-cli run-system-tool ping --input '{}'`.
 3. Verify the working tree matches the plan: `git log --oneline -8` should end at the commit named in
    §5. Ignore the non-ours churn in §4.8.
-4. Pick the next `⬜` item in dependency order (W4 next). Read the files it owns *fully* before editing.
+4. Pick the next `⬜` item in dependency order (W5 next). Read the files it owns *fully* before editing.
 5. Make the change (delegate if it parallelises), **compile-verify per §4.1**, screenshot if visual,
    review, commit one-per-issue, update the plan's running log with what was done and what's still
    `PENDING-HEADSET`/`PENDING-PLAYTEST`.

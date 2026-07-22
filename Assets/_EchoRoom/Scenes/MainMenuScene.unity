@@ -2498,16 +2498,6 @@ MonoBehaviour:
   cameraTransform: {fileID: 0}
   distanceFromCamera: 1.15
   heightOffset: 0
-  useFixedWorldPlacement: 1
-  fixedWorldPosition: {x: 0, y: 1.15, z: -8.75}
-  fixedWorldEulerAngles: {x: 0, y: 180, z: 0}
-  sceneAnchors:
-  - sceneName: MainMenuScene
-    position: {x: 0, y: 1.15, z: -8.75}
-    eulerAngles: {x: 0, y: 180, z: 0}
-  - sceneName: MainScene
-    position: {x: -3.04, y: 0.95, z: -1.342}
-    eulerAngles: {x: 0, y: 89.752, z: 0}
   minimumDisplayTime: 4
   thankYouDuration: 5
   worldScale: 0.0016
@@ -2646,7 +2636,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1363827653}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
-  m_LocalPosition: {x: 0, y: 0, z: -8.75}
+  m_LocalPosition: {x: 0, y: 0, z: -9.75}
   m_LocalScale: {x: -0.00184, y: 0.00184, z: 0.00184}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2733,11 +2723,11 @@ MonoBehaviour:
   loadingScreen: {fileID: 1156458651}
   cameraTransform: {fileID: 0}
   gameplaySceneName: MainScene
-  distanceFromCamera: 2.1
+  distanceFromCamera: 1.5
   heightOffset: -0.05
   worldScale: 0.0016
   useFixedWorldPlacement: 1
-  fixedWorldPosition: {x: 0, y: 1.15, z: -8.75}
+  fixedWorldPosition: {x: 0, y: 1.15, z: -9.75}
   fixedWorldEulerAngles: {x: 0, y: 180, z: 0}
 --- !u!1 &1371745697
 GameObject:
