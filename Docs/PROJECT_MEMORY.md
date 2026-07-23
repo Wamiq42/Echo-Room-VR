@@ -404,6 +404,7 @@ Connection procedure: open this Unity project, open the Ivan Murzak AI Game Deve
   - `Docs/PolishTasks/POLISH-08-DOOR-AUDIO.md`
   - `Docs/PolishTasks/POLISH-09-ECHO-SURFACE-VARIATION.md`
 - **Files modified:**
+  - `Docs/HANDOFF.md`
   - `Docs/PROJECT_MEMORY.md`
 - **Files moved/deleted:** None.
 - **Unity objects affected:** None — documentation and coordination change only.
@@ -2987,3 +2988,20 @@ Verification performed:
 - **Verification:** Unity synchronously imported and compiled the final scripts with `EditorUtility.scriptCompilationFailed=False`; reflection found the new serialized fields and confirmed both removed string fields absent. Live serialized readback found one EventSystem panel configuration per scene, both masks `4294967291`, exact Right/Left menu refs in that order, and exact timer self/head refs; both scenes saved clean. Source and saved-scene searches found no targeted object-name literals or stale fields. In Play Mode, both rays, the Right Controller, and Main Camera were deliberately renamed while decoys used the old names. Menu hide/show, loader suppress/restore, decoy non-interference, and timer reference stability all passed; original names and transient decoys were restored/removed. Real `MainMenuScene → MainScene → MainMenuScene` Single-mode transitions completed with the persistent loader hidden and non-busy at arrival, MainScene UI rays inactive, both destination menu refs active, timer refs exact, and the reconciled mask intact. A persistent observer repeated both transitions: started/completed `2/2`, observed `2,121` transition frames, maximum active UI-enabled rays `0`, violation frames `0`, and both final menu refs active. Independent source, scene, architecture, and QA reviews found no blocker. After clearing diagnostic noise, a final focused pointer smoke left the Unity Console count at `0`, `scriptCompilationFailed=False`, and `isCompiling=False`. Earlier W9 diagnostic scripts had harness-only compile/property-inspection errors, so this is a fresh final-state claim rather than a claim that the complete historical Console was pristine. Play Mode was stopped and clean `MainMenuScene` was restored as the only open active scene.
 - **Known limitations:** `PENDING-HEADSET` for physical hover/trigger behavior in both menus and any transition-frame pointer flash visible only in Quest. Main-menu refs fail loudly instead of supporting legacy automatic name discovery. Timer re-enable behavior remains as documented in W7. The deferred unused/duplicate assets remain in the project.
 - **Follow-up:** Run the consolidated Quest checklist in `Docs/HANDOFF.md` §6. All in-scope W0–W9 code work is complete; do not begin Issue 7a or Issues 12/14 without renewed user direction.
+
+### DOC-QUEST-INTERACTIVE-CHECKLIST-001 — Add a self-saving headset QA checklist
+
+- **Date:** 2026-07-23
+- **Goal:** Give the user a directly interactive checklist for the physical Quest and Unity Editor acceptance checks instead of requiring them to edit chat checkboxes manually.
+- **Result:** Added one standalone, responsive HTML checklist that opens locally without installation or a server. It contains 55 Quest/Editor checks grouped into seven sections. Every item has Pass/Fail/Skip controls and a note field. Progress, section counts, result filters, tester/build/device metadata, automatic browser-local saving, reset confirmation, clipboard copy, and downloadable Markdown results are included.
+- **Files created:**
+  - `Docs/QUEST_TEST_CHECKLIST.html`
+- **Files modified:**
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:** None — documentation/QA utility only.
+- **Components/assets/settings:** The checklist is dependency-free HTML/CSS/JavaScript and makes no network requests. Device-local state uses the browser `localStorage` key `echo-room-vr-quest-checklist-v1`. The default build reference is `Development-Phase / 8f69007`. Export produces `echo-room-quest-results-YYYY-MM-DD.md` for direct handoff to the lead session.
+- **Decisions and assumptions:** Kept the tool local because the user asked for a file, not a hosted application. Used a single portable file so it can be opened by double-clicking and shared independently of Unity. Pass/Fail/Skip buttons can be toggled back to unmarked. Quest tests and the separate Editor-only XR Device Simulator checks are clearly distinguished. State remains local to the browser/profile used to open the file; clearing browser site data or using a different browser does not transfer saved progress, so Markdown export is the durable handoff.
+- **Verification:** Extracted JavaScript passed `node --check`; the file contains all 55 authored test rows, has zero external HTTP references, and `git diff --check` passed. Browser interaction/visual QA was not performed because it was not requested; the file uses standard current-browser APIs with a clipboard fallback.
+- **Known limitations:** A browser may treat each moved local-file path as a separate storage origin, so keep the file in its project location while testing. The checklist cannot itself inspect the headset or Unity; results are user-entered. Clipboard behavior depends on browser permissions, while Markdown download remains available.
+- **Follow-up:** Open `Docs/QUEST_TEST_CHECKLIST.html`, complete the build checks, download the Markdown report, and send it to the lead session for triage.

@@ -188,6 +188,9 @@ remain untouched.
 W2's complete menu→maze lifecycle and W3's exact head-relative placement are now verified in Editor
 Play Mode. The remaining physical-input/comfort checks are:
 
+**Interactive version:** open [`QUEST_TEST_CHECKLIST.html`](QUEST_TEST_CHECKLIST.html) in a browser.
+It saves Pass/Fail/Skip results locally and exports a Markdown report for the lead session.
+
 1. **W1:** point a controller ray at a menu button → it highlights and the trigger activates it.
 2. **W8:** in the main menu, press WASD (XR simulator) → the player does NOT translate, but mouse-look
    still works.

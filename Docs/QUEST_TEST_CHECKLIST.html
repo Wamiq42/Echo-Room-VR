@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Echo Room VR — Quest Test Checklist</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #03090d;
+      --panel: #07141a;
+      --panel-raised: #0a1d25;
+      --line: #17434d;
+      --cyan: #36e8ef;
+      --cyan-soft: #9ef8fb;
+      --text: #e9f6f7;
+      --muted: #8ba7ac;
+      --pass: #49d88a;
+      --fail: #ff637d;
+      --skip: #f1bb58;
+      --pending: #658087;
+      --shadow: 0 18px 55px rgba(0, 0, 0, .38);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(54, 232, 239, .09), transparent 34rem),
+        linear-gradient(180deg, #020608, var(--bg));
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button, input, textarea, select { font: inherit; }
+    button { color: inherit; }
+
+    .shell {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 34px 0 80px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: clamp(24px, 5vw, 48px);
+      background: linear-gradient(135deg, rgba(7, 24, 31, .97), rgba(4, 13, 18, .98));
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 360px;
+      height: 360px;
+      right: -150px;
+      top: -195px;
+      border: 1px solid rgba(54, 232, 239, .25);
+      border-radius: 50%;
+      box-shadow: 0 0 0 45px rgba(54, 232, 239, .035), 0 0 0 92px rgba(54, 232, 239, .02);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--cyan);
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .19em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(2rem, 5vw, 4.25rem);
+      line-height: .98;
+      letter-spacing: -.045em;
+    }
+
+    .intro {
+      max-width: 760px;
+      margin: 20px 0 0;
+      color: #b8ced2;
+      font-size: clamp(1rem, 2vw, 1.13rem);
+    }
+
+    .save-state {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    .save-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--pass);
+      box-shadow: 0 0 12px rgba(73, 216, 138, .8);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: .76rem;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .field input {
+      width: 100%;
+      border: 1px solid #21434c;
+      border-radius: 10px;
+      background: #031016;
+      color: var(--text);
+      padding: 11px 12px;
+      outline: none;
+    }
+
+    .field input:focus, textarea:focus, select:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(54, 232, 239, .12);
+    }
+
+    .summary {
+      position: sticky;
+      z-index: 10;
+      top: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      margin: 18px 0;
+      padding: 15px 17px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(5, 18, 24, .94);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, .3);
+      backdrop-filter: blur(16px);
+    }
+
+    .progress-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .progress-line strong { color: var(--text); }
+
+    .track {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #10252b;
+    }
+
+    .fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #18aeb8, var(--cyan));
+      box-shadow: 0 0 16px rgba(54, 232, 239, .45);
+      transition: width .2s ease;
+    }
+
+    .counts {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .count {
+      min-width: 68px;
+      padding: 7px 10px;
+      border: 1px solid #1b3a42;
+      border-radius: 10px;
+      background: #07151b;
+      text-align: center;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .count strong { display: block; font-size: 1.05rem; color: var(--text); }
+    .count.pass strong { color: var(--pass); }
+    .count.fail strong { color: var(--fail); }
+    .count.skip strong { color: var(--skip); }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin: 20px 0;
+    }
+
+    .toolbar select, .action {
+      min-height: 42px;
+      border: 1px solid #24454d;
+      border-radius: 10px;
+      background: #08171d;
+      padding: 9px 13px;
+      cursor: pointer;
+    }
+
+    .action:hover, .toolbar select:hover { border-color: #3b6a74; }
+    .action.primary { border-color: #238e96; background: #0b353b; color: var(--cyan-soft); }
+    .action.danger { margin-left: auto; color: #ff9aac; }
+
+    .section {
+      margin: 18px 0;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(6, 19, 25, .92);
+      box-shadow: var(--shadow);
+    }
+
+    .section[hidden] { display: none; }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid #12323a;
+    }
+
+    .section-number {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid #27616b;
+      border-radius: 10px;
+      color: var(--cyan);
+      background: #09222a;
+      font-weight: 850;
+    }
+
+    .section h2 { margin: 0; font-size: 1.15rem; }
+    .section-subtitle { margin: 2px 0 0; color: var(--muted); font-size: .84rem; }
+    .section-progress { color: var(--muted); font-size: .8rem; white-space: nowrap; }
+
+    .test-list { padding: 5px 20px 18px; }
+
+    .test {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px 20px;
+      padding: 18px 0;
+      border-bottom: 1px solid #102c33;
+    }
+
+    .test:last-child { border-bottom: 0; }
+    .test[data-status="pass"] { --status-color: var(--pass); }
+    .test[data-status="fail"] { --status-color: var(--fail); }
+    .test[data-status="skip"] { --status-color: var(--skip); }
+    .test[data-status]:not([data-status="pending"]) .test-title { color: var(--status-color); }
+
+    .test-id {
+      display: inline-block;
+      min-width: 34px;
+      color: #5e858d;
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+    }
+
+    .test-title { font-weight: 720; }
+    .test-help { margin: 5px 0 0 34px; color: var(--muted); font-size: .86rem; }
+
+    .status-buttons {
+      display: flex;
+      gap: 7px;
+      align-items: flex-start;
+    }
+
+    .status-btn {
+      min-width: 62px;
+      border: 1px solid #27444b;
+      border-radius: 9px;
+      background: #08161b;
+      padding: 8px 10px;
+      cursor: pointer;
+      color: #a9bec2;
+      font-size: .78rem;
+      font-weight: 780;
+    }
+
+    .status-btn:hover { transform: translateY(-1px); }
+    .status-btn[aria-pressed="true"][data-value="pass"] { border-color: var(--pass); color: #07130c; background: var(--pass); }
+    .status-btn[aria-pressed="true"][data-value="fail"] { border-color: var(--fail); color: #19040a; background: var(--fail); }
+    .status-btn[aria-pressed="true"][data-value="skip"] { border-color: var(--skip); color: #1a1001; background: var(--skip); }
+
+    .note-wrap { grid-column: 1 / -1; margin-left: 34px; }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 58px;
+      resize: vertical;
+      border: 1px solid #1d3941;
+      border-radius: 9px;
+      background: #041117;
+      color: var(--text);
+      padding: 10px 11px;
+      outline: none;
+    }
+
+    textarea::placeholder { color: #537178; }
+    .test:not([data-status="fail"]) .note-wrap { opacity: .75; }
+
+    .empty {
+      display: none;
+      margin: 30px 0;
+      padding: 30px;
+      border: 1px dashed #29505a;
+      border-radius: 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .empty.visible { display: block; }
+
+    .footer-note {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: .85rem;
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 50;
+      left: 50%;
+      bottom: 24px;
+      transform: translate(-50%, 120px);
+      border: 1px solid #2d6972;
+      border-radius: 10px;
+      background: #0a242b;
+      color: var(--cyan-soft);
+      padding: 10px 15px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transition: .22s ease;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 820px) {
+      .meta-grid { grid-template-columns: 1fr; }
+      .summary { position: static; grid-template-columns: 1fr; }
+      .counts { justify-content: flex-start; }
+      .test { grid-template-columns: 1fr; }
+      .status-buttons { margin-left: 34px; flex-wrap: wrap; }
+      .action.danger { margin-left: 0; }
+    }
+
+    @media (max-width: 520px) {
+      .shell { width: min(100% - 16px, 1180px); padding-top: 8px; }
+      .hero, .section { border-radius: 14px; }
+      .hero { padding: 23px 18px; }
+      .section-head { grid-template-columns: auto 1fr; padding: 16px; }
+      .section-progress { grid-column: 2; }
+      .test-list { padding-inline: 16px; }
+      .status-btn { flex: 1; }
+      .note-wrap, .test-help, .status-buttons { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">Echo Room VR · Build Acceptance</p>
+      <h1>Quest Test Checklist</h1>
+      <p class="intro">Test one item at a time. Choose Pass, Fail, or Skip and add a note when something looks wrong. Your progress is saved automatically in this browser.</p>
+      <div class="save-state" aria-live="polite"><span class="save-dot"></span><span id="save-label">Ready — progress saves automatically</span></div>
+      <div class="meta-grid">
+        <div class="field">
+          <label for="tester">Tester</label>
+          <input id="tester" data-meta="tester" autocomplete="name" placeholder="Your name">
+        </div>
+        <div class="field">
+          <label for="build">Build / commit</label>
+          <input id="build" data-meta="build" placeholder="Example: Development-Phase / 8f69007">
+        </div>
+        <div class="field">
+          <label for="device">Quest model</label>
+          <input id="device" data-meta="device" placeholder="Quest 2, Quest 3…">
+        </div>
+      </div>
+    </header>
+
+    <section class="summary" aria-label="Test progress">
+      <div>
+        <div class="progress-line"><strong id="progress-label">0 of 0 marked</strong><span id="progress-percent">0%</span></div>
+        <div class="track"><div class="fill" id="progress-fill"></div></div>
+      </div>
+      <div class="counts">
+        <div class="count pass"><strong id="pass-count">0</strong>Pass</div>
+        <div class="count fail"><strong id="fail-count">0</strong>Fail</div>
+        <div class="count skip"><strong id="skip-count">0</strong>Skip</div>
+        <div class="count"><strong id="pending-count">0</strong>Left</div>
+      </div>
+    </section>
+
+    <div class="toolbar" aria-label="Checklist actions">
+      <label for="filter" class="eyebrow" style="margin:0">Show</label>
+      <select id="filter">
+        <option value="all">All tests</option>
+        <option value="pending">Unmarked only</option>
+        <option value="fail">Failures only</option>
+        <option value="quest">Quest tests only</option>
+        <option value="editor">Editor tests only</option>
+      </select>
+      <button class="action primary" id="download" type="button">Download results</button>
+      <button class="action" id="copy" type="button">Copy summary</button>
+      <button class="action danger" id="reset" type="button">Reset checklist</button>
+    </div>
+
+    <div id="checklist"></div>
+    <div id="empty" class="empty">No tests match this filter.</div>
+    <p class="footer-note">Tip: if a test fails, include what happened, what you expected, and whether it happens every time.</p>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = "echo-room-vr-quest-checklist-v1";
+
+    const sections = [
+      {
+        id: "main-menu",
+        title: "Main menu",
+        subtitle: "Quest · Visual comfort and controller interaction",
+        platform: "quest",
+        tests: [
+          ["1.1", "Menu is readable in both eyes and is not mirrored.", "Look at the title and several button labels with each eye, then both eyes."],
+          ["1.2", "Viewing distance feels comfortable.", "You should not need to strain, lean back, or move unusually close."],
+          ["1.3", "Both controller rays appear.", "Move both controllers and confirm each ray follows the correct hand."],
+          ["1.4", "Pointing at a button highlights the correct button.", "Sweep across several buttons and watch the hover state."],
+          ["1.5", "Right Trigger activates only the highlighted button.", "Try NEW GAME, SETTINGS, BACK, and PLAY TUTORIAL."],
+          ["1.6", "Rays do not pass through the panel or select the wrong row.", "Aim near button edges and between two buttons."],
+          ["1.7", "The menu does not physically obstruct or push the player.", "Lean or move within your safe boundary without forcing contact."],
+        ]
+      },
+      {
+        id: "to-maze",
+        title: "Main menu → maze",
+        subtitle: "Quest · Loading cover and scene handoff",
+        platform: "quest",
+        tests: [
+          ["2.1", "Loading screen appears before the maze is visible.", "Start NEW GAME and watch the first transition frame."],
+          ["2.2", "Loading screen stays centered while your head moves.", "Slowly look left, right, up, and down during loading."],
+          ["2.3", "No black frame, maze flash, flicker, or visible scene seam occurs.", "The loading cover should remain continuous."],
+          ["2.4", "Controller rays disappear for the entire transition.", "Keep moving both controllers while the cover is active."],
+          ["2.5", "No one-frame ray flash appears when the maze loads.", "Watch closely as the loading panel disappears."],
+          ["2.6", "Pause cannot open during loading.", "Press the pause/menu control several times during the transition."],
+          ["2.7", "Level introduction appears after the loading cover clears.", "Confirm it is not hidden behind the loading screen."],
+          ["2.8", "The transition feels comfortable in both eyes.", "Report any nausea, stereo mismatch, or uncomfortable motion."],
+        ]
+      },
+      {
+        id: "timer",
+        title: "Maze timer",
+        subtitle: "Quest · Use one timed maze and allow it to reach zero",
+        platform: "quest",
+        tests: [
+          ["3.1", "Countdown begins only after loading finishes.", "The full level time should remain available after the cover clears."],
+          ["3.2", "The timer flashes visibly when the level begins.", "Watch the right-controller area immediately after loading."],
+          ["3.3", "Right-controller A reveals the timer.", "Press A once; holding it should not be required."],
+          ["3.4", "Timer remains readable while moving and rotating your right hand.", "Move naturally without bringing the controller too close to your face."],
+          ["3.5", "Timer is comfortable and readable in both eyes.", "Report double vision, clipping, or hand occlusion."],
+          ["3.6", "At 60 seconds remaining, the timer reveals with a heartbeat.", "Do not press A near the threshold; let the automatic warning trigger."],
+          ["3.7", "At 30 seconds, the warning is more urgent.", "Compare visibility and audio against the 60-second warning."],
+          ["3.8", "At 10 seconds, the warning is clearly most urgent.", "It should be the strongest of the three warnings."],
+          ["3.9", "Warning audio is audible but not painful or overpowering.", "Judge it against normal game audio."],
+          ["3.10", "Pausing freezes the countdown and active warning.", "Pause immediately after a warning, wait a few seconds, then resume."],
+          ["3.11", "At zero, TIME EXPIRED opens with unobstructed buttons.", "TIME 00:00 must not overlap RESTART or RETURN TO MENU."],
+          ["3.12", "RESTART begins again with the full timer.", "Confirm the level-start flash also returns."],
+          ["3.13", "RETURN TO MENU works after expiry.", "Confirm it uses the loading transition."],
+          ["3.14", "Maze E remains untimed, if accessible.", "There should be no countdown or automatic timer warnings."],
+        ]
+      },
+      {
+        id: "pause",
+        title: "Pause menu and walls",
+        subtitle: "Quest · Open Pause in open space, near a wall, and near a corner",
+        platform: "quest",
+        tests: [
+          ["4.1", "Pause menu appears in front of you at a comfortable distance.", "Try it from at least three positions."],
+          ["4.2", "The panel never intersects a wall.", "Open it while close to and looking across wall surfaces."],
+          ["4.3", "Near a wall, the panel pulls closer or scales down sensibly.", "The correction should feel intentional, not like a jump into your face."],
+          ["4.4", "Text remains readable after any scale-to-fit adjustment.", "Check title, body text, and button labels."],
+          ["4.5", "Both controller rays operate every pause-menu button.", "Test SETTINGS, BACK, RESUME, RESTART, and RETURN TO MENU when available."],
+          ["4.6", "Settings opens and closes correctly.", "No overlapping screens or missing buttons should appear."],
+          ["4.7", "Resuming restores gameplay, time, audio, and controls.", "Move, listen, and reveal the timer after closing Pause."],
+        ]
+      },
+      {
+        id: "tutorial",
+        title: "Tutorial prompts",
+        subtitle: "Quest · Run PLAY TUTORIAL from beginning to end",
+        platform: "quest",
+        tests: [
+          ["5.1", "Every prompt uses the styled UI Toolkit panel.", "Check SONAR, MICROPHONE, MOVE, INTERACTION, and WARNING."],
+          ["5.2", "Prompt text is readable and not mirrored in either eye.", "Close each eye briefly, then view with both eyes."],
+          ["5.3", "A prompt stays fixed in the world when your head or controllers move.", "It should not follow every head movement."],
+          ["5.4", "Each new prompt recenters comfortably in front of you.", "Observe the transition between tutorial steps."],
+          ["5.5", "Turning away and back causes no swimming or unwanted recentering.", "The current prompt should remain at its presented world position."],
+          ["5.6", "Controller rays do not interact with or get blocked by the prompt.", "Aim through and around the prompt."],
+          ["5.7", "Nearby walls do not hide or cut through the prompt.", "Pay attention when a prompt appears near corridor geometry."],
+          ["5.8", "MOVE teaches: ‘In timed mazes, press A to reveal the timer.’", "Confirm the full message is visible without clipping."],
+          ["5.9", "All tutorial stages progress correctly.", "Complete Sonar, Microphone, Move, Interaction, and Warning."],
+          ["5.10", "Ending fade and return to the main menu feel comfortable.", "Report stereo mismatch, flicker, or abrupt brightness."],
+        ]
+      },
+      {
+        id: "return-menu",
+        title: "Maze → main menu",
+        subtitle: "Quest · Return after gameplay or tutorial",
+        platform: "quest",
+        tests: [
+          ["6.1", "Loading cover remains centered during the return.", "Move your head slowly during the transition."],
+          ["6.2", "No maze/menu flash or black seam appears.", "The loading screen should cover the complete handoff."],
+          ["6.3", "Controller rays remain hidden while loading.", "Watch both hands throughout the transition."],
+          ["6.4", "Both main-menu rays reappear after loading.", "Move each controller after the cover clears."],
+          ["6.5", "Main-menu buttons still highlight and activate correctly.", "Open SETTINGS and return to confirm interaction survived the round trip."],
+        ]
+      },
+      {
+        id: "editor",
+        title: "Unity Editor-only check",
+        subtitle: "Editor · XR Device Simulator, not the Quest build",
+        platform: "editor",
+        tests: [
+          ["7.1", "WASD does not translate the player in MainMenuScene.", "Enter Play Mode and hold each movement key."],
+          ["7.2", "Mouse look still works.", "Move the simulated headset view normally."],
+          ["7.3", "Simulated controllers still move and aim.", "Manipulate both controller poses."],
+          ["7.4", "Simulated menu interaction still works.", "Hover and activate at least two menu buttons."],
+        ]
+      }
+    ];
+
+    const defaults = {
+      meta: { tester: "", build: "Development-Phase / 8f69007", device: "" },
+      tests: {}
+    };
+
+    function loadState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return parsed && parsed.tests ? parsed : structuredClone(defaults);
+      } catch {
+        return structuredClone(defaults);
+      }
+    }
+
+    let state = loadState();
+    let saveTimer;
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const label = document.getElementById("save-label");
+      label.textContent = "Saved on this computer";
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => { label.textContent = "Ready — progress saves automatically"; }, 1400);
+    }
+
+    function ensureTest(id) {
+      if (!state.tests[id]) state.tests[id] = { status: "pending", note: "" };
+      return state.tests[id];
+    }
+
+    function render() {
+      const root = document.getElementById("checklist");
+      root.innerHTML = "";
+      for (const [sectionIndex, section] of sections.entries()) {
+        const card = document.createElement("section");
+        card.className = "section";
+        card.dataset.platform = section.platform;
+        card.dataset.section = section.id;
+        card.innerHTML = `
+          <div class="section-head">
+            <div class="section-number">${sectionIndex + 1}</div>
+            <div><h2>${section.title}</h2><p class="section-subtitle">${section.subtitle}</p></div>
+            <div class="section-progress" data-section-progress="${section.id}"></div>
+          </div>
+          <div class="test-list"></div>`;
+
+        const list = card.querySelector(".test-list");
+        for (const [id, title, help] of section.tests) {
+          const itemState = ensureTest(id);
+          const item = document.createElement("article");
+          item.className = "test";
+          item.dataset.id = id;
+          item.dataset.status = itemState.status;
+          item.dataset.platform = section.platform;
+          item.innerHTML = `
+            <div>
+              <div><span class="test-id">${id}</span><span class="test-title">${title}</span></div>
+              <p class="test-help">${help}</p>
+            </div>
+            <div class="status-buttons" role="group" aria-label="Result for test ${id}">
+              ${["pass", "fail", "skip"].map(value => `<button type="button" class="status-btn" data-value="${value}" aria-pressed="${itemState.status === value}">${value[0].toUpperCase() + value.slice(1)}</button>`).join("")}
+            </div>
+            <div class="note-wrap"><textarea aria-label="Notes for test ${id}" placeholder="Notes${itemState.status === "fail" ? " — what happened?" : " (optional)"}"></textarea></div>`;
+          item.querySelector("textarea").value = itemState.note || "";
+          list.appendChild(item);
+        }
+        root.appendChild(card);
+      }
+      bindChecklistEvents();
+      updateSummary();
+      applyFilter();
+    }
+
+    function bindChecklistEvents() {
+      document.querySelectorAll(".status-btn").forEach(button => {
+        button.addEventListener("click", () => {
+          const item = button.closest(".test");
+          const id = item.dataset.id;
+          const value = button.dataset.value;
+          const current = ensureTest(id);
+          current.status = current.status === value ? "pending" : value;
+          item.dataset.status = current.status;
+          item.querySelectorAll(".status-btn").forEach(candidate => {
+            candidate.setAttribute("aria-pressed", String(candidate.dataset.value === current.status));
+          });
+          item.querySelector("textarea").placeholder = current.status === "fail" ? "Notes — what happened?" : "Notes (optional)";
+          saveState();
+          updateSummary();
+          applyFilter();
+        });
+      });
+
+      document.querySelectorAll(".test textarea").forEach(textarea => {
+        textarea.addEventListener("input", () => {
+          const id = textarea.closest(".test").dataset.id;
+          ensureTest(id).note = textarea.value;
+          saveState();
+        });
+      });
+    }
+
+    function allTests() {
+      return sections.flatMap(section => section.tests.map(test => ({ id: test[0], platform: section.platform })));
+    }
+
+    function updateSummary() {
+      const tests = allTests();
+      const counts = { pass: 0, fail: 0, skip: 0, pending: 0 };
+      tests.forEach(test => counts[ensureTest(test.id).status]++);
+      const marked = tests.length - counts.pending;
+      const percent = tests.length ? Math.round(marked / tests.length * 100) : 0;
+      document.getElementById("progress-label").textContent = `${marked} of ${tests.length} marked`;
+      document.getElementById("progress-percent").textContent = `${percent}%`;
+      document.getElementById("progress-fill").style.width = `${percent}%`;
+      Object.entries(counts).forEach(([key, value]) => document.getElementById(`${key}-count`).textContent = value);
+
+      for (const section of sections) {
+        const completed = section.tests.filter(test => ensureTest(test[0]).status !== "pending").length;
+        document.querySelector(`[data-section-progress="${section.id}"]`).textContent = `${completed}/${section.tests.length} marked`;
+      }
+    }
+
+    function applyFilter() {
+      const filter = document.getElementById("filter").value;
+      let visibleCount = 0;
+      document.querySelectorAll(".section").forEach(section => {
+        let sectionVisible = false;
+        section.querySelectorAll(".test").forEach(test => {
+          const show = filter === "all" ||
+            (filter === "pending" && test.dataset.status === "pending") ||
+            (filter === "fail" && test.dataset.status === "fail") ||
+            (filter === "quest" && test.dataset.platform === "quest") ||
+            (filter === "editor" && test.dataset.platform === "editor");
+          test.hidden = !show;
+          if (show) { sectionVisible = true; visibleCount++; }
+        });
+        section.hidden = !sectionVisible;
+      });
+      document.getElementById("empty").classList.toggle("visible", visibleCount === 0);
+    }
+
+    function resultMarkdown() {
+      const lines = [
+        "# Echo Room VR — Quest Test Results",
+        "",
+        `- Tester: ${state.meta.tester || "Not entered"}`,
+        `- Build: ${state.meta.build || "Not entered"}`,
+        `- Device: ${state.meta.device || "Not entered"}`,
+        `- Exported: ${new Date().toLocaleString()}`,
+        ""
+      ];
+      for (const section of sections) {
+        lines.push(`## ${section.title}`, "");
+        for (const [id, title] of section.tests) {
+          const item = ensureTest(id);
+          const symbol = item.status === "pass" ? "✅ PASS" : item.status === "fail" ? "❌ FAIL" : item.status === "skip" ? "⏭️ SKIP" : "⬜ UNMARKED";
+          lines.push(`- **${id} ${symbol}** — ${title}`);
+          if (item.note.trim()) lines.push(`  - Notes: ${item.note.trim().replace(/\n/g, " ")}`);
+        }
+        lines.push("");
+      }
+      return lines.join("\n");
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    document.querySelectorAll("[data-meta]").forEach(input => {
+      input.value = state.meta[input.dataset.meta] || "";
+      input.addEventListener("input", () => {
+        state.meta[input.dataset.meta] = input.value;
+        saveState();
+      });
+    });
+
+    document.getElementById("filter").addEventListener("change", applyFilter);
+
+    document.getElementById("download").addEventListener("click", () => {
+      const blob = new Blob([resultMarkdown()], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `echo-room-quest-results-${new Date().toISOString().slice(0, 10)}.md`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      showToast("Results downloaded");
+    });
+
+    document.getElementById("copy").addEventListener("click", async () => {
+      const text = resultMarkdown();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const helper = document.createElement("textarea");
+        helper.value = text;
+        helper.style.position = "fixed";
+        helper.style.opacity = "0";
+        document.body.appendChild(helper);
+        helper.select();
+        document.execCommand("copy");
+        helper.remove();
+      }
+      showToast("Summary copied");
+    });
+
+    document.getElementById("reset").addEventListener("click", () => {
+      if (!confirm("Reset every result and note? This cannot be undone.")) return;
+      state = structuredClone(defaults);
+      localStorage.removeItem(STORAGE_KEY);
+      document.querySelectorAll("[data-meta]").forEach(input => input.value = state.meta[input.dataset.meta] || "");
+      render();
+      showToast("Checklist reset");
+    });
+
+    render();
+  </script>
+</body>
+</html>
