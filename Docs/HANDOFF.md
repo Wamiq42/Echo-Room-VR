@@ -3,7 +3,7 @@
 **Purpose.** Everything a fresh Claude Code session — or a different AI model — needs to continue this
 UI-fix pass without re-discovering what's already known. Read this top to bottom before touching code.
 
-**Last updated:** after W5 completion and QA (2026-07-23). Branch: `Development-Phase`. No pushes made.
+**Last updated:** after W6b completion and QA (2026-07-23). Branch: `Development-Phase`. No pushes made.
 
 ---
 
@@ -25,8 +25,8 @@ This handoff summarises both but does not replace them.
 - **Echo Room** — a VR horror/puzzle game. Premise: *"play blind, see with sound"* — a blind survivor
   in a dead research facility navigates by echolocation (a sonar "ping" reveals geometry briefly).
 - **Unity 6000.3.8f1**, **URP 17.3.0**, **XR Interaction Toolkit 3.3.1**, target is **Meta Quest**.
-- **UI is UI Toolkit** (`UIDocument` + UXML/USS, world-space panels), *not* uGUI — with one exception:
-  the tutorial prompt and screen fades are runtime-built uGUI canvases.
+- **UI is UI Toolkit** (`UIDocument` + UXML/USS, world-space panels). The tutorial ending fade remains
+  a runtime-built uGUI canvas because it is a camera-bound stereo screen fade, not a menu/prompt.
 - Two scenes only: `MainMenuScene` (build index 0) and `MainScene`. **Levels are prefabs instantiated
   into MainScene**, not separate scenes. This matters a lot — see §5.
 - Key scripts live under `Assets/_EchoRoom/Scripts/`. UI is in `.../Scripts/UI/`, managers in
@@ -101,9 +101,9 @@ Then `Read` the PNG to view it. Screenshots land in `Docs/QA/`.
    existing runtime value but deliberately retained this orientation convention; untangling it now
    requires a separate collider/orientation/controller-targeting pass with headset verification.
 4. **`QueryTriggerInteraction` enum is `UseGlobal=0, Ignore=1, Collide=2`.** Easy to get backwards.
-5. **Three separate name-string GameObject lookups exist** and silently break on rename:
-   `VRMainMenu.cs` (`"Menu UI Ray"`), `MazeLevelTimer.cs` (`"Right Controller"`), and the tutorial
-   prompt. W9 replaces them.
+5. **Two name-string GameObject lookups remain** and silently break on rename:
+   `VRMainMenu.cs` (`"Menu UI Ray"`) and `MazeLevelTimer.cs` (`"Right Controller"`). W6 removed the
+   tutorial prompt's former controller-name dependency; W9 replaces the remaining lookups.
 6. **`GameManager` exists only in MainScene** (zero in MainMenuScene). Anything that must survive the
    menu→game transition cannot live on it — this invalidated the original W2 plan mid-flight.
 7. **Line-ending warnings** (`LF will be replaced by CRLF`) on every commit are cosmetic; ignore.
@@ -125,7 +125,7 @@ Then `Read` the PNG to view it. Screenshots land in `Docs/QA/`.
 | W4 | Menu occlusion + distance | 4, 7b | ✅ completed and QA-verified |
 | W5 | Editor authoring parity | 1 | ✅ completed and QA-verified |
 | **W6a** | Tutorial prompt world-lock | 3 | ✅ completed; headset check pending |
-| **W6b** | Tutorial prompt styling | 11 | ⏸ awaiting user choice |
+| **W6b** | Tutorial prompt styling | 11 | ✅ completed; headset check pending |
 | **W7** | Timer fairness | 10 | ⬜ next executable item |
 | **W9** | Interaction layers + safe cleanup | adjacent | ⬜ |
 
@@ -152,13 +152,15 @@ UXML's representative Start screen in Edit Mode; runtime state selection is unch
 evidence: `Docs/QA/issue-01-before-editmode-stacking.png` and
 `Docs/QA/w5-after-editmode-mainmenu.png`.
 
-**W6a result worth carrying forward:** the tutorial prompt remains a runtime world-space uGUI/TMP
-canvas, but it no longer follows the Right Controller. Each message is placed once from the current
-head pose at `(0, -0.10, 0.85)` metres and remains world-locked until the next message. Missing-camera
-placement hides the prompt and logs once. The `Move → Button` proximity update, prompt copy, TMP
-auto-sizing/outline, fades, observer field contract, and ending sequence remain structurally intact.
-The ending fade no longer falls back to non-stereo `ScreenSpaceOverlay`. No scene serialization was
-required. QA image: `Docs/QA/w6-issue3-world-locked-prompt.png`.
+**W6 result worth carrying forward:** the tutorial prompt is now a runtime world-space UI Toolkit
+`UIDocument`, not uGUI/TMP. It reuses `VRMenuPanelSettings.asset` and `VRMenu.uss`, with dedicated
+`VRTutorialPrompt.uxml` / `VRTutorialPromptStyles.uss`. Each message is placed once from the current
+head pose at `(0, -0.10, 0.85)` metres and remains world-locked until the next message. The document
+stays active while its root handles display/opacity; every element ignores picking and no collider or
+XR UI manager is added. A typed director snapshot replaced observer reflection/TMP coupling while
+preserving the tutorial trace schema. The separate ending fade remains camera-bound uGUI. No scene
+serialization was required. Five final captures live at `Docs/QA/w6b-01-sonar.png` through
+`w6b-05-warning.png`.
 
 ## 6. ⏳ Pending playtest checks — THE USER MUST DO THESE
 
@@ -175,25 +177,24 @@ Play Mode. The remaining physical-input/comfort checks are:
    a wall and confirm the emergency pull-in/scale-to-fit behavior is preferable to clipping.
 5. **W5:** confirm the authoring changes did not alter perceived scale, stereo readability, or
    physical controller-ray hover/trigger behavior on Quest.
-6. **W6a:** verify the provisional 0.856 m centre distance is comfortable and readable; move the
+6. **W6a/W6b:** verify the provisional 0.856 m centre distance is comfortable and readable; move the
    headset and controller independently to confirm no jitter, swimming, or recentering; turn away and
-   back; and run all five natural prompt states to confirm each new message reanchors once and does
-   not intersect nearby geometry.
+   back; and inspect all five prompt states in both eyes to confirm the negative-X/180° UI Toolkit
+   orientation is readable, each new message reanchors comfortably, controller rays are not
+   intercepted, and nearby geometry does not obscure the panel. The full sequence already passes in
+   Editor Play Mode; these are physical Quest checks only.
 
 ## 7. Remaining work — how to execute each
 
 Full specs are in `UI_FIX_PLAN.md` under each `W#`. Condensed here with the dependency order.
 
-- **W6b — tutorial styling** (Issue 11). **DECISION PENDING (see §8):** manually restyle the existing
-  uGUI/TMP prompt, or authorize a broader UI Toolkit port that also migrates observer diagnostics,
-  auto-fit, outline treatment, and world-space transform behavior. Owns `TutorialDirector.cs`.
 - **W7 — timer fairness** (Issue 10). 180 s/maze timer is invisible unless the A button is held.
   Add escalating auto-reveals at 60/30/10 s with an on-theme audio cue, keep manual reveal, and teach
   the reveal button in the tutorial. Depends on W2 (the level-start flash was firing behind the old
   loading screen). Player-facing copy must be drafted in the existing voice and shown to the user for
   approval. Owns `MazeLevelTimer.cs` (+ `TutorialDirector.cs` after W6).
 - **W9 — interaction layers + safe cleanup.** Reconcile `PanelInputConfiguration.m_InteractionLayers`
-  (`4294967291` in MainMenuScene vs `1075` in MainScene). Replace the three name-string lookups with
+  (`4294967291` in MainMenuScene vs `1075` in MainScene). Replace the two remaining name-string lookups with
   serialized refs. **Do NOT delete** `VRFrontEndMenu.cs` (duplicate of `VRMainMenu`) or
   `VRGameplayMenu.uxml` (unused, but possible groundwork for the out-of-scope wrist panel) without the
   user — flag them instead.
@@ -210,16 +211,10 @@ and commits. (W2 and W8 were done this way.)
 
 ## 8. Open decisions the user still needs to make
 
-1. **W6 styling — port vs restyle.** Detailed scoping found that porting the tutorial prompt to UI
-   Toolkit would break `TutorialRuntimeObserver.cs:78`, which reads the private field `tutorialPromptText`
-   as a `TMP_Text` by reflection — a UI Toolkit `Label` isn't a `TMP_Text`, so it returns null and
-   `:153` emits a hard `Debug.LogError` every tutorial run; it also loses TMP auto-sizing that the
-   76-char `InteractionMessage` depends on. **Lead recommendation: keep it uGUI, restyle by hand.**
-   User can overrule. W6a anchoring is complete independently; this decision now governs only W6b.
-2. **Issue 12 / 14 (wrist HUD/objective panel)** — deferred by the user to "later, when other issues
+1. **Issue 12 / 14 (wrist HUD/objective panel)** — deferred by the user to "later, when other issues
    are resolved." Data survey is already in the issue doc (timer/level-name free; "2 of 3 switches"
    exists but private; objective text and a multi-step phase model must be authored).
-3. **Maze E has no time limit** (name-match falls through to `-1`). Left as-is in W7; flagged for the
+2. **Maze E has no time limit** (name-match falls through to `-1`). Left as-is in W7; flagged for the
    user to confirm intentional.
 
 ## 9. Quick-start for a fresh session / different model
@@ -229,8 +224,7 @@ and commits. (W2 and W8 were done this way.)
 2. Confirm Unity is alive: `npx unity-mcp-cli run-system-tool ping --input '{}'`.
 3. Verify the working tree matches the plan: `git log --oneline -8` should end at the commit named in
    §5. Ignore the non-ours churn in §4.8.
-4. Resolve the W6b styling choice with the user, or take the next executable `⬜` item (W7). Read the
-   files it owns *fully* before editing.
+4. Take the next executable `⬜` item, W7. Read the files it owns *fully* before editing.
 5. Make the change (delegate if it parallelises), **compile-verify per §4.1**, screenshot if visual,
    review, commit one-per-issue, update the plan's running log with what was done and what's still
    `PENDING-HEADSET`/`PENDING-PLAYTEST`.

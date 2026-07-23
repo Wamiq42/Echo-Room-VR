@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Reflection;
-using TMPro;
 using UnityEngine;
 
 [DefaultExecutionOrder(1000)]
@@ -10,14 +8,9 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
     GameObject levelRoot;
     Transform player;
     Transform interactionWall;
-    TMP_Text tutorialPromptText;
     AudioSource entityAudio;
     AudioSource heartbeatAudio;
     PingEmitter pingEmitter;
-
-    FieldInfo stepField;
-    FieldInfo buttonActivatedField;
-    FieldInfo leverActivatedField;
 
     string lastStep;
     string lastPromptText;
@@ -48,36 +41,20 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
             if (!attached)
             {
                 TutorialDirector candidate = FindObjectOfType<TutorialDirector>();
-                if (candidate != null && candidate.enabled)
-                {
-                    System.Type type = typeof(TutorialDirector);
-                    FieldInfo rootField = type.GetField("levelRoot", BindingFlags.Instance | BindingFlags.NonPublic);
-                    FieldInfo playerField = type.GetField("player", BindingFlags.Instance | BindingFlags.NonPublic);
-                    bool ready = rootField != null && rootField.GetValue(candidate) != null &&
-                                 playerField != null && playerField.GetValue(candidate) != null;
-                    if (ready) Attach(candidate);
-                }
+                if (candidate != null && candidate.enabled &&
+                    candidate.TryGetRuntimeDiagnosticState(out TutorialDirector.RuntimeDiagnosticState state))
+                    Attach(candidate, state);
             }
 
             yield return null;
         }
     }
 
-    void Attach(TutorialDirector target)
+    void Attach(TutorialDirector target, TutorialDirector.RuntimeDiagnosticState state)
     {
         attached = true;
         director = target;
-        System.Type type = typeof(TutorialDirector);
-        stepField = type.GetField("step", BindingFlags.Instance | BindingFlags.NonPublic);
-        buttonActivatedField = type.GetField("buttonActivated", BindingFlags.Instance | BindingFlags.NonPublic);
-        leverActivatedField = type.GetField("leverActivated", BindingFlags.Instance | BindingFlags.NonPublic);
-
-        levelRoot = ReadField<GameObject>(type, "levelRoot");
-        player = ReadField<Transform>(type, "player");
-        interactionWall = ReadField<Transform>(type, "interactionWall");
-        tutorialPromptText = ReadField<TMP_Text>(type, "tutorialPromptText");
-        entityAudio = ReadField<AudioSource>(type, "entityAudio");
-        heartbeatAudio = ReadField<AudioSource>(type, "heartbeatAudio");
+        RefreshReferences(state);
 
         pingEmitter = FindObjectOfType<PingEmitter>();
         if (pingEmitter != null) pingEmitter.OnPingEmitted += OnPing;
@@ -90,53 +67,45 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
             " levelRoot=" + NameOf(levelRoot) +
             " player=" + NameOf(player) +
             " interactionWall=" + NameOf(interactionWall) +
-            " tutorialPrompt=" + NameOf(tutorialPromptText) +
+            " tutorialPrompt=" + NameOf(state.Prompt.PromptObject) +
+            " promptElement=" + state.Prompt.ElementName +
             " entityAudio=" + NameOf(entityAudio) +
             " heartbeatAudio=" + NameOf(heartbeatAudio));
 
-        LogReferenceHealth();
-        CaptureChanges(true);
-        LogHeartbeat();
-    }
-
-    T ReadField<T>(System.Type type, string name) where T : class
-    {
-        FieldInfo field = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
-        return field != null ? field.GetValue(director) as T : null;
+        LogReferenceHealth(state);
+        CaptureChanges(state, true);
+        LogHeartbeat(state);
     }
 
     void Update()
     {
         if (!attached || director == null) return;
+        director.TryGetRuntimeDiagnosticState(out TutorialDirector.RuntimeDiagnosticState state);
+        RefreshReferences(state);
 
-        CaptureChanges(false);
+        CaptureChanges(state, false);
         if (Time.unscaledTime >= nextHeartbeat)
         {
             nextHeartbeat = Time.unscaledTime + 1f;
-            LogHeartbeat();
+            LogHeartbeat(state);
         }
     }
 
-    void CaptureChanges(bool force)
+    void CaptureChanges(TutorialDirector.RuntimeDiagnosticState state, bool force)
     {
-        string step = stepField != null ? System.Convert.ToString(stepField.GetValue(director)) : "UNKNOWN";
-        Track("STEP", ref lastStep, step, force);
-        Track("TEXT_PROMPT", ref lastPromptText, TextState(tutorialPromptText), force);
+        Track("STEP", ref lastStep, state.Step, force);
+        Track("TEXT_PROMPT", ref lastPromptText, PromptState(state.Prompt), force);
 
         Track("ENTITY_AUDIO_PLAYING", ref lastEntityAudioPlaying, entityAudio != null && entityAudio.isPlaying, force);
         Track("HEARTBEAT_PLAYING", ref lastHeartbeatPlaying, heartbeatAudio != null && heartbeatAudio.isPlaying, force);
     }
 
-    void LogHeartbeat()
+    void LogHeartbeat(TutorialDirector.RuntimeDiagnosticState state)
     {
-        string step = stepField != null ? System.Convert.ToString(stepField.GetValue(director)) : "UNKNOWN";
-        bool buttonDone = buttonActivatedField != null && (bool)buttonActivatedField.GetValue(director);
-        bool leverDone = leverActivatedField != null && (bool)leverActivatedField.GetValue(director);
-
         TutorialRuntimeLogger.Event("HEARTBEAT",
-            "step=" + step +
-            " buttonActivated=" + buttonDone +
-            " leverActivated=" + leverDone +
+            "step=" + state.Step +
+            " buttonActivated=" + state.ButtonActivated +
+            " leverActivated=" + state.LeverActivated +
             " player=" + PositionOf(player) +
             " interactionDistance=" + DistanceTo(interactionWall) +
             " entityAudioPlaying=" + (entityAudio != null && entityAudio.isPlaying) +
@@ -145,18 +114,21 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
             " heartbeatVolume=" + (heartbeatAudio != null ? heartbeatAudio.volume.ToString("F2") : "NA"));
     }
 
-    void LogReferenceHealth()
+    void LogReferenceHealth(TutorialDirector.RuntimeDiagnosticState state)
     {
         Check("levelRoot", levelRoot);
         Check("player", player);
         Check("interactionWall", interactionWall);
-        Check("tutorialPromptText", tutorialPromptText);
+        Check("tutorialPromptDocument", state.Prompt.DocumentReady ? state.Prompt.PromptObject : null);
+        Check("tutorialPromptRoot", state.Prompt.RootReady ? state.Prompt.PromptObject : null);
+        Check("tutorialPromptText", state.Prompt.TextReady ? state.Prompt.PromptObject : null);
         Check("entityAudio", entityAudio);
         Check("heartbeatAudio", heartbeatAudio);
         Check("pingEmitter", pingEmitter);
-        Check("stepField", stepField);
-        Check("buttonActivatedField", buttonActivatedField);
-        Check("leverActivatedField", leverActivatedField);
+        TutorialRuntimeLogger.Event("REFERENCE", "step OK (typed diagnostic contract).");
+        TutorialRuntimeLogger.Event("REFERENCE", "buttonActivated OK (typed diagnostic contract).");
+        TutorialRuntimeLogger.Event("REFERENCE", "leverActivated OK (typed diagnostic contract).");
+        TutorialRuntimeLogger.Event("PROMPT_PANEL", "attached=" + state.Prompt.Attached);
     }
 
     void Check(string label, object value)
@@ -167,10 +139,11 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
 
     void OnPing(Vector3 origin)
     {
+        director.TryGetRuntimeDiagnosticState(out TutorialDirector.RuntimeDiagnosticState state);
         TutorialRuntimeLogger.Event("PING",
             "origin=" + origin.ToString("F2") +
             " stepBeforeDirectorCallbackMayDependOnSubscriptionOrder=" +
-            (stepField != null ? System.Convert.ToString(stepField.GetValue(director)) : "UNKNOWN"));
+            state.Step);
     }
 
     void OnButton(EchoButtonInteractable button)
@@ -193,7 +166,9 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
 
     string CurrentStep()
     {
-        return stepField != null ? System.Convert.ToString(stepField.GetValue(director)) : "UNKNOWN";
+        if (director == null) return "UNKNOWN";
+        director.TryGetRuntimeDiagnosticState(out TutorialDirector.RuntimeDiagnosticState state);
+        return state.Step;
     }
 
     bool BelongsToLevel(Transform target)
@@ -210,12 +185,12 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
         return Vector3.Distance(a, b).ToString("F2");
     }
 
-    static string TextState(TMP_Text text)
+    static string PromptState(TutorialDirector.PromptDiagnosticState prompt)
     {
-        if (text == null) return "NULL";
-        return "active=" + text.gameObject.activeSelf +
-               " alpha=" + text.alpha.ToString("F1") +
-               " text=" + (text.text ?? string.Empty).Replace("\n", " / ");
+        if (!prompt.Created) return "NULL";
+        return "active=" + prompt.Active +
+               " alpha=" + prompt.Opacity.ToString("F1") +
+               " text=" + (prompt.Text ?? string.Empty).Replace("\n", " / ");
     }
 
     static void Track(string category, ref string previous, string current, bool force)
@@ -242,6 +217,15 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
         return value != null ? value.name : "NULL";
     }
 
+    void RefreshReferences(TutorialDirector.RuntimeDiagnosticState state)
+    {
+        levelRoot = state.LevelRoot;
+        player = state.Player;
+        interactionWall = state.InteractionWall;
+        entityAudio = state.EntityAudio;
+        heartbeatAudio = state.HeartbeatAudio;
+    }
+
     void Detach()
     {
         if (pingEmitter != null) pingEmitter.OnPingEmitted -= OnPing;
@@ -253,7 +237,6 @@ public sealed class TutorialRuntimeObserver : MonoBehaviour
         levelRoot = null;
         player = null;
         interactionWall = null;
-        tutorialPromptText = null;
         entityAudio = null;
         heartbeatAudio = null;
         pingEmitter = null;

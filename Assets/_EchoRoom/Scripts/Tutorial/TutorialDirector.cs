@@ -1,5 +1,4 @@
 using System.Collections;
-using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Image = UnityEngine.UI.Image;
@@ -119,6 +118,63 @@ sealed class TutorialMenuPrompt : MonoBehaviour
 [DisallowMultipleComponent]
 public sealed class TutorialDirector : MonoBehaviour
 {
+    internal readonly struct PromptDiagnosticState
+    {
+        public readonly GameObject PromptObject;
+        public readonly bool DocumentReady;
+        public readonly bool RootReady;
+        public readonly bool TextReady;
+        public readonly bool Attached;
+        public readonly bool Active;
+        public readonly float Opacity;
+        public readonly string Text;
+        public readonly string ElementName;
+
+        public bool Created => DocumentReady && RootReady && TextReady;
+
+        public PromptDiagnosticState(GameObject promptObject, bool documentReady, bool rootReady,
+            bool textReady, bool attached, bool active, float opacity, string text, string elementName)
+        {
+            PromptObject = promptObject;
+            DocumentReady = documentReady;
+            RootReady = rootReady;
+            TextReady = textReady;
+            Attached = attached;
+            Active = active;
+            Opacity = opacity;
+            Text = text;
+            ElementName = elementName;
+        }
+    }
+
+    internal readonly struct RuntimeDiagnosticState
+    {
+        public readonly string Step;
+        public readonly GameObject LevelRoot;
+        public readonly Transform Player;
+        public readonly Transform InteractionWall;
+        public readonly bool ButtonActivated;
+        public readonly bool LeverActivated;
+        public readonly AudioSource EntityAudio;
+        public readonly AudioSource HeartbeatAudio;
+        public readonly PromptDiagnosticState Prompt;
+
+        public RuntimeDiagnosticState(string step, GameObject levelRoot, Transform player,
+            Transform interactionWall, bool buttonActivated, bool leverActivated,
+            AudioSource entityAudio, AudioSource heartbeatAudio, PromptDiagnosticState prompt)
+        {
+            Step = step;
+            LevelRoot = levelRoot;
+            Player = player;
+            InteractionWall = interactionWall;
+            ButtonActivated = buttonActivated;
+            LeverActivated = leverActivated;
+            EntityAudio = entityAudio;
+            HeartbeatAudio = heartbeatAudio;
+            Prompt = prompt;
+        }
+    }
+
     enum Step { Ping, SecondReveal, Move, Button, Lever, Ending, Done }
     const float WarningHoldDuration = 2f;
     const float TextFadeDuration = 0.65f;
@@ -134,8 +190,11 @@ public sealed class TutorialDirector : MonoBehaviour
     const string WarningMessage = "WARNING\nSonar can attract unwanted attention.\nSomething dangerous may be listening.";
 
     static readonly Vector3 PromptOffsetFromView = new Vector3(0f, -0.10f, 0.85f);
-    const float PromptCanvasScale = 0.0005f;
+    const float PromptWorldScale = 0.0005f;
     static readonly Vector2 PromptPanelSize = new Vector2(700f, 260f);
+    const string PromptLayoutResource = "UI/VRTutorialPrompt";
+    const string PromptStylesResource = "UI/VRTutorialPromptStyles";
+    const string PromptPanelSettingsResource = "UI/VRMenuPanelSettings";
 
     Step step;
     GameObject levelRoot;
@@ -143,9 +202,13 @@ public sealed class TutorialDirector : MonoBehaviour
     Transform head;
     PingEmitter pingEmitter;
     AudioSource entityAudio, heartbeatAudio;
-    Canvas tutorialPromptCanvas;
-    CanvasGroup tutorialPromptGroup;
-    TextMeshProUGUI tutorialPromptText;
+    UIDocument tutorialPromptDocument;
+    VisualElement tutorialPromptRoot;
+    Label tutorialPromptTitle;
+    Label tutorialPromptBody;
+    string currentTutorialPromptText = string.Empty;
+    bool tutorialPromptPresented;
+    float tutorialPromptOpacity;
     bool buttonActivated, leverActivated;
     bool activeTutorial;
     bool promptPlacementErrorLogged;
@@ -175,7 +238,8 @@ public sealed class TutorialDirector : MonoBehaviour
         EchoButtonInteractable.OnAnyButtonPressed -= OnButton;
         LeverInteractable.OnAnyLeverTurnedOn -= OnLever;
         if (pingEmitter != null) pingEmitter.OnPingEmitted -= OnPing;
-        if (tutorialPromptCanvas != null) tutorialPromptCanvas.gameObject.SetActive(false);
+        StopAllCoroutines();
+        SetPromptPresentation(false, 0f);
     }
 
     void Update()
@@ -208,7 +272,7 @@ public sealed class TutorialDirector : MonoBehaviour
 
         BuildInteractionLesson();
         BuildEndingLesson();
-        BuildControllerInstructions();
+        BuildTutorialPrompt();
         Darken();
 
         step = Step.Ping;
@@ -261,66 +325,63 @@ public sealed class TutorialDirector : MonoBehaviour
         if (heartbeatAudio == null) Debug.LogError("[Tutorial] Ending Heartbeat AudioSource is missing.");
     }
 
-    void BuildControllerInstructions()
+    void BuildTutorialPrompt()
     {
         interactionWall = levelRoot.transform.Find("Interaction Wall");
         ResolveHead();
 
-        CreateControllerPrompt();
+        CreateTutorialPrompt();
     }
 
-    void CreateControllerPrompt()
+    void CreateTutorialPrompt()
     {
-        GameObject canvasObject = new GameObject(
-            "Tutorial Controller Prompt",
-            typeof(RectTransform),
-            typeof(Canvas),
-            typeof(CanvasGroup));
+        VisualTreeAsset layout = Resources.Load<VisualTreeAsset>(PromptLayoutResource);
+        StyleSheet styles = Resources.Load<StyleSheet>(PromptStylesResource);
+        PanelSettings panelSettings = Resources.Load<PanelSettings>(PromptPanelSettingsResource);
 
-        canvasObject.transform.SetParent(transform, false);
-        canvasObject.transform.localScale = Vector3.one * PromptCanvasScale;
+        if (layout == null || styles == null || panelSettings == null)
+        {
+            Debug.LogError("[Tutorial] UI Toolkit prompt assets are missing. Expected Resources/" +
+                           PromptLayoutResource + ".uxml, Resources/" + PromptStylesResource +
+                           ".uss, and Resources/" + PromptPanelSettingsResource + ".asset.");
+            return;
+        }
 
-        RectTransform canvasRect = canvasObject.GetComponent<RectTransform>();
-        canvasRect.sizeDelta = PromptPanelSize;
+        GameObject promptObject = new GameObject("Tutorial UI Toolkit Prompt");
+        promptObject.SetActive(false);
+        promptObject.transform.SetParent(transform, false);
 
-        tutorialPromptCanvas = canvasObject.GetComponent<Canvas>();
-        tutorialPromptCanvas.renderMode = RenderMode.WorldSpace;
-        tutorialPromptCanvas.sortingOrder = short.MaxValue;
+        tutorialPromptDocument = promptObject.AddComponent<UIDocument>();
+        tutorialPromptDocument.panelSettings = panelSettings;
+        tutorialPromptDocument.visualTreeAsset = layout;
+        tutorialPromptDocument.worldSpaceSizeMode = UIDocument.WorldSpaceSizeMode.Fixed;
+        tutorialPromptDocument.worldSpaceSize = PromptPanelSize;
+        tutorialPromptDocument.pivot = Pivot.Center;
+        tutorialPromptDocument.position = Position.Absolute;
+        tutorialPromptDocument.sortingOrder = short.MaxValue;
+        promptObject.transform.localScale = new Vector3(-PromptWorldScale, PromptWorldScale, PromptWorldScale);
+        promptObject.SetActive(true);
 
-        tutorialPromptGroup = canvasObject.GetComponent<CanvasGroup>();
-        tutorialPromptGroup.alpha = 0f;
-        tutorialPromptGroup.interactable = false;
-        tutorialPromptGroup.blocksRaycasts = false;
+        VisualElement documentRoot = tutorialPromptDocument.rootVisualElement;
+        documentRoot.pickingMode = PickingMode.Ignore;
+        documentRoot.Query<VisualElement>().ForEach(element => element.pickingMode = PickingMode.Ignore);
 
+        tutorialPromptRoot = documentRoot.Q<VisualElement>("tutorial-prompt-root");
+        tutorialPromptTitle = documentRoot.Q<Label>("tutorial-prompt-title");
+        tutorialPromptBody = documentRoot.Q<Label>("tutorial-prompt-body");
+        if (tutorialPromptRoot == null || tutorialPromptTitle == null || tutorialPromptBody == null)
+        {
+            Debug.LogError("[Tutorial] VRTutorialPrompt.uxml is missing the prompt root, title, " +
+                           "or body element.");
+            Destroy(promptObject);
+            tutorialPromptDocument = null;
+            tutorialPromptRoot = null;
+            tutorialPromptTitle = null;
+            tutorialPromptBody = null;
+            return;
+        }
 
-        GameObject textObject = new GameObject(
-            "Prompt Text",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(TextMeshProUGUI));
-        textObject.transform.SetParent(canvasObject.transform, false);
-
-        RectTransform textRect = textObject.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(30f, 24f);
-        textRect.offsetMax = new Vector2(-30f, -24f);
-
-        tutorialPromptText = textObject.GetComponent<TextMeshProUGUI>();
-        tutorialPromptText.alignment = TextAlignmentOptions.Center;
-        tutorialPromptText.color = new Color(0.82f, 0.97f, 1f, 1f);
-        tutorialPromptText.fontStyle = FontStyles.Bold;
-        tutorialPromptText.fontSize = 15f;
-        tutorialPromptText.enableAutoSizing = true;
-        tutorialPromptText.fontSizeMin = 10.5f;
-        tutorialPromptText.fontSizeMax = 15f;
-        tutorialPromptText.enableWordWrapping = true;
-        tutorialPromptText.overflowMode = TextOverflowModes.Truncate;
-        tutorialPromptText.outlineWidth = 0.22f;
-        tutorialPromptText.outlineColor = new Color32(0, 6, 10, 255);
-        tutorialPromptText.raycastTarget = false;
-
-        canvasObject.SetActive(false);
+        SetPromptPresentation(false, 0f);
     }
 
     void ResolveHead()
@@ -334,7 +395,7 @@ public sealed class TutorialDirector : MonoBehaviour
     bool TryPlacePromptAtHeadPose()
     {
         ResolveHead();
-        if (tutorialPromptCanvas == null || head == null)
+        if (tutorialPromptDocument == null || head == null)
         {
             if (!promptPlacementErrorLogged)
             {
@@ -346,59 +407,102 @@ public sealed class TutorialDirector : MonoBehaviour
 
         promptPlacementErrorLogged = false;
 
-        Transform prompt = tutorialPromptCanvas.transform;
+        Transform prompt = tutorialPromptDocument.transform;
         Vector3 offset = head.right * PromptOffsetFromView.x +
                          head.up * PromptOffsetFromView.y +
                          head.forward * PromptOffsetFromView.z;
         prompt.position = head.position + offset;
-        prompt.rotation = Quaternion.LookRotation(prompt.position - head.position, head.up);
-        prompt.localScale = Vector3.one * PromptCanvasScale;
+        prompt.rotation = Quaternion.LookRotation(prompt.position - head.position, head.up) *
+                          Quaternion.Euler(0f, 180f, 0f);
+        prompt.localScale = new Vector3(-PromptWorldScale, PromptWorldScale, PromptWorldScale);
         return true;
     }
 
     void ShowPrompt(string message)
     {
-        if (tutorialPromptCanvas == null || tutorialPromptText == null) return;
-        tutorialPromptText.text = message;
+        if (!SetPromptCopy(message)) return;
         if (!TryPlacePromptAtHeadPose())
         {
-            tutorialPromptCanvas.gameObject.SetActive(false);
+            SetPromptPresentation(false, 0f);
             return;
         }
-        tutorialPromptCanvas.gameObject.SetActive(true);
-        tutorialPromptGroup.alpha = 1f;
+        SetPromptPresentation(true, 1f);
     }
 
     IEnumerator FadePrompt(float targetAlpha, float duration)
     {
-        if (tutorialPromptGroup == null) yield break;
+        if (tutorialPromptRoot == null) yield break;
 
-        float startAlpha = tutorialPromptGroup.alpha;
+        float startAlpha = tutorialPromptOpacity;
         float elapsed = 0f;
         while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
-            tutorialPromptGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
+            SetPromptPresentation(true, Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration));
             yield return null;
         }
 
-        tutorialPromptGroup.alpha = targetAlpha;
-        if (targetAlpha <= 0f && tutorialPromptCanvas != null)
-            tutorialPromptCanvas.gameObject.SetActive(false);
+        SetPromptPresentation(targetAlpha > 0f, targetAlpha);
     }
 
     IEnumerator SwapPrompt(string incoming)
     {
-        if (tutorialPromptCanvas == null || tutorialPromptText == null) yield break;
+        if (tutorialPromptRoot == null || tutorialPromptTitle == null || tutorialPromptBody == null) yield break;
 
-        if (tutorialPromptCanvas.gameObject.activeSelf)
+        if (tutorialPromptPresented)
             yield return FadePrompt(0f, TextFadeDuration);
 
-        tutorialPromptText.text = incoming;
-        if (!TryPlacePromptAtHeadPose()) yield break;
-        tutorialPromptCanvas.gameObject.SetActive(true);
-        tutorialPromptGroup.alpha = 0f;
+        if (!SetPromptCopy(incoming)) yield break;
+        if (!TryPlacePromptAtHeadPose())
+        {
+            SetPromptPresentation(false, 0f);
+            yield break;
+        }
+        SetPromptPresentation(true, 0f);
         yield return FadePrompt(1f, TextFadeDuration);
+    }
+
+    bool SetPromptCopy(string message)
+    {
+        if (tutorialPromptRoot == null || tutorialPromptTitle == null || tutorialPromptBody == null) return false;
+
+        currentTutorialPromptText = message ?? string.Empty;
+        int lineBreak = currentTutorialPromptText.IndexOf('\n');
+        string title = lineBreak >= 0 ? currentTutorialPromptText.Substring(0, lineBreak) : currentTutorialPromptText;
+        string body = lineBreak >= 0 ? currentTutorialPromptText.Substring(lineBreak + 1) : string.Empty;
+        tutorialPromptTitle.text = title;
+        tutorialPromptBody.text = body;
+        tutorialPromptBody.EnableInClassList("compact-copy", body.Length > 60 || body.IndexOf('\n') >= 0);
+        bool warning = title == "WARNING";
+        tutorialPromptRoot.EnableInClassList("warning-state", warning);
+        tutorialPromptTitle.EnableInClassList("warning-text", warning);
+        return true;
+    }
+
+    void SetPromptPresentation(bool presented, float opacity)
+    {
+        tutorialPromptPresented = presented;
+        tutorialPromptOpacity = Mathf.Clamp01(opacity);
+        if (tutorialPromptRoot == null) return;
+        tutorialPromptRoot.style.display = presented ? DisplayStyle.Flex : DisplayStyle.None;
+        tutorialPromptRoot.style.opacity = tutorialPromptOpacity;
+    }
+
+    internal bool TryGetRuntimeDiagnosticState(out RuntimeDiagnosticState state)
+    {
+        bool documentReady = tutorialPromptDocument != null;
+        bool rootReady = tutorialPromptRoot != null;
+        bool textReady = tutorialPromptTitle != null && tutorialPromptBody != null;
+        bool attached = rootReady && tutorialPromptRoot.panel != null;
+        GameObject promptObject = documentReady ? tutorialPromptDocument.gameObject : null;
+        bool active = tutorialPromptPresented && documentReady && tutorialPromptDocument.enabled &&
+                      promptObject.activeInHierarchy && attached;
+        var prompt = new PromptDiagnosticState(promptObject, documentReady, rootReady, textReady,
+            attached, active, tutorialPromptOpacity, currentTutorialPromptText,
+            textReady ? tutorialPromptBody.name : "NULL");
+        state = new RuntimeDiagnosticState(step.ToString(), levelRoot, player, interactionWall,
+            buttonActivated, leverActivated, entityAudio, heartbeatAudio, prompt);
+        return levelRoot != null && player != null;
     }
 
     static float HorizontalDistance(Vector3 a, Vector3 b)
@@ -472,7 +576,7 @@ public sealed class TutorialDirector : MonoBehaviour
     IEnumerator PlayEnding()
     {
         activeTutorial = false;
-        if (tutorialPromptCanvas != null && tutorialPromptCanvas.gameObject.activeSelf)
+        if (tutorialPromptPresented)
             yield return FadePrompt(0f, WarningFadeDuration);
 
         TutorialProgress.Complete();

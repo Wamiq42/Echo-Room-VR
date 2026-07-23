@@ -50,7 +50,7 @@ Ordered by dependency, not by issue number. Each row is one commit.
 | W4 | Menu placement: wall occlusion + distance | 4, 7b | W1 | ✅ Done |
 | W5 | Editor authoring parity | 1 | W1 | ✅ Done |
 | W6a | Tutorial prompt: head-relative world-lock | 3 | — | ✅ Done |
-| W6b | Tutorial prompt styling | 11 | W6a | ⏸ Awaiting user choice |
+| W6b | Tutorial prompt styling | 11 | W6a | ✅ Done |
 | W7 | Timer fairness: warnings + tutorial teaching | 10 | W2 | ⬜ |
 | W8 | Main menu: block simulator WASD | 9 | — | ✅ Done (`8bcecdc`) |
 | W9 | Interaction-layer reconciliation + safe cleanup | adjacent | W1 | ⬜ |
@@ -226,16 +226,31 @@ stability, distance, readability, and reanchor transitions.
 
 ## W6b — Tutorial prompt styling
 
-**Issue 11 remains pending user choice. No styling change landed with Issue 3.** The prompt remains
-the only UI outside the UI Toolkit stack: a runtime-built uGUI `Canvas` with `TextMeshProUGUI`. The
-current recommendation is to keep uGUI/TMP and restyle it by hand so `TutorialRuntimeObserver`
-reflection and TMP auto-sizing continue to work. See the running-log reversal below; do not port it
-to UI Toolkit without user approval.
+**Issue 11 — ✅ complete.** The user explicitly chose UI Toolkit on 2026-07-23, superseding the
+earlier uGUI recommendation. `TutorialDirector` now creates one noninteractive world-space
+`UIDocument` from `VRTutorialPrompt.uxml`, reuses `VRMenuPanelSettings.asset` and the shared
+`VRMenu.uss` visual language, and adds prompt-specific layout through
+`VRTutorialPromptStyles.uss`. The prompt remains fixed at 700 × 260 UI units and preserves W6a's
+one-shot head-relative world lock with the project's readable negative-X/180° UI Toolkit
+orientation. The document stays active; fades and hiding operate on the visual root so cached
+elements and the generated `UIRenderer` remain stable.
+
+The five authored messages split into independent title/body labels. Known long copy uses the
+fixed `compact-copy` treatment, while WARNING switches the frame, title, corner accents, and two
+thin divider lines to the danger palette. Every element is `PickingMode.Ignore`; the prompt has no
+collider, XR UI manager, Canvas, CanvasGroup, or TMP component. The separate stereo ending fade
+remains uGUI by design.
+
+`TutorialRuntimeObserver` no longer reflects private fields or depends on TMP. It reads one typed
+director-owned diagnostic snapshot while preserving the existing `ATTACH`, `REFERENCE`, `STEP`,
+`TEXT_PROMPT`, `PING`, `BUTTON`, `LEVER`, audio, heartbeat, and `DETACH` log categories.
 
 **Acceptance:** prompt matches the chosen menu visual language, with screenshots of all five prompt
 states. `PENDING-HEADSET` for readability.
 
-**QA:** ⏸ pending user decision
+**QA:** ✅ complete in deterministic Edit Mode and a full natural Play Mode sequence; all five
+desktop captures visually pass. `PENDING-HEADSET` for stereo readability/scale, comfort,
+world-lock stability, reanchor comfort, physical controller behavior, and geometry occlusion.
 
 ---
 
@@ -579,7 +594,7 @@ normalizes the negative-X scale magnitude but does not remove the existing mirro
 transform convention or its collider warning. Issue 7a's 1920 × 1080 reflow and deletion of the
 unused `VRGameplayMenu.uxml` remain out of scope.
 
-### Reversal — W6 styling approach (was: port to UI Toolkit)
+### Historical reversal — W6 styling approach (superseded by user decision)
 
 Detailed scoping turned up a blocker I did not know about when I recommended the port, so I am
 **changing my recommendation** and will not port unless you overrule me:
@@ -594,11 +609,13 @@ Detailed scoping turned up a blocker I did not know about when I recommended the
 - The world-space transform math would need re-deriving, since UI Toolkit here needs the negative-X
   mirror and a 180° flip that the uGUI prompt does not.
 
-**Revised plan for W6:** keep the prompt as uGUI, and restyle it by hand to match the menu's visual
+**Historical recommendation:** keep the prompt as uGUI, and restyle it by hand to match the menu's visual
 language (panel frame, corner brackets, `--echo-cyan`/`--echo-white` palette, `.signal-line`
 divider). You lose single-source-of-truth styling, which is a real cost — but you keep working
 diagnostics, text auto-fit, and the existing pose math. **The anchoring fix (Issue 3) was unaffected
-and has now completed independently as W6a.** Say the word if you'd rather take the port and its costs.
+and completed independently as W6a.** On 2026-07-23 the user overruled this recommendation and
+required UI Toolkit. W6b then migrated the observer contract, fixed-copy layout, and orientation
+along with the prompt, so the blockers documented above are resolved rather than ignored.
 
 ### W6a — Tutorial prompt anchoring ✅
 
@@ -634,4 +651,37 @@ requires a resolved camera and always uses `ScreenSpaceCamera`.
   stereo-stable without swimming or jitter, stays world-locked through physical movement, and that
   each message reanchor feels comfortable seated and standing.
 
-**Remaining W6 work:** Issue 11 styling is still blocked on the user choice documented above.
+### W6b — UI Toolkit tutorial prompt ✅
+
+**Implemented:** the runtime uGUI/TMP prompt was replaced with a fixed-size world-space
+`UIDocument`. `VRTutorialPrompt.uxml` links `VRMenu.uss` plus the uniquely named
+`VRTutorialPromptStyles.uss` (the distinct Resources key avoids Unity returning the UXML's generated
+inline stylesheet). The document reuses `VRMenuPanelSettings`, stays active for lifecycle stability,
+and shows/hides/fades only its root. W6a placement is preserved at `(0, -0.10, 0.85)` head space,
+with `(-0.0005, 0.0005, 0.0005)` scale and the required 180° yaw correction. A typed diagnostic
+snapshot replaced observer reflection/TMP coupling. `OnDisable()` stops running prompt coroutines
+before hiding, preventing a disabled director from being made visible again by a late fade frame.
+
+**Verified:**
+
+- ✅ Final assets import and scripts compile. A deterministic fixture passed fixed 700 × 260
+  configuration, one shared + one prompt stylesheet, ignored picking, absence of legacy/interactive
+  prompt components, title/body splitting, normal/compact/warning classes, W6a placement and
+  eight-frame world lock, typed diagnostics, XR-rig camera fallback, safe no-camera hiding, and
+  disable-time cleanup.
+- ✅ A full Play Mode sequence used the real Sonar ping implementation, public microphone ping path,
+  real movement-distance gate, and public button/lever APIs. It reached every prompt state, warning
+  hold, ending audio/fades, observer `DETACH`, and `MainMenuScene`; completion preferences were
+  checked and the pre-run values restored exactly.
+- ✅ Desktop evidence was captured and independently reviewed:
+  `Docs/QA/w6b-01-sonar.png`, `w6b-02-microphone.png`, `w6b-03-move.png`,
+  `w6b-04-interaction.png`, and `w6b-05-warning.png`. The warning capture was retaken after review
+  caught and removed an unintended thick divider fill.
+- ✅ Independent code, observer, and visual reviews closed with no remaining source blocker.
+- ⚠️ The deliberate no-camera fixture emitted its expected placement Error, and unrelated existing
+  XR/tooling warnings remain; no blanket zero-Console-warning claim is made.
+- ⚠️ **`PENDING-HEADSET`:** stereo orientation/readability, apparent scale and comfort, physical
+  world-lock/reanchor behavior, ray non-interception, nearby-geometry occlusion, seated/standing
+  behavior, and ending-fade comfort.
+
+**Remaining W6 work:** none in code; only the recorded Quest checks remain.
