@@ -19,7 +19,6 @@ namespace EchoRoom.UI
         [SerializeField, Min(0.1f)] float thankYouDuration = 5f;
         [SerializeField, Min(0.0001f)] float worldScale = 0.0016f;
         [SerializeField, Min(1f)] float transitionWatchdogSeconds = 25f;
-        [SerializeField] string uiPointerFallbackName = "Menu UI Ray";
 
         readonly List<GameObject> suppressedPointers = new List<GameObject>();
         UIDocument document;
@@ -332,13 +331,6 @@ namespace EchoRoom.UI
                 if (ray == null || !ray.enableUIInteraction) continue;
                 SuppressPointerObject(ray.gameObject);
             }
-
-            if (string.IsNullOrEmpty(uiPointerFallbackName)) return;
-            Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
-            for (int i = 0; i < transforms.Length; i++)
-                if (transforms[i] != null && transforms[i].name == uiPointerFallbackName)
-                    SuppressPointerObject(transforms[i].gameObject);
         }
 
         void SuppressPointerObject(GameObject pointer)

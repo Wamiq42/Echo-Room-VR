@@ -17,7 +17,8 @@ public sealed class MazeLevelTimer : MonoBehaviour
     [SerializeField, Min(1f)] float mazeDTimeSeconds = 180f;
 
     [Header("Controller Display")]
-    [SerializeField] string rightControllerName = "Right Controller";
+    [SerializeField] Transform rightController;
+    [SerializeField] Transform head;
     [SerializeField] Vector3 displayOffsetFromView = new Vector3(-0.13f, 0.035f, 0.015f);
     [SerializeField, Min(0.001f)] float displayScale = 0.035f;
     [FormerlySerializedAs("buttonRevealSeconds")]
@@ -43,8 +44,6 @@ public sealed class MazeLevelTimer : MonoBehaviour
     [SerializeField, Min(0.05f)] float startFlashOffSeconds = 0.16f;
 
     GameManager gameManager;
-    Transform rightController;
-    Transform head;
     TextMeshPro timerText;
     AudioSource warningAudioSource;
     Coroutine flashRoutine;
@@ -363,18 +362,8 @@ public sealed class MazeLevelTimer : MonoBehaviour
 
     void ResolveTrackingTargets()
     {
-        if (Camera.main != null) head = Camera.main.transform;
-        if (rightController != null) return;
-
-        Transform[] transforms = FindObjectsOfType<Transform>(true);
-        for (int i = 0; i < transforms.Length; i++)
-        {
-            if (transforms[i].name == rightControllerName)
-            {
-                rightController = transforms[i];
-                break;
-            }
-        }
+        if (head == null && Camera.main != null) head = Camera.main.transform;
+        if (rightController == null) rightController = transform;
     }
 
     void SetDisplayAlpha(float alpha)

@@ -15,6 +15,7 @@ namespace EchoRoom.UI
         [SerializeField] StyleSheet menuStyles;
         [SerializeField] VRLoadingScreen loadingScreen;
         [SerializeField] Transform cameraTransform;
+        [SerializeField] GameObject[] vrPointerRoots;
         [SerializeField] string gameplaySceneName = "MainScene";
         [SerializeField, Min(0.5f)] float distanceFromCamera = 2.1f;
         [SerializeField] float heightOffset = -0.05f;
@@ -36,6 +37,7 @@ namespace EchoRoom.UI
         readonly List<Button> levelButtons = new List<Button>();
         PuzzleProgressData progress;
         VRSettingsPanelController settingsController;
+        bool pointerConfigurationErrorLogged;
 
         void Awake()
         {
@@ -206,12 +208,14 @@ namespace EchoRoom.UI
             EnsureInitialProgress();
             TutorialProgress.RequestPlay();
             if (tutorialButton != null) tutorialButton.SetEnabled(false);
-            SetControllerPointersVisible(false);
 
             if (loadingScreen != null)
                 loadingScreen.LoadScene(gameplaySceneName, "ENTERING TUTORIAL");
             else
+            {
+                SetControllerPointersVisible(false);
                 SceneManager.LoadScene(gameplaySceneName);
+            }
         }
 
         void EnsureInitialProgress()
@@ -227,12 +231,14 @@ namespace EchoRoom.UI
             string levelName = levelData.levels[index] != null
                 ? levelData.levels[index].levelName.ToUpperInvariant()
                 : "LEVEL " + (index + 1);
-            SetControllerPointersVisible(false);
 
             if (loadingScreen != null)
                 loadingScreen.LoadScene(gameplaySceneName, "ENTERING " + levelName);
             else
+            {
+                SetControllerPointersVisible(false);
                 SceneManager.LoadScene(gameplaySceneName);
+            }
         }
 
         string GetPuzzleId(int index)
@@ -273,12 +279,35 @@ namespace EchoRoom.UI
             transform.localScale = new Vector3(-worldScale, worldScale, worldScale);
         }
 
-        static void SetControllerPointersVisible(bool value)
+        void SetControllerPointersVisible(bool value)
         {
-            Transform[] transforms = FindObjectsOfType<Transform>(true);
-            for (int i = 0; i < transforms.Length; i++)
-                if (transforms[i] != null && transforms[i].name == "Menu UI Ray")
-                    transforms[i].gameObject.SetActive(value);
+            if (vrPointerRoots == null || vrPointerRoots.Length == 0)
+            {
+                if (!pointerConfigurationErrorLogged)
+                {
+                    Debug.LogError("[VRMainMenu] Controller pointer references are not assigned.", this);
+                    pointerConfigurationErrorLogged = true;
+                }
+                return;
+            }
+
+            bool missingReference = false;
+            for (int i = 0; i < vrPointerRoots.Length; i++)
+            {
+                GameObject pointer = vrPointerRoots[i];
+                if (pointer == null)
+                {
+                    missingReference = true;
+                    continue;
+                }
+                pointer.SetActive(value);
+            }
+
+            if (missingReference && !pointerConfigurationErrorLogged)
+            {
+                Debug.LogError("[VRMainMenu] One or more controller pointer references are missing.", this);
+                pointerConfigurationErrorLogged = true;
+            }
         }
 
         void OnDestroy()

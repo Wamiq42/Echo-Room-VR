@@ -3,7 +3,8 @@
 **Purpose.** Everything a fresh Claude Code session — or a different AI model — needs to continue this
 UI-fix pass without re-discovering what's already known. Read this top to bottom before touching code.
 
-**Last updated:** after W7 completion and QA (2026-07-23). Branch: `Development-Phase`. No pushes made.
+**Last updated:** after W9 completion and full in-scope plan QA (2026-07-23). Branch:
+`Development-Phase`. No pushes made.
 
 ---
 
@@ -101,9 +102,10 @@ Then `Read` the PNG to view it. Screenshots land in `Docs/QA/`.
    existing runtime value but deliberately retained this orientation convention; untangling it now
    requires a separate collider/orientation/controller-targeting pass with headset verification.
 4. **`QueryTriggerInteraction` enum is `UseGlobal=0, Ignore=1, Collide=2`.** Easy to get backwards.
-5. **Two name-string GameObject lookups remain** and silently break on rename:
-   `VRMainMenu.cs` (`"Menu UI Ray"`) and `MazeLevelTimer.cs` (`"Right Controller"`). W6 removed the
-   tutorial prompt's former controller-name dependency; W9 replaces the remaining lookups.
+5. **W9 removed the remaining UI/timer object-name scans.** `VRMainMenu` owns exact serialized
+   pointer refs, `MazeLevelTimer` owns exact controller/head refs, and the persistent loader discovers
+   only active `XRRayInteractor`s with UI interaction enabled after each scene load. Do not replace
+   the loader's type-safe current-scene scan with fixed scene refs; it survives Single-mode loads.
 6. **`GameManager` exists only in MainScene** (zero in MainMenuScene). Anything that must survive the
    menu→game transition cannot live on it — this invalidated the original W2 plan mid-flight.
 7. **Line-ending warnings** (`LF will be replaced by CRLF`) on every commit are cosmetic; ignore.
@@ -126,8 +128,8 @@ Then `Read` the PNG to view it. Screenshots land in `Docs/QA/`.
 | W5 | Editor authoring parity | 1 | ✅ completed and QA-verified |
 | **W6a** | Tutorial prompt world-lock | 3 | ✅ completed; headset check pending |
 | **W6b** | Tutorial prompt styling | 11 | ✅ completed; headset check pending |
-| **W7** | Timer fairness | 10 | ✅ completed; headset check pending |
-| **W9** | Interaction layers + safe cleanup | adjacent | ⬜ |
+| **W7** | Timer fairness | 10 | ✅ `92715c4`; headset check pending |
+| **W9** | Interaction layers + safe cleanup | adjacent | ✅ completed; headset check pending |
 
 **Out of scope this pass (user's call):** Issue 12 / Issue 14 (in-game HUD / wrist objective panel)
 and Issue 7a (panel resolution reflow to 1920×1080). Don't start these without the user.
@@ -171,6 +173,16 @@ readout before the time-up menu opens. The UI Toolkit MOVE prompt teaches `press
 timer`; Maze E remains intentionally untimed pending a separate design decision. Final evidence:
 `Docs/QA/w7-tutorial-timer-reveal.png`, `w7-10-second-warning.png`, and `w7-time-expired.png`.
 
+**W9 result worth carrying forward:** both EventSystem `PanelInputConfiguration` components now use
+`4294967291` / `Physics.DefaultRaycastLayers`. MainMenu's `VRMainMenu` serializes Right then Left Menu
+UI Ray roots; MainScene's `MazeLevelTimer` serializes its own Right Controller transform and the XR
+Main Camera. The loader keeps a typed, current-scene `XRRayInteractor.enableUIInteraction` scan
+because it is persistent and cannot retain references into unloaded scenes. Missing menu refs fail
+loudly; there is no legacy name-discovery fallback. Rename/decoy QA passed, and a persistent observer
+sampled 2,121 frames across real menu→game→menu transitions with zero active UI pointers while
+transitioning. Deferred `VRFrontEndMenu.cs`, `VRGameplayMenu.uxml`, and `EchoPuzzleController.cs`
+remain untouched.
+
 ## 6. ⏳ Pending playtest checks — THE USER MUST DO THESE
 
 W2's complete menu→maze lifecycle and W3's exact head-relative placement are now verified in Editor
@@ -195,16 +207,15 @@ Play Mode. The remaining physical-input/comfort checks are:
 7. **W7:** in a timed maze, confirm physical A reveals the timer; inspect it while moving the right
    hand and in both eyes; and confirm the 60/30/10 heartbeat cues are audible, comfortable, and
    appropriately urgent without overpowering gameplay audio.
+8. **W9:** repeat physical controller hover/trigger in both main and pause menus, including immediately
+   after both scene transitions, and watch for any one-frame pointer flash while the loading cover is
+   still active. Desktop frame-by-frame observation found none.
 
-## 7. Remaining work — how to execute each
+## 7. Remaining work
 
-Full specs are in `UI_FIX_PLAN.md` under each `W#`. Condensed here with the dependency order.
-
-- **W9 — interaction layers + safe cleanup.** Reconcile `PanelInputConfiguration.m_InteractionLayers`
-  (`4294967291` in MainMenuScene vs `1075` in MainScene). Replace the two remaining name-string lookups with
-  serialized refs. **Do NOT delete** `VRFrontEndMenu.cs` (duplicate of `VRMainMenu`) or
-  `VRGameplayMenu.uxml` (unused, but possible groundwork for the out-of-scope wrist panel) without the
-  user — flag them instead.
+All in-scope W0–W9 code work is complete. The remaining acceptance work is the consolidated physical
+Quest checklist in §6. Issue 7a and Issues 12/14 remain explicitly deferred; the unused/duplicate
+assets noted in W9 remain intentionally undeleted.
 
 **Parallelisation & contention:** W4, W5, and W6 own distinct primary code/assets, but **scene files
 are the bottleneck** — only one worker may hold `MainMenuScene.unity` / `MainScene.unity` at a time,
@@ -231,11 +242,11 @@ and commits. (W2 and W8 were done this way.)
 2. Confirm Unity is alive: `npx unity-mcp-cli run-system-tool ping --input '{}'`.
 3. Verify the working tree matches the plan: `git log --oneline -8` should end at the commit named in
    §5. Ignore the non-ours churn in §4.8.
-4. Take the next executable `⬜` item, W9. Read the files it owns *fully* before editing.
-5. Make the change (delegate if it parallelises), **compile-verify per §4.1**, screenshot if visual,
-   review, commit one-per-issue, update the plan's running log with what was done and what's still
-   `PENDING-HEADSET`/`PENDING-PLAYTEST`.
-6. Report status honestly, including the pending playtest checks in §6.
+4. Confirm the execution table contains no in-scope `⬜` item. Run the Quest checklist in §6 before
+   treating physical comfort/input as accepted.
+5. If new work is authorized, preserve the one-issue/one-commit discipline, compile-verify per §4.1,
+   and update both the plan log and `PROJECT_MEMORY.md`.
+6. Report status honestly, including every remaining `PENDING-HEADSET` item.
 
 ### If you are a different AI model
 

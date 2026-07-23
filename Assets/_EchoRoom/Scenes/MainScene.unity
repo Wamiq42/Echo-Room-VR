@@ -4117,7 +4117,7 @@ MonoBehaviour:
     m_ProcessWorldSpaceInput: 1
     m_InteractionLayers:
       serializedVersion: 2
-      m_Bits: 1075
+      m_Bits: 4294967291
     m_MaxInteractionDistance: Infinity
     m_DefaultEventCameraIsMainCamera: 1
     m_EventCameras: []
@@ -7931,7 +7931,6 @@ MonoBehaviour:
   thankYouDuration: 5
   worldScale: 0.0016
   transitionWatchdogSeconds: 25
-  uiPointerFallbackName: Menu UI Ray
 --- !u!114 &1156458652
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13103,7 +13102,8 @@ MonoBehaviour:
   mazeBTimeSeconds: 180
   mazeCTimeSeconds: 180
   mazeDTimeSeconds: 180
-  rightControllerName: Right Controller
+  rightController: {fileID: 508977651}
+  head: {fileID: 1790717474}
   displayOffsetFromView: {x: -0.13, y: 0.035, z: 0.015}
   displayScale: 0.035
   visibleDurationSeconds: 3

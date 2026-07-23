@@ -51,9 +51,9 @@ Ordered by dependency, not by issue number. Each row is one commit.
 | W5 | Editor authoring parity | 1 | W1 | ✅ Done |
 | W6a | Tutorial prompt: head-relative world-lock | 3 | — | ✅ Done |
 | W6b | Tutorial prompt styling | 11 | W6a | ✅ Done |
-| W7 | Timer fairness: warnings + tutorial teaching | 10 | W2 | ✅ Done |
+| W7 | Timer fairness: warnings + tutorial teaching | 10 | W2 | ✅ Done (`92715c4`) |
 | W8 | Main menu: block simulator WASD | 9 | — | ✅ Done (`8bcecdc`) |
-| W9 | Interaction-layer reconciliation + safe cleanup | adjacent | W1 | ⬜ |
+| W9 | Interaction-layer reconciliation + safe cleanup | adjacent | W1 | ✅ Done |
 
 **Parallel-safe groups.** W1, W6 and W8 touch disjoint files and can run concurrently. W2 and W3 are
 strictly sequential (same files). W4 and W5 both wait on W1's outcome.
@@ -98,7 +98,8 @@ proves messy, fall back to interactor-side `Collide` **plus** a narrowed raycast
 **Acceptance:** ray hover highlights a menu button; trigger press activates it; no new console
 errors; player cannot be physically blocked by a panel. Screenshot before/after.
 
-**QA:** ⬜ pending
+**QA:** ✅ collider/raycast physics and serialized configuration verified in Editor.
+`PENDING-HEADSET` for physical hover/trigger and confirming the solid panel never blocks the player.
 
 ---
 
@@ -130,7 +131,10 @@ handles a null camera; verify it re-resolves rather than caching a destroyed tra
 hides only once the level is ready. Pause menu is hidden and rays are dead for the whole transition.
 Level intro banner visible after the screen clears. `PENDING-HEADSET` for comfort of the transition.
 
-**QA:** ⬜ pending
+**QA:** ✅ real two-way scene transitions, persistent-owner lifecycle, cover timing, pointer/pause
+suppression, destination completion, and watchdog behavior verified in Editor. W9's final persistent
+observer added 2,121 transition frames with zero active UI rays. `PENDING-HEADSET` for peripheral
+coverage and transition comfort.
 
 ---
 
@@ -154,7 +158,9 @@ W4 (distance) and are a different UX decision. W3 is loading-screen-only.
 **Acceptance:** enter a maze via NEW GAME; the loading screen is centred in front of the player the
 whole time, including immediately after `MovePlayerToSpawn`. Screenshot from inside a maze.
 
-**QA:** ⬜ pending
+**QA:** ✅ deterministic head-relative placement and live MainMenu→MainScene behavior verified with
+desktop evidence. `PENDING-HEADSET` for stereo stability, continuous physical head tracking,
+peripheral coverage, and perceived jitter/comfort.
 
 ---
 
@@ -301,20 +307,31 @@ problem, not player-facing — but it matters because it makes Editor sessions m
 **Acceptance:** WASD does not translate the player in `MainMenuScene`; mouse look and simulated
 controller interaction still work (needed for testing the menu). Gameplay locomotion unaffected.
 
-**QA:** ⬜ pending
+**QA:** ✅ implementation and Unity compilation verified. `PENDING-PLAYTEST` for physically pressing
+WASD/mouse-look in the XR Device Simulator; this Editor-only input cannot be exercised through the
+Unity runtime bridge.
 
 ---
 
 ## W9 — Interaction layers and safe cleanup
 
-1. **Reconcile `PanelInputConfiguration.m_InteractionLayers`** — `4294967291` in `MainMenuScene.unity:1122-1131`
-   vs `1075` in `MainScene.unity:4113-4116`. Drift, not design. Align to one value.
-2. **Replace name-string lookups.** Three places match GameObjects by literal name and silently break
-   on rename: `VRMainMenu.cs:262-268` (`"Menu UI Ray"`, plus a full-scene `FindObjectsOfType` scan),
-   `MazeLevelTimer.cs:273-285` (`"Right Controller"`), and the tutorial prompt. Replace with
-   serialized references.
+**Implemented.** Both scenes now serialize `PanelInputConfiguration.m_InteractionLayers` as
+`4294967291` (`0xFFFFFFFB`, `Physics.DefaultRaycastLayers`). This is the UI Toolkit bridge's physics
+world-picking `LayerMask`, not an XR Interaction Layer mask. It includes the current Default-layer
+panels while excluding Ignore Raycast and removes unexplained scene drift.
 
-**Deliberately NOT doing without your say-so** (recorded, not actioned):
+`VRMainMenu` now owns exact serialized right/left pointer roots and no longer scans every Transform
+for `"Menu UI Ray"`. Missing refs fail loudly; there is deliberately no silent name-discovery
+fallback. During normal async loads, the persistent `VRLoadingScreen` owns pointer suppression and
+restoration; the menu's exact refs handle only initialization and the no-loader synchronous fallback.
+The loader itself now discovers active UI pointers only through `XRRayInteractor.enableUIInteraction`,
+which remains safe after each scene load without retaining invalid cross-scene references.
+
+`MazeLevelTimer` now serializes its exact Right Controller and Main Camera transforms. Rename-safe
+fallbacks use the component's own `transform` and `Camera.main`; the full-scene `"Right Controller"`
+scan is gone. W6 had already removed the tutorial prompt's former controller-name dependency.
+
+**Deliberately not changed:**
 
 - **Deleting `VRFrontEndMenu.cs`** — duplicates `VRMainMenu.cs` against the same UXML IDs, and only
   `VRMainMenu` appears wired into a scene. Deleting a script is irreversible enough that I want your
@@ -324,7 +341,11 @@ controller interaction still work (needed for testing the menu). Gameplay locomo
 - **`EchoPuzzleController`'s per-frame `GetComponentsInChildren`** (`:98`, called from `Update` `:20`)
   — a real performance smell on Quest, but it's gameplay code outside this UI pass.
 
-**QA:** ⬜ pending
+**QA:** ✅ source/serialized audits, rename-and-decoy runtime checks, two real scene transitions, and
+a persistent frame observer pass. Across 2,121 observed transition frames in both directions there
+were zero active UI-enabled rays; destination menu rays restored correctly. Final fresh Console count
+was zero and independent code/architecture/QA reviews found no blocker. `PENDING-HEADSET` for physical
+hover/click and any transient visual behavior only visible in Quest.
 
 ---
 
@@ -728,3 +749,41 @@ message now says: `In timed mazes, press A to reveal the timer.` Maze E remains 
 
 **Remaining W7 work:** none in code; only the recorded Quest checks and the separate design decision
 for Maze E remain.
+
+### W9 — Interaction-layer reconciliation and rename-safe cleanup ✅
+
+**Implemented:** both scene-local `PanelInputConfiguration` components now use
+`4294967291` / `0xFFFFFFFB` (`Physics.DefaultRaycastLayers`) for UI Toolkit world picking. The main
+menu serializes exact right/left Menu UI Ray roots. The maze timer serializes its exact Right
+Controller and Main Camera transforms. `VRMainMenu` and `MazeLevelTimer` no longer scan all
+Transforms by object name. The persistent loader retains only the type-safe current-scene
+`XRRayInteractor.enableUIInteraction` scan, because fixed scene refs cannot survive a Single-mode
+scene load. Normal async transitions let the loader capture/restore active pointers; the exact menu
+refs remain the no-loader fallback. Both scenes were saved through Unity, purging the obsolete
+`uiPointerFallbackName` and `rightControllerName` YAML keys.
+
+**Verified:**
+
+- ✅ Synchronous import and reflection reported `scriptCompilationFailed=False`, both new serialized
+  timer fields and the menu pointer array present, and both removed fallback fields absent.
+- ✅ Live serialized readback found one EventSystem configuration per scene, both masks exactly
+  `4294967291`; the main menu array held Right then Left Menu UI Ray; the timer held its own Right
+  Controller transform plus `XR Origin (XR Rig)/Camera Offset/Main Camera`. Both scenes saved clean.
+- ✅ A Play Mode rename-and-decoy fixture renamed both pointer objects, the controller, and camera;
+  created decoys with the old names; and passed menu hide/show, loader suppress/restore, decoy
+  non-interference, and timer-reference stability. Source and saved-scene searches found none of the
+  removed literal names/fields.
+- ✅ Real `MainMenuScene → MainScene → MainMenuScene` Single-mode loads completed with one persistent
+  loader, masks intact, MainScene UI rays inactive, and both destination menu refs restored active.
+  A persistent observer then repeated both transitions and sampled 2,121 `IsTransitioning` frames:
+  active UI-pointer violations `0`, maximum active UI-enabled rays `0`, transitions started/completed
+  `2/2`, and final menu refs active.
+- ✅ Independent source, scene, architecture, and QA reviews found no blocker. Final cleared Console
+  readback remained at zero entries after a focused pointer smoke; compilation remained successful.
+  Earlier diagnostic script compilation mistakes remain harness history and are not product errors.
+- ✅ `VRFrontEndMenu.cs`, `VRGameplayMenu.uxml`, and `EchoPuzzleController.cs` were inspected but
+  deliberately not changed or deleted; they remain outside this safe cleanup.
+- ⚠️ **`PENDING-HEADSET`:** physical controller hover/click and any transition-frame visual behavior
+  that cannot be judged from the desktop simulator.
+
+**Remaining W9 work:** none in code; only the consolidated Quest checks remain.

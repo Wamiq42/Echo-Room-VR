@@ -2502,7 +2502,6 @@ MonoBehaviour:
   thankYouDuration: 5
   worldScale: 0.0016
   transitionWatchdogSeconds: 25
-  uiPointerFallbackName: Menu UI Ray
 --- !u!114 &1156458652
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2722,6 +2721,9 @@ MonoBehaviour:
   menuStyles: {fileID: 7433441132597879392, guid: 2becd1cdd6fe8ee4ab3ad33fdeaecfa9, type: 3}
   loadingScreen: {fileID: 1156458651}
   cameraTransform: {fileID: 0}
+  vrPointerRoots:
+  - {fileID: 1102790405}
+  - {fileID: 1779060063}
   gameplaySceneName: MainScene
   distanceFromCamera: 1.5
   heightOffset: -0.05
