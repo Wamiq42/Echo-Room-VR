@@ -185,7 +185,7 @@ public sealed class TutorialDirector : MonoBehaviour
 
     const string SonarMessage = "SONAR\nPress the SONAR button to reveal the corridor.";
     const string MicrophoneMessage = "MICROPHONE\nHold Y and speak for a stronger microphone ping.";
-    const string DirectionMessage = "MOVE\nGo straight, then turn left.";
+    const string DirectionMessage = "MOVE\nIn timed mazes, press A to reveal the timer.\nGo straight, then turn left.";
     const string InteractionMessage = "INTERACTION\nMove close, aim at the button or lever, and press RIGHT TRIGGER.";
     const string WarningMessage = "WARNING\nSonar can attract unwanted attention.\nSomething dangerous may be listening.";
 

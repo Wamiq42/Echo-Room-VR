@@ -30,6 +30,13 @@ public sealed class MazeLevelTimer : MonoBehaviour
     [SerializeField] Color lowTimeColor = new Color(1f, 0.36f, 0.20f, 1f);
     [SerializeField, Min(1f)] float lowTimeThresholdSeconds = 30f;
 
+    [Header("Automatic Warnings")]
+    [SerializeField, Min(0.1f), Tooltip("Base visibility for the 60-second warning. Later warnings remain visible longer.")]
+    float automaticRevealSeconds = 3f;
+    [SerializeField] AudioClip warningAudioClip;
+    [SerializeField, Range(0f, 1f)] float warningAudioVolume = 0.65f;
+    [SerializeField, Min(0.1f)] float warningAudioDurationSeconds = 1.1f;
+
     [Header("Level Start Flash")]
     [SerializeField, Range(1, 8)] int startFlashCount = 4;
     [SerializeField, Min(0.05f)] float startFlashOnSeconds = 0.22f;
@@ -39,15 +46,21 @@ public sealed class MazeLevelTimer : MonoBehaviour
     Transform rightController;
     Transform head;
     TextMeshPro timerText;
+    AudioSource warningAudioSource;
     Coroutine flashRoutine;
+    Coroutine warningAudioRoutine;
     float remainingSeconds;
     float targetAlpha;
-    float revealUntilUnscaledTime;
+    float revealUntilTime;
     bool timerRunning;
     bool startFlashActive;
+    bool warningAudioMissingLogged;
+    int automaticWarningMask;
 #if ENABLE_INPUT_SYSTEM
     InputAction revealAction;
 #endif
+
+    static readonly float[] AutomaticWarningThresholds = { 60f, 30f, 10f };
 
     public float RemainingSeconds => remainingSeconds;
     public bool IsRunning => timerRunning;
@@ -90,6 +103,16 @@ public sealed class MazeLevelTimer : MonoBehaviour
 #if ENABLE_INPUT_SYSTEM
         revealAction?.Disable();
 #endif
+        if (flashRoutine != null)
+        {
+            StopCoroutine(flashRoutine);
+            flashRoutine = null;
+        }
+        timerRunning = false;
+        startFlashActive = false;
+        StopWarningAudio();
+        targetAlpha = 0f;
+        SetDisplayAlpha(0f);
     }
 
     void OnDestroy()
@@ -108,19 +131,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
     {
         if (!timerRunning) return;
 
-        if (RevealPressed())
-            RevealFor(visibleDurationSeconds);
-
-        // Scaled time deliberately stops the countdown while VRPauseMenu sets timeScale to zero.
-        remainingSeconds = Mathf.Max(0f, remainingSeconds - Time.deltaTime);
-        UpdateDisplayText();
-
-        if (!startFlashActive)
-            targetAlpha = Time.unscaledTime < revealUntilUnscaledTime ? 1f : 0f;
-        FadeDisplay();
-
-        if (remainingSeconds <= 0f)
-            ExpireTimer();
+        TickTimer(Time.deltaTime, Time.time, Time.deltaTime, RevealPressed());
     }
 
     void LateUpdate()
@@ -156,13 +167,16 @@ public sealed class MazeLevelTimer : MonoBehaviour
         }
 
         remainingSeconds = duration;
-        timerRunning = true;
-        revealUntilUnscaledTime = 0f;
+        timerRunning = false;
+        revealUntilTime = 0f;
+        automaticWarningMask = 0;
+        StopWarningAudio();
         EnsureDisplay();
         UpdateDisplayText();
+        SetDisplayAlpha(0f);
 
         if (flashRoutine != null) StopCoroutine(flashRoutine);
-        flashRoutine = StartCoroutine(FlashAtLevelStart());
+        flashRoutine = StartCoroutine(StartTimerWhenTransitionComplete());
     }
 
     float GetDuration(string levelName)
@@ -179,13 +193,15 @@ public sealed class MazeLevelTimer : MonoBehaviour
     {
         timerRunning = false;
         remainingSeconds = 0f;
-        revealUntilUnscaledTime = 0f;
+        revealUntilTime = 0f;
         startFlashActive = false;
+        automaticWarningMask = 0;
         if (flashRoutine != null)
         {
             StopCoroutine(flashRoutine);
             flashRoutine = null;
         }
+        StopWarningAudio();
         targetAlpha = 0f;
         SetDisplayAlpha(0f);
     }
@@ -195,16 +211,30 @@ public sealed class MazeLevelTimer : MonoBehaviour
         timerRunning = false;
         remainingSeconds = 0f;
         startFlashActive = false;
-        targetAlpha = 1f;
-        SetDisplayAlpha(1f);
+        StopWarningAudio();
         UpdateDisplayText();
 
-        if (!VRPauseMenu.TryShowTimeUpMenu())
+        if (VRPauseMenu.TryShowTimeUpMenu())
+        {
+            // The controller display sits in front of the time-up panel in VR. Hide it once the
+            // restart menu is available so the final 00:00 readout cannot cover its controls.
+            targetAlpha = 0f;
+            SetDisplayAlpha(0f);
+        }
+        else
+        {
+            targetAlpha = 1f;
+            SetDisplayAlpha(1f);
             Debug.LogError("[MazeLevelTimer] Time expired, but the restart menu could not be found.", this);
+        }
     }
 
-    IEnumerator FlashAtLevelStart()
+    IEnumerator StartTimerWhenTransitionComplete()
     {
+        while (VRLoadingScreen.Instance != null && VRLoadingScreen.Instance.IsTransitioning)
+            yield return null;
+
+        timerRunning = true;
         startFlashActive = true;
         for (int i = 0; i < startFlashCount; i++)
         {
@@ -220,19 +250,74 @@ public sealed class MazeLevelTimer : MonoBehaviour
         targetAlpha = 0f;
     }
 
+    void TickTimer(float scaledDeltaTime, float presentationTime, float presentationDeltaTime, bool revealPressed)
+    {
+        if (revealPressed)
+            RevealFor(visibleDurationSeconds, presentationTime);
+
+        // Scaled time deliberately stops the countdown while VRPauseMenu sets timeScale to zero.
+        float previousSeconds = remainingSeconds;
+        remainingSeconds = Mathf.Max(0f, remainingSeconds - Mathf.Max(0f, scaledDeltaTime));
+        UpdateDisplayText();
+
+        if (remainingSeconds <= 0f)
+        {
+            ExpireTimer();
+            return;
+        }
+
+        TryTriggerAutomaticWarning(previousSeconds, remainingSeconds, presentationTime);
+
+        if (!startFlashActive)
+            targetAlpha = presentationTime < revealUntilTime ? 1f : 0f;
+        FadeDisplay(presentationDeltaTime);
+
+    }
+
+    void TryTriggerAutomaticWarning(float previousSeconds, float currentSeconds, float presentationTime)
+    {
+        int mostUrgentCrossing = -1;
+        for (int i = 0; i < AutomaticWarningThresholds.Length; i++)
+        {
+            int bit = 1 << i;
+            float threshold = AutomaticWarningThresholds[i];
+            if ((automaticWarningMask & bit) == 0 && previousSeconds > threshold && currentSeconds <= threshold)
+                mostUrgentCrossing = i;
+        }
+
+        if (mostUrgentCrossing < 0) return;
+
+        // If one long frame crosses more than one threshold, show only the most urgent warning and
+        // retire every less-urgent threshold so warnings cannot pile up on the same frame.
+        for (int i = 0; i <= mostUrgentCrossing; i++)
+            automaticWarningMask |= 1 << i;
+
+        float revealSeconds = automaticRevealSeconds + mostUrgentCrossing * 0.75f;
+        RevealFor(revealSeconds, presentationTime);
+        PlayWarningAudio(mostUrgentCrossing);
+        Debug.Log("[MazeLevelTimer] Automatic warning at " +
+                  AutomaticWarningThresholds[mostUrgentCrossing].ToString("0") +
+                  " seconds remaining.", this);
+    }
+
     void RevealFor(float seconds)
     {
-        revealUntilUnscaledTime = Mathf.Max(revealUntilUnscaledTime, Time.unscaledTime + seconds);
+        RevealFor(seconds, Time.time);
+    }
+
+    void RevealFor(float seconds, float presentationTime)
+    {
+        revealUntilTime = Mathf.Max(revealUntilTime, presentationTime + seconds);
         targetAlpha = 1f;
     }
 
-    void FadeDisplay()
+    void FadeDisplay(float presentationDeltaTime)
     {
         if (timerText == null) return;
         Color color = timerText.color;
         float duration = color.a < targetAlpha ? fadeInSeconds : fadeOutSeconds;
         float speed = duration <= 0.001f ? 1000f : 1f / duration;
-        color.a = Mathf.MoveTowards(color.a, targetAlpha, Time.unscaledDeltaTime * speed);
+        color.a = Mathf.MoveTowards(color.a, targetAlpha, Mathf.Max(0f, presentationDeltaTime) * speed);
         timerText.color = color;
     }
 
@@ -268,6 +353,12 @@ public sealed class MazeLevelTimer : MonoBehaviour
         timerText.outlineColor = new Color32(0, 8, 12, 220);
         timerText.text = "TIME  00:00";
         timerText.color = normalColor;
+
+        warningAudioSource = display.AddComponent<AudioSource>();
+        warningAudioSource.playOnAwake = false;
+        warningAudioSource.loop = false;
+        warningAudioSource.spatialBlend = 0f;
+        warningAudioSource.dopplerLevel = 0f;
     }
 
     void ResolveTrackingTargets()
@@ -292,6 +383,53 @@ public sealed class MazeLevelTimer : MonoBehaviour
         Color color = timerText.color;
         color.a = alpha;
         timerText.color = color;
+    }
+
+    void PlayWarningAudio(int urgency)
+    {
+        if (warningAudioSource == null || warningAudioClip == null)
+        {
+            if (!warningAudioMissingLogged)
+            {
+                Debug.LogWarning("[MazeLevelTimer] Automatic timer warning audio is not assigned.", this);
+                warningAudioMissingLogged = true;
+            }
+            return;
+        }
+
+        warningAudioMissingLogged = false;
+        if (warningAudioRoutine != null) StopCoroutine(warningAudioRoutine);
+        warningAudioSource.Stop();
+        warningAudioSource.clip = warningAudioClip;
+        warningAudioSource.volume = Mathf.Clamp01(warningAudioVolume * (0.65f + urgency * 0.175f));
+        warningAudioSource.pitch = 0.9f + urgency * 0.15f;
+        warningAudioSource.Play();
+        warningAudioRoutine = StartCoroutine(StopWarningAudioAfter(
+            warningAudioDurationSeconds + urgency * 0.25f));
+    }
+
+    IEnumerator StopWarningAudioAfter(float seconds)
+    {
+        // Match the scaled countdown and reveal window: a pause must not consume a warning.
+        yield return new WaitForSeconds(seconds);
+        if (warningAudioSource != null)
+        {
+            warningAudioSource.Stop();
+            warningAudioSource.pitch = 1f;
+        }
+        warningAudioRoutine = null;
+    }
+
+    void StopWarningAudio()
+    {
+        if (warningAudioRoutine != null)
+        {
+            StopCoroutine(warningAudioRoutine);
+            warningAudioRoutine = null;
+        }
+        if (warningAudioSource == null) return;
+        warningAudioSource.Stop();
+        warningAudioSource.pitch = 1f;
     }
 
     void CreateRevealAction()

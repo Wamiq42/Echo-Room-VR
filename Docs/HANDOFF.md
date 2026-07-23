@@ -3,7 +3,7 @@
 **Purpose.** Everything a fresh Claude Code session — or a different AI model — needs to continue this
 UI-fix pass without re-discovering what's already known. Read this top to bottom before touching code.
 
-**Last updated:** after W6b completion and QA (2026-07-23). Branch: `Development-Phase`. No pushes made.
+**Last updated:** after W7 completion and QA (2026-07-23). Branch: `Development-Phase`. No pushes made.
 
 ---
 
@@ -126,7 +126,7 @@ Then `Read` the PNG to view it. Screenshots land in `Docs/QA/`.
 | W5 | Editor authoring parity | 1 | ✅ completed and QA-verified |
 | **W6a** | Tutorial prompt world-lock | 3 | ✅ completed; headset check pending |
 | **W6b** | Tutorial prompt styling | 11 | ✅ completed; headset check pending |
-| **W7** | Timer fairness | 10 | ⬜ next executable item |
+| **W7** | Timer fairness | 10 | ✅ completed; headset check pending |
 | **W9** | Interaction layers + safe cleanup | adjacent | ⬜ |
 
 **Out of scope this pass (user's call):** Issue 12 / Issue 14 (in-game HUD / wrist objective panel)
@@ -162,6 +162,15 @@ preserving the tutorial trace schema. The separate ending fade remains camera-bo
 serialization was required. Five final captures live at `Docs/QA/w6b-01-sonar.png` through
 `w6b-05-warning.png`.
 
+**W7 result worth carrying forward:** timed mazes now wait for the loading transition before starting
+at the full 180 seconds and showing their four-flash introduction. Automatic one-shot reveals fire at
+60/30/10 seconds for 3.0/3.75/4.5 seconds with progressively stronger playback of the existing
+heartbeat clip. Pause freezes the countdown, visible warning, fade, and cue lifetime together; manual
+A / Gamepad South / keyboard `T` reveal remains independent. Successful expiry hides the controller
+readout before the time-up menu opens. The UI Toolkit MOVE prompt teaches `press A to reveal the
+timer`; Maze E remains intentionally untimed pending a separate design decision. Final evidence:
+`Docs/QA/w7-tutorial-timer-reveal.png`, `w7-10-second-warning.png`, and `w7-time-expired.png`.
+
 ## 6. ⏳ Pending playtest checks — THE USER MUST DO THESE
 
 W2's complete menu→maze lifecycle and W3's exact head-relative placement are now verified in Editor
@@ -183,16 +192,14 @@ Play Mode. The remaining physical-input/comfort checks are:
    orientation is readable, each new message reanchors comfortably, controller rays are not
    intercepted, and nearby geometry does not obscure the panel. The full sequence already passes in
    Editor Play Mode; these are physical Quest checks only.
+7. **W7:** in a timed maze, confirm physical A reveals the timer; inspect it while moving the right
+   hand and in both eyes; and confirm the 60/30/10 heartbeat cues are audible, comfortable, and
+   appropriately urgent without overpowering gameplay audio.
 
 ## 7. Remaining work — how to execute each
 
 Full specs are in `UI_FIX_PLAN.md` under each `W#`. Condensed here with the dependency order.
 
-- **W7 — timer fairness** (Issue 10). 180 s/maze timer is invisible unless the A button is held.
-  Add escalating auto-reveals at 60/30/10 s with an on-theme audio cue, keep manual reveal, and teach
-  the reveal button in the tutorial. Depends on W2 (the level-start flash was firing behind the old
-  loading screen). Player-facing copy must be drafted in the existing voice and shown to the user for
-  approval. Owns `MazeLevelTimer.cs` (+ `TutorialDirector.cs` after W6).
 - **W9 — interaction layers + safe cleanup.** Reconcile `PanelInputConfiguration.m_InteractionLayers`
   (`4294967291` in MainMenuScene vs `1075` in MainScene). Replace the two remaining name-string lookups with
   serialized refs. **Do NOT delete** `VRFrontEndMenu.cs` (duplicate of `VRMainMenu`) or
@@ -214,8 +221,8 @@ and commits. (W2 and W8 were done this way.)
 1. **Issue 12 / 14 (wrist HUD/objective panel)** — deferred by the user to "later, when other issues
    are resolved." Data survey is already in the issue doc (timer/level-name free; "2 of 3 switches"
    exists but private; objective text and a multi-step phase model must be authored).
-2. **Maze E has no time limit** (name-match falls through to `-1`). Left as-is in W7; flagged for the
-   user to confirm intentional.
+2. **Maze E has no time limit** (name-match falls through to `-1`). W7 intentionally preserved that
+   behavior because adding a limit is a design change, not part of the fairness defect.
 
 ## 9. Quick-start for a fresh session / different model
 
@@ -224,7 +231,7 @@ and commits. (W2 and W8 were done this way.)
 2. Confirm Unity is alive: `npx unity-mcp-cli run-system-tool ping --input '{}'`.
 3. Verify the working tree matches the plan: `git log --oneline -8` should end at the commit named in
    §5. Ignore the non-ours churn in §4.8.
-4. Take the next executable `⬜` item, W7. Read the files it owns *fully* before editing.
+4. Take the next executable `⬜` item, W9. Read the files it owns *fully* before editing.
 5. Make the change (delegate if it parallelises), **compile-verify per §4.1**, screenshot if visual,
    review, commit one-per-issue, update the plan's running log with what was done and what's still
    `PENDING-HEADSET`/`PENDING-PLAYTEST`.

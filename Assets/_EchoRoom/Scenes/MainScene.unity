@@ -13112,6 +13112,10 @@ MonoBehaviour:
   normalColor: {r: 0.34, g: 0.94, b: 0.94, a: 1}
   lowTimeColor: {r: 1, g: 0.36, b: 0.2, a: 1}
   lowTimeThresholdSeconds: 30
+  automaticRevealSeconds: 3
+  warningAudioClip: {fileID: 8300000, guid: 5502fb395141a0145a85aff591511133, type: 3}
+  warningAudioVolume: 0.65
+  warningAudioDurationSeconds: 1.1
   startFlashCount: 4
   startFlashOnSeconds: 0.22
   startFlashOffSeconds: 0.16

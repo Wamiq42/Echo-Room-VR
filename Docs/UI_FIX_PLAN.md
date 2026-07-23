@@ -51,7 +51,7 @@ Ordered by dependency, not by issue number. Each row is one commit.
 | W5 | Editor authoring parity | 1 | W1 | ✅ Done |
 | W6a | Tutorial prompt: head-relative world-lock | 3 | — | ✅ Done |
 | W6b | Tutorial prompt styling | 11 | W6a | ✅ Done |
-| W7 | Timer fairness: warnings + tutorial teaching | 10 | W2 | ⬜ |
+| W7 | Timer fairness: warnings + tutorial teaching | 10 | W2 | ✅ Done |
 | W8 | Main menu: block simulator WASD | 9 | — | ✅ Done (`8bcecdc`) |
 | W9 | Interaction-layer reconciliation + safe cleanup | adjacent | W1 | ⬜ |
 
@@ -256,31 +256,32 @@ world-lock stability, reanchor comfort, physical controller behavior, and geomet
 
 ## W7 — Timer fairness
 
-**Root cause.** 180 s per maze; display is controller-parented and alpha-0 unless the A button is
-pressed. The only unprompted warning is a 4-flash at level start — which currently fires *behind the
-loading screen*, so it is never seen. Hence "no indication of time anywhere."
+**Implemented.** Timed mazes now wait for W2's loading transition to finish before the countdown and
+four-flash introduction begin, so the full 180 seconds and the start signal are available to the
+player. The timer automatically reveals at exactly 60, 30, and 10 seconds remaining. Reveal holds
+escalate from 3.0 to 3.75 to 4.5 seconds, while the existing heartbeat clip escalates from subdued to
+urgent through volume, pitch, and cue length. A long frame crossing several thresholds emits only the
+most urgent cue and retires the skipped thresholds; expiry takes priority over the ten-second cue.
 
-**Approach — options A + C, keeping the manual reveal (as agreed).**
+Manual A / Gamepad South / keyboard `T` reveal remains independent and unchanged. The warning
+presentation uses scaled game time, so pausing freezes the countdown, active reveal window, fade, and
+cue lifetime together. Successful expiry hides the controller readout before opening the time-up
+menu, keeping Restart and Return unobstructed. Disabling the component cancels its delayed start and
+warning presentation.
 
-1. Escalating auto-reveals at 60 s / 30 s / 10 s remaining, with audio. Prefer a signal-decay or
-   heartbeat cue over a beep — it fits the fiction and the game is audio-first.
-2. Teach the reveal button in the tutorial. `TutorialDirector` already has a prompt-slot pattern.
-3. Keep A / keyboard `T` manual reveal exactly as-is.
-
-**Depends on W2** — the level-start flash only becomes visible once the loading screen stops covering
-it.
-
-**Open question I will decide and document:** `GetDuration` returns `-1` for unmatched level names,
-so **Maze E currently has no time limit**. I'll leave that behaviour alone (changing it is a design
-call, not a bug fix) and flag it for you.
-
-**Tutorial copy** will be drafted to match the existing voice (`SonarMessage` et al., `:130-134`) and
-flagged for your approval — it's player-facing text and it should sound like you wrote it.
+The existing UI Toolkit MOVE prompt now teaches the control with the exact copy:
+`MOVE\nIn timed mazes, press A to reveal the timer.\nGo straight, then turn left.` No new tutorial
+gate was added. Maze E remains deliberately untimed because assigning it a duration is a separate
+design decision. The lightweight controller timer remains the existing TMP world text; converting it
+into an objective/wrist UI panel belongs to the explicitly deferred Issue 12/14 HUD work.
 
 **Acceptance:** warnings fire at the right thresholds and are visible; tutorial teaches the reveal;
 manual reveal still works. `PENDING-HEADSET` for whether the warnings read clearly in-headset.
 
-**QA:** ⬜ pending
+**QA:** ✅ deterministic threshold/hitch/manual/pause fixtures, full live timer lifecycle, natural
+tutorial path, and all three desktop captures pass. Independent code and visual reviews closed their
+pause/lifecycle and expiry-overlap findings. `PENDING-HEADSET` for physical A input, moving-hand and
+stereo readability, and warning-cue loudness/comfort.
 
 ---
 
@@ -685,3 +686,45 @@ before hiding, preventing a disabled director from being made visible again by a
   behavior, and ending-fade comfort.
 
 **Remaining W6 work:** none in code; only the recorded Quest checks remain.
+
+### W7 — Timer fairness ✅
+
+**Implemented:** `MazeLevelTimer` now starts only after `VRLoadingScreen.IsTransitioning` clears,
+preserving the authored 180 seconds and moving the four-flash introduction out from behind the cover.
+One-shot automatic warnings cross at 60/30/10 seconds with 3.0/3.75/4.5-second reveals and the
+existing `universfield-fast-heartbeat-151928` clip at progressively higher volume, pitch, and cue
+length. Long-frame crossings coalesce to the most urgent warning, expiry wins over warning playback,
+pause freezes an active warning, and manual A / Gamepad South / keyboard `T` reveal remains isolated.
+Successful expiry hides `TIME 00:00` before the time-up menu appears. The UI Toolkit tutorial MOVE
+message now says: `In timed mazes, press A to reveal the timer.` Maze E remains untimed.
+
+**Verified:**
+
+- ✅ Synchronous import and reflection readback reported `scriptCompilationFailed=False`; the final
+  methods and serialized warning fields were present. MainScene saved the 6.896-second mono heartbeat
+  clip, base volume `0.65`, base cue length `1.1`, and base reveal `3.0` on the exact timer component.
+- ✅ A deterministic fixture passed exact 60/30/10 crossings, masks `1/3/7`, no duplicates,
+  65→5-second hitch coalescing to the ten-second cue, paused countdown stability, manual-reveal
+  isolation, Maze A–D durations, and untimed Maze E.
+- ✅ Live Play Mode passed countdown gating while the loading cover was active, a full 180-second
+  post-cover start and visible intro flash, all three warning presentations with real `AudioSource`
+  playback/stop and escalation, expiry/menu/audio cleanup, restart, and untimed Maze E cleanup.
+- ✅ A focused pause regression held a live 60-second warning for 2.5 real seconds at `timeScale=0`:
+  remaining time stayed `59.00`, the reveal retained all `3.00` seconds, and the cue coroutine remained
+  pending until resume. A lifecycle regression confirmed disabling the component cancelled the
+  delayed-start coroutine and hid the display.
+- ✅ A natural tutorial run reached the real MOVE state and read back the exact new text from
+  `Tutorial System/Tutorial UI Toolkit Prompt`; prior tutorial preferences were restored exactly.
+- ✅ Final 1920×1080 evidence: `Docs/QA/w7-tutorial-timer-reveal.png`,
+  `Docs/QA/w7-10-second-warning.png`, and `Docs/QA/w7-time-expired.png`. Independent visual review
+  initially caught `TIME 00:00` over Restart; the product was fixed, the expiry image was recaptured,
+  and the reviewer passed the unobstructed result. Independent code review's pause and disable-race
+  findings were likewise fixed and re-reviewed with no blocker.
+- ⚠️ The compressed-audio sample-read diagnostic and an early fixture assumption about preassigned
+  runtime `AudioSource.clip` produced harness-only errors; corrected product-path checks passed. No
+  blanket zero-Console-warning/error claim is made for the entire work session.
+- ⚠️ **`PENDING-HEADSET`:** physical A-button mapping, stereo/controller-distance readability,
+  moving-hand occlusion, and heartbeat loudness/comfort on Quest.
+
+**Remaining W7 work:** none in code; only the recorded Quest checks and the separate design decision
+for Maze E remain.
