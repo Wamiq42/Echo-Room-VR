@@ -133,14 +133,14 @@ public sealed class TutorialDirector : MonoBehaviour
     const string InteractionMessage = "INTERACTION\nMove close, aim at the button or lever, and press RIGHT TRIGGER.";
     const string WarningMessage = "WARNING\nSonar can attract unwanted attention.\nSomething dangerous may be listening.";
 
-    static readonly Vector3 PromptOffsetFromView = new Vector3(-0.13f, 0.035f, 0.015f);
+    static readonly Vector3 PromptOffsetFromView = new Vector3(0f, -0.10f, 0.85f);
     const float PromptCanvasScale = 0.0005f;
     static readonly Vector2 PromptPanelSize = new Vector2(700f, 260f);
 
     Step step;
     GameObject levelRoot;
     Transform player, startCheckpoint, interactionWall;
-    Transform head, rightController;
+    Transform head;
     PingEmitter pingEmitter;
     AudioSource entityAudio, heartbeatAudio;
     Canvas tutorialPromptCanvas;
@@ -148,6 +148,7 @@ public sealed class TutorialDirector : MonoBehaviour
     TextMeshProUGUI tutorialPromptText;
     bool buttonActivated, leverActivated;
     bool activeTutorial;
+    bool promptPlacementErrorLogged;
 
     void Awake()
     {
@@ -180,8 +181,6 @@ public sealed class TutorialDirector : MonoBehaviour
     void Update()
     {
         if (!activeTutorial || player == null) return;
-
-        UpdatePromptPose();
 
         if (step == Step.Move && interactionWall != null && HorizontalDistance(player.position, interactionWall.position) <= 5f)
         {
@@ -265,16 +264,7 @@ public sealed class TutorialDirector : MonoBehaviour
     void BuildControllerInstructions()
     {
         interactionWall = levelRoot.transform.Find("Interaction Wall");
-        head = Camera.main != null ? Camera.main.transform : null;
-        if (head == null && player != null)
-            head = player.Find("Camera Offset/Main Camera");
-
-        rightController = player != null ? player.Find("Camera Offset/Right Controller") : null;
-
-        if (head == null)
-            Debug.LogError("[Tutorial] Main Camera is missing; controller prompt cannot face the player.");
-        if (rightController == null)
-            Debug.LogError("[Tutorial] Right Controller is missing; controller prompt cannot be positioned.");
+        ResolveHead();
 
         CreateControllerPrompt();
     }
@@ -331,29 +321,52 @@ public sealed class TutorialDirector : MonoBehaviour
         tutorialPromptText.raycastTarget = false;
 
         canvasObject.SetActive(false);
-        UpdatePromptPose();
     }
 
-    void UpdatePromptPose()
+    void ResolveHead()
     {
-        if (tutorialPromptCanvas == null || head == null || rightController == null) return;
+        if (head != null) return;
+        head = Camera.main != null ? Camera.main.transform : null;
+        if (head == null && player != null)
+            head = player.Find("Camera Offset/Main Camera");
+    }
+
+    bool TryPlacePromptAtHeadPose()
+    {
+        ResolveHead();
+        if (tutorialPromptCanvas == null || head == null)
+        {
+            if (!promptPlacementErrorLogged)
+            {
+                Debug.LogError("[Tutorial] Main Camera is missing; the world-space prompt cannot be placed safely.");
+                promptPlacementErrorLogged = true;
+            }
+            return false;
+        }
+
+        promptPlacementErrorLogged = false;
 
         Transform prompt = tutorialPromptCanvas.transform;
         Vector3 offset = head.right * PromptOffsetFromView.x +
                          head.up * PromptOffsetFromView.y +
                          head.forward * PromptOffsetFromView.z;
-        prompt.position = rightController.position + offset;
+        prompt.position = head.position + offset;
         prompt.rotation = Quaternion.LookRotation(prompt.position - head.position, head.up);
         prompt.localScale = Vector3.one * PromptCanvasScale;
+        return true;
     }
 
     void ShowPrompt(string message)
     {
         if (tutorialPromptCanvas == null || tutorialPromptText == null) return;
         tutorialPromptText.text = message;
+        if (!TryPlacePromptAtHeadPose())
+        {
+            tutorialPromptCanvas.gameObject.SetActive(false);
+            return;
+        }
         tutorialPromptCanvas.gameObject.SetActive(true);
         tutorialPromptGroup.alpha = 1f;
-        UpdatePromptPose();
     }
 
     IEnumerator FadePrompt(float targetAlpha, float duration)
@@ -382,9 +395,9 @@ public sealed class TutorialDirector : MonoBehaviour
             yield return FadePrompt(0f, TextFadeDuration);
 
         tutorialPromptText.text = incoming;
+        if (!TryPlacePromptAtHeadPose()) yield break;
         tutorialPromptCanvas.gameObject.SetActive(true);
         tutorialPromptGroup.alpha = 0f;
-        UpdatePromptPose();
         yield return FadePrompt(1f, TextFadeDuration);
     }
 
@@ -512,21 +525,21 @@ public sealed class TutorialDirector : MonoBehaviour
         SceneManager.LoadScene("MainMenuScene");
     }
 
-    static Image CreateFadeOverlay()
+    Image CreateFadeOverlay()
     {
+        ResolveHead();
+        Camera camera = head != null ? head.GetComponent<Camera>() : null;
+        if (camera == null)
+        {
+            Debug.LogError("[Tutorial] Main Camera is missing; the ending fade cannot be rendered safely in stereo.");
+            return null;
+        }
+
         GameObject canvasObject = new GameObject("Tutorial Ending Fade", typeof(Canvas));
         Canvas canvas = canvasObject.GetComponent<Canvas>();
-        Camera camera = Camera.main;
-        if (camera != null)
-        {
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = camera;
-            canvas.planeDistance = Mathf.Max(camera.nearClipPlane + 0.05f, 0.1f);
-        }
-        else
-        {
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        }
+        canvas.renderMode = RenderMode.ScreenSpaceCamera;
+        canvas.worldCamera = camera;
+        canvas.planeDistance = Mathf.Max(camera.nearClipPlane + 0.05f, 0.1f);
         canvas.sortingOrder = short.MaxValue;
 
         GameObject imageObject = new GameObject("Black Fade", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));

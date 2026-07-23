@@ -49,7 +49,8 @@ Ordered by dependency, not by issue number. Each row is one commit.
 | W3 | Consolidate the hard-coded world anchor | 13 | W2 | ✅ Done |
 | W4 | Menu placement: wall occlusion + distance | 4, 7b | W1 | ✅ Done |
 | W5 | Editor authoring parity | 1 | W1 | ✅ Done |
-| W6 | Tutorial prompt: anchoring + styling | 3, 11 | — | ⬜ |
+| W6a | Tutorial prompt: head-relative world-lock | 3 | — | ✅ Done |
+| W6b | Tutorial prompt styling | 11 | W6a | ⏸ Awaiting user choice |
 | W7 | Timer fairness: warnings + tutorial teaching | 10 | W2 | ⬜ |
 | W8 | Main menu: block simulator WASD | 9 | — | ✅ Done (`8bcecdc`) |
 | W9 | Interaction-layer reconciliation + safe cleanup | adjacent | W1 | ⬜ |
@@ -65,7 +66,7 @@ strictly sequential (same files). W4 and W5 both wait on W1's outcome.
 | `VRMainMenu.cs` | W2 → W3 → W5 |
 | `VRLoadingScreen.cs` | W2 → W3 |
 | `GameManager.cs` | W2, then W7 |
-| `TutorialDirector.cs` | W6, then W7 |
+| `TutorialDirector.cs` | W6a, then W6b or W7 — serialise these |
 | `MazeLevelTimer.cs` | W7 |
 | `UnifiedLocomotionBridge.cs` | W8 |
 | `MainMenuScene.unity` / `MainScene.unity` | W1, W2, W4, W8 — **serialise these, never concurrent** |
@@ -204,26 +205,37 @@ behaviour unchanged. Before/after screenshots.
 
 ---
 
-## W6 — Tutorial prompt: anchoring and styling
+## W6a — Tutorial prompt anchoring
 
-**Anchoring (Issue 3).** `TutorialDirector.cs:345` re-drives the prompt from
-`rightController.position` every frame. Wamiq asked for "best possible UX" → **head-relative,
-world-locked on show**: placed once in front of the player when it appears, then frozen. Always
-visible on arrival, never chases the player (chasing UI is a leading cause of VR discomfort), and
-consistent with how the pause menu already behaves.
+**Anchoring (Issue 3 — ✅ complete).** The prompt is now **head-relative, world-locked on show**:
+each message is placed once at `(0, -0.10, 0.85)` metres in head space, then its world transform is
+left untouched until the next message appears. The former per-frame controller placement and right-
+controller dependency are gone. `Camera.main` remains preferred, with the XR-rig Main Camera as a
+fallback; no camera leaves the prompt hidden and emits one clear error.
 
-**Styling (Issue 11).** The prompt is the only UI outside the UI Toolkit stack — a runtime-built uGUI
-`Canvas` with a bare `TextMeshPro` and hard-coded font values (`:325-331`). It cannot inherit
-`VRMenu.uss`. Port to UI Toolkit and reuse the menu stylesheet so it matches for free.
+**Also fixed with Issue 3:** the ending fade no longer falls back to `ScreenSpaceOverlay`. It uses the
+resolved XR camera in `ScreenSpaceCamera` mode or fails loudly without creating an unsafe overlay.
 
-**Also fix here:** `TutorialDirector.cs:528` falls back to `RenderMode.ScreenSpaceOverlay` when
-`Camera.main` is null — the only such case in the project, and it will not composite correctly in
-stereo. Should fail loudly instead.
+**Acceptance:** the prompt appears in front of the player, stays put while the head and controller
+move, and reanchors once for each new message. `PENDING-HEADSET` for world-lock comfort, stereo
+stability, distance, readability, and reanchor transitions.
 
-**Acceptance:** prompt appears in front of the player, stays put, matches menu styling. Screenshots
-of each tutorial prompt state. `PENDING-HEADSET` for readability.
+**QA:** ✅ complete in deterministic Edit Mode and live Play Mode; `PENDING-HEADSET`
 
-**QA:** ⬜ pending
+---
+
+## W6b — Tutorial prompt styling
+
+**Issue 11 remains pending user choice. No styling change landed with Issue 3.** The prompt remains
+the only UI outside the UI Toolkit stack: a runtime-built uGUI `Canvas` with `TextMeshProUGUI`. The
+current recommendation is to keep uGUI/TMP and restyle it by hand so `TutorialRuntimeObserver`
+reflection and TMP auto-sizing continue to work. See the running-log reversal below; do not port it
+to UI Toolkit without user approval.
+
+**Acceptance:** prompt matches the chosen menu visual language, with screenshots of all five prompt
+states. `PENDING-HEADSET` for readability.
+
+**QA:** ⏸ pending user decision
 
 ---
 
@@ -585,5 +597,41 @@ Detailed scoping turned up a blocker I did not know about when I recommended the
 **Revised plan for W6:** keep the prompt as uGUI, and restyle it by hand to match the menu's visual
 language (panel frame, corner brackets, `--echo-cyan`/`--echo-white` palette, `.signal-line`
 divider). You lose single-source-of-truth styling, which is a real cost — but you keep working
-diagnostics, text auto-fit, and the existing pose math. **The anchoring fix (Issue 3) is unaffected
-and proceeds as planned.** Say the word if you'd rather take the port and its costs.
+diagnostics, text auto-fit, and the existing pose math. **The anchoring fix (Issue 3) was unaffected
+and has now completed independently as W6a.** Say the word if you'd rather take the port and its costs.
+
+### W6a — Tutorial prompt anchoring ✅
+
+**Implemented:** `TutorialDirector` no longer updates the tutorial prompt pose every frame or looks
+up the right controller. Each prompt is placed once from the resolved head pose at a centred,
+slightly lowered 0.85 m distance. `ShowPrompt()` handles the initial placement and `SwapPrompt()`
+handles each later reanchor. The visible prompt therefore remains fixed in world space while the
+player moves. Missing-camera placement remains hidden and reports one error. The ending fade now
+requires a resolved camera and always uses `ScreenSpaceCamera`.
+
+**Verified:**
+
+- ✅ Unity compiled the change with `scriptCompilationFailed=False`.
+- ✅ A deterministic fixture verified exact offset, rotation, scale, no per-frame movement after
+  head/controller changes, fresh placement on the next show, `Camera.main` preference, XR-rig camera
+  fallback, no right-controller dependency, and fail-closed prompt/fade behavior without a camera.
+- ✅ A real `MainScene` tutorial Play Mode run loaded `T_Junction_Tutorial` through `GameManager`.
+  Numeric assertions confirmed the initial pose, an unchanged pose after moving the player/head and
+  right controller, a fresh pose after `SwapPrompt()`, and another unchanged pose after later motion.
+- ✅ The live run preserved the `Move → Button` five-metre gate, the observer's reflected TMP prompt
+  reference, and a camera-bound `ScreenSpaceCamera` ending fade. The tutorial trace reported all ten
+  observer references `OK` and zero observer errors.
+- ✅ `Docs/QA/w6-issue3-world-locked-prompt.png` visually shows the live Interaction prompt in front
+  of the player. The editor was restored to clean `MainMenuScene`, and the pre-test tutorial status
+  and request preferences were restored exactly.
+- ✅ Independent code review found no blocker. It called out only the pre-existing possibility of
+  overlapping rapid `SwapPrompt()` coroutines and the expected lack of automatic retry when the
+  initial camera is missing and no later message occurs.
+- ⚠️ This run did not exercise the complete Sonar → Microphone → Move → Interaction → Warning →
+  ending/audio/scene-return sequence; earlier tutorial-specific entries cover separate pieces, but
+  W6a does not claim a new full-sequence regression pass.
+- ⚠️ **`PENDING-HEADSET`:** confirm the 0.85 m placement is comfortable and readable, remains
+  stereo-stable without swimming or jitter, stays world-locked through physical movement, and that
+  each message reanchor feels comfortable seated and standing.
+
+**Remaining W6 work:** Issue 11 styling is still blocked on the user choice documented above.

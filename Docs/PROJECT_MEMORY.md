@@ -39,6 +39,9 @@ This is a maintained summary of important known locations. Add entries when a fi
 | Main-menu persistent loading UI document | `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen` |
 | Gameplay pause/failure world-space UI document | `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu` |
 | Gameplay loading UI document | `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen` |
+| Tutorial runtime director | `Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System` |
+| Runtime-created tutorial prompt | `Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System/Tutorial Controller Prompt` |
+| Runtime-created tutorial prompt text | `Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System/Tutorial Controller Prompt/Prompt Text` |
 
 ### Important code and assets
 
@@ -49,6 +52,8 @@ This is a maintained summary of important known locations. Add entries when a fi
 | Loading authoring layout | `Assets/_EchoRoom/Resources/UI/VRLoadingScreen.uxml` |
 | Loading stylesheet | `Assets/_EchoRoom/Resources/UI/VRLoadingScreen.uss` |
 | Shared world-space UI Toolkit panel settings | `Assets/_EchoRoom/Resources/UI/VRMenuPanelSettings.asset` |
+| Tutorial sequence and runtime prompt | `Assets/_EchoRoom/Scripts/Tutorial/TutorialDirector.cs` |
+| Tutorial runtime diagnostics | `Assets/_EchoRoom/Scripts/Tutorial/TutorialRuntimeObserver.cs` |
 
 ### Unity MCP connection
 
@@ -2854,3 +2859,31 @@ Verification performed:
 - **Verification:** Unity imported both UXMLs with `m_ImportedWithErrors=false`, `m_ImportedWithWarnings=false`, and one linked stylesheet each. A live cross-scene Edit Mode audit opened both scene assets through Unity and verified all four exact objects, source assets, shared PanelSettings, Absolute/Fixed 900 × 560 settings, centred pivots, sorting orders, and one stylesheet reference across each full visual tree. After a real UI Toolkit repaint, Start resolved to `Flex`; Level/Warning/Pause/Settings/Captured, both loading roots, and Thank You resolved to `None`. The after-image `Docs/QA/w5-after-editmode-mainmenu.png` was captured with `EditorApplication.isPlaying=false` and visually compared with `Docs/QA/issue-01-before-editmode-stacking.png`. Play Mode tests exercised Start/Level/Settings switching, loading 0%→50%→hidden, a real MainMenuScene→MainScene transition with exactly one persistent loading owner, and Pause/Settings/Captured/Time Up/hidden cleanup. Delayed pause input activated after layout, and hiding restored collider, time, and audio. Runtime stylesheet counts remained one per document. The final fresh one-minute Console query returned zero Errors and zero Exceptions. Both scenes were read back clean, and `MainMenuScene` was restored active and clean.
 - **Known limitations:** `PENDING-HEADSET` for physical controller-ray hover/trigger behavior, stereo readability, perceived scale, and transition comfort. MainScene's Edit Mode representative Start screen is not its runtime Pause state. W5 does not resolve the pre-existing negative-scale collider warning or Issue 7a's deferred 1920 × 1080 reflow.
 - **Follow-up:** Run the existing W1/W4/W5 Quest checks, address the transform convention separately if controller targeting remains incorrect, and continue the UI plan with W6.
+
+### UI-W6A-TUTORIAL-WORLD-LOCK-001 — World-lock each tutorial prompt at presentation
+
+- **Date:** 2026-07-23
+- **Goal:** Complete UI work item W6a / Issue 3 by replacing the controller-following tutorial prompt with a head-relative pose captured once whenever a message appears.
+- **Result:** The existing runtime uGUI/TMP prompt is placed 0.85 m forward and 0.10 m below the resolved Main Camera when the initial prompt or a replacement message is shown, for a centre distance of approximately 0.856 m. It then retains that world pose instead of following the headset or Right Controller every frame. The Right Controller is no longer a prompt dependency. Missing-camera placement leaves the prompt hidden and emits one explicit Error. The ending fade now requires a stereo camera instead of falling back to `ScreenSpaceOverlay`. Issue 11 styling was not changed and remains pending user choice.
+- **Files created:**
+  - `Docs/QA/w6-issue3-world-locked-prompt.png`
+- **Files modified:**
+  - `Assets/_EchoRoom/Scripts/Tutorial/TutorialDirector.cs`
+  - `Docs/UI_FIX_PLAN.md`
+  - `Docs/HANDOFF.md`
+  - `Docs/PROJECT_MEMORY.md`
+  - `Logs/TutorialRuntime.log` (ignored runtime verification trace; not committed)
+- **Files created and deleted during verification:**
+  - `Library/W6Issue3LiveQA.txt` (ignored temporary harness result; removed after readback)
+- **Files moved/deleted as part of the product change:** None.
+- **Unity objects affected:**
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System/Tutorial Controller Prompt` (runtime-created)
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial System/Tutorial Controller Prompt/Prompt Text` (runtime-created)
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: Tutorial Ending Fade` (runtime-created)
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Main Camera` (inspected read-only pose/camera source)
+- **Components/assets/settings:** `PromptOffsetFromView` is `(0, -0.10, 0.85)`; `PromptCanvasScale=0.0005` and `PromptPanelSize=700×260` are unchanged. `ShowPrompt()` and `SwapPrompt()` call `TryPlacePromptAtHeadPose()` once before showing each message. Per-frame prompt placement and the `rightController` field/lookup were removed. `TutorialDirector.Update()` remains because it owns the `Move → Button` proximity gate. `tutorialPromptText` remains a `TextMeshProUGUI`, preserving `TutorialRuntimeObserver` reflection and `TEXT_PROMPT` diagnostics. `CreateFadeOverlay()` now uses the resolved Main Camera only and returns null with an Error when a stereo camera is unavailable.
+- **Decisions and assumptions:** Full headset orientation axes are used, matching the existing camera-relative UI convention. World-locking means the player can deliberately turn away after a message appears; each subsequent message recentres from the then-current head pose. No wall cast was added, so presentation while facing very close geometry may still obscure the prompt. The 0.856 m centre distance is provisional pending headset comfort verification. The prompt remains bare floating uGUI text because Issue 11 is a separate design/architecture choice.
+- **Verification:** Unity synchronous import and compilation completed with `EditorUtility.scriptCompilationFailed=False`. A deterministic temporary fixture passed exact offset/rotation/scale, eight repeated `Update()` calls without pose drift after head/controller movement, fresh placement on a later show, `Camera.main` preference, XR-rig fallback, no right-controller dependency, and fail-closed prompt/fade behavior without a camera. A real `MainScene` Play Mode run loaded `T_Junction_Tutorial` through `GameManager`; a corrected runtime harness passed initial placement, world-lock after player/head/controller motion, reanchor on `SwapPrompt()`, post-swap lock, observer TMP compatibility, the preserved `Move → Button` gate, and creation of a camera-bound `ScreenSpaceCamera` fade. The initial and swapped prompt positions were `(1.76000, 0.95000, -0.33000)` and `(2.69154, 1.03000, -0.81116)`. The saved tutorial trace reported all ten observer references `OK`, zero `[ERROR]` entries, initial Sonar text, the QA swap, `Ping → Button`, and Interaction text. `Docs/QA/w6-issue3-world-locked-prompt.png` was captured at the open tutorial start and visually inspected; it proves the Interaction prompt rendered without obvious clipping, not motion locking by itself. A first dynamic harness draft failed to compile because of harness-only omissions; no product code or serialized Unity state changed, and the corrected harness passed. The deliberate no-camera fixture emitted its expected Errors, so no blanket zero-Console-Error claim is made. Independent code, observer, and QA reviews found no Issue 3 blocker. Play Mode was stopped, both pre-test tutorial PlayerPrefs keys were restored exactly (`Status=2`, `Requested=0`), and clean `MainMenuScene` was restored active.
+- **Known limitations:** `PENDING-HEADSET` for stereo comfort, apparent distance, readability, jitter/swimming, turn-away-and-return behavior, independent physical controller movement, nearby-geometry occlusion, and seated/standing reanchors. The saved run did not exercise natural Ping events, `SecondReveal`, `Move`, real button/lever completion, `Warning`/`Ending`/`Done`, ending audio, observer detach, or return to `MainMenuScene`. Rapid overlapping `SwapPrompt()` coroutines and lack of an automatic retry when the initial camera is absent and no later message occurs are pre-existing/non-blocking lifecycle risks. W6b styling and the required five-state styling screenshots remain open.
+- **Follow-up:** Decide W6b / Issue 11 styling. Before or during W7, run the complete natural tutorial sequence once and confirm each prompt reanchors once, plus warning hold, ending audio, stereo fade, completion persistence, scene return, and observer detach. Run the recorded headset checks on Quest before accepting the 0.856 m distance as comfortable.

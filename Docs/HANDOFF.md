@@ -124,8 +124,9 @@ Then `Read` the PNG to view it. Screenshots land in `Docs/QA/`.
 | W3 | Loading screen head-relative | 13 | ✅ completed and QA-verified |
 | W4 | Menu occlusion + distance | 4, 7b | ✅ completed and QA-verified |
 | W5 | Editor authoring parity | 1 | ✅ completed and QA-verified |
-| **W6** | Tutorial prompt anchor + style | 3, 11 | ⬜ next |
-| **W7** | Timer fairness | 10 | ⬜ |
+| **W6a** | Tutorial prompt world-lock | 3 | ✅ completed; headset check pending |
+| **W6b** | Tutorial prompt styling | 11 | ⏸ awaiting user choice |
+| **W7** | Timer fairness | 10 | ⬜ next executable item |
 | **W9** | Interaction layers + safe cleanup | adjacent | ⬜ |
 
 **Out of scope this pass (user's call):** Issue 12 / Issue 14 (in-game HUD / wrist objective panel)
@@ -151,6 +152,14 @@ UXML's representative Start screen in Edit Mode; runtime state selection is unch
 evidence: `Docs/QA/issue-01-before-editmode-stacking.png` and
 `Docs/QA/w5-after-editmode-mainmenu.png`.
 
+**W6a result worth carrying forward:** the tutorial prompt remains a runtime world-space uGUI/TMP
+canvas, but it no longer follows the Right Controller. Each message is placed once from the current
+head pose at `(0, -0.10, 0.85)` metres and remains world-locked until the next message. Missing-camera
+placement hides the prompt and logs once. The `Move → Button` proximity update, prompt copy, TMP
+auto-sizing/outline, fades, observer field contract, and ending sequence remain structurally intact.
+The ending fade no longer falls back to non-stereo `ScreenSpaceOverlay`. No scene serialization was
+required. QA image: `Docs/QA/w6-issue3-world-locked-prompt.png`.
+
 ## 6. ⏳ Pending playtest checks — THE USER MUST DO THESE
 
 W2's complete menu→maze lifecycle and W3's exact head-relative placement are now verified in Editor
@@ -166,15 +175,18 @@ Play Mode. The remaining physical-input/comfort checks are:
    a wall and confirm the emergency pull-in/scale-to-fit behavior is preferable to clipping.
 5. **W5:** confirm the authoring changes did not alter perceived scale, stereo readability, or
    physical controller-ray hover/trigger behavior on Quest.
+6. **W6a:** verify the provisional 0.856 m centre distance is comfortable and readable; move the
+   headset and controller independently to confirm no jitter, swimming, or recentering; turn away and
+   back; and run all five natural prompt states to confirm each new message reanchors once and does
+   not intersect nearby geometry.
 
 ## 7. Remaining work — how to execute each
 
 Full specs are in `UI_FIX_PLAN.md` under each `W#`. Condensed here with the dependency order.
 
-- **W6 — tutorial prompt** (Issues 3, 11). **Anchor:** `TutorialDirector.cs:345` re-drives the prompt
-  from the controller every frame → make it head-relative, world-locked on show (place once in front
-  of the player, then freeze). **Style: DECISION PENDING (see §8)** — recommended path is restyle the
-  uGUI prompt by hand, NOT port to UI Toolkit. Owns `TutorialDirector.cs`.
+- **W6b — tutorial styling** (Issue 11). **DECISION PENDING (see §8):** manually restyle the existing
+  uGUI/TMP prompt, or authorize a broader UI Toolkit port that also migrates observer diagnostics,
+  auto-fit, outline treatment, and world-space transform behavior. Owns `TutorialDirector.cs`.
 - **W7 — timer fairness** (Issue 10). 180 s/maze timer is invisible unless the A button is held.
   Add escalating auto-reveals at 60/30/10 s with an on-theme audio cue, keep manual reveal, and teach
   the reveal button in the tutorial. Depends on W2 (the level-start flash was firing behind the old
@@ -203,7 +215,7 @@ and commits. (W2 and W8 were done this way.)
    as a `TMP_Text` by reflection — a UI Toolkit `Label` isn't a `TMP_Text`, so it returns null and
    `:153` emits a hard `Debug.LogError` every tutorial run; it also loses TMP auto-sizing that the
    76-char `InteractionMessage` depends on. **Lead recommendation: keep it uGUI, restyle by hand.**
-   User can overrule. Until decided, do only the W6 *anchoring* half.
+   User can overrule. W6a anchoring is complete independently; this decision now governs only W6b.
 2. **Issue 12 / 14 (wrist HUD/objective panel)** — deferred by the user to "later, when other issues
    are resolved." Data survey is already in the issue doc (timer/level-name free; "2 of 3 switches"
    exists but private; objective text and a multi-step phase model must be authored).
@@ -217,7 +229,8 @@ and commits. (W2 and W8 were done this way.)
 2. Confirm Unity is alive: `npx unity-mcp-cli run-system-tool ping --input '{}'`.
 3. Verify the working tree matches the plan: `git log --oneline -8` should end at the commit named in
    §5. Ignore the non-ours churn in §4.8.
-4. Pick the next `⬜` item in dependency order (W6 next). Read the files it owns *fully* before editing.
+4. Resolve the W6b styling choice with the user, or take the next executable `⬜` item (W7). Read the
+   files it owns *fully* before editing.
 5. Make the change (delegate if it parallelises), **compile-verify per §4.1**, screenshot if visual,
    review, commit one-per-issue, update the plan's running log with what was done and what's still
    `PENDING-HEADSET`/`PENDING-PLAYTEST`.
