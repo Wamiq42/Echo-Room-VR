@@ -13988,6 +13988,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SonarRevealController
   pingEmitter: {fileID: 1886651329}
   revealLingerSeconds: 2.25
+  afterWaveCount: 2
+  afterWaveDelaySeconds: 0.18
+  afterWaveStrength: 0.1
+  afterWaveStrengthDecay: 1
+  afterWaveWidthScale: 0.65
 --- !u!1001 &1784333477
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -18,6 +18,11 @@ public class SonarRevealController : MonoBehaviour
     private static readonly int PulsesId = Shader.PropertyToID("_SonarPulses");
     private static readonly int PulseRangesId = Shader.PropertyToID("_SonarPulseRanges");
     private static readonly int RevealLingerOverrideId = Shader.PropertyToID("_EchoRevealLingerOverride");
+    private static readonly int AfterWaveCountId = Shader.PropertyToID("_EchoAfterWaveCount");
+    private static readonly int AfterWaveDelayId = Shader.PropertyToID("_EchoAfterWaveDelay");
+    private static readonly int AfterWaveStrengthId = Shader.PropertyToID("_EchoAfterWaveStrength");
+    private static readonly int AfterWaveStrengthDecayId = Shader.PropertyToID("_EchoAfterWaveStrengthDecay");
+    private static readonly int AfterWaveWidthScaleId = Shader.PropertyToID("_EchoAfterWaveWidthScale");
     private static readonly Vector4[] SharedPulses = new Vector4[MaxPulses];
     private static readonly Vector4[] SharedPulseRanges = new Vector4[MaxPulses];
     private static int sharedNextIndex;
@@ -31,6 +36,18 @@ public class SonarRevealController : MonoBehaviour
     [Header("Reveal Timing")]
     [Tooltip("How long revealed environment surfaces linger after the ping wave passes them. This overrides individual material linger values.")]
     [SerializeField, Min(0.05f)] private float revealLingerSeconds = 2.25f;
+
+    [Header("Visual After-Waves")]
+    [Tooltip("Number of purely visual rings that follow the primary reveal wave. These rings never reveal surfaces or trigger gameplay.")]
+    [SerializeField, Range(0, 3)] private int afterWaveCount = 2;
+    [Tooltip("Time between the primary ring and each visual follower.")]
+    [SerializeField, Min(0.01f)] private float afterWaveDelaySeconds = 0.18f;
+    [Tooltip("Brightness of the first visual follower relative to the primary ring.")]
+    [SerializeField, Range(0f, 1f)] private float afterWaveStrength = 0.10f;
+    [Tooltip("Brightness multiplier applied to each successive visual follower.")]
+    [SerializeField, Range(0f, 1f)] private float afterWaveStrengthDecay = 1.0f;
+    [Tooltip("Follower width relative to the primary ring width.")]
+    [SerializeField, Range(0.05f, 1.5f)] private float afterWaveWidthScale = 0.65f;
 
     private void Awake()
     {
@@ -59,11 +76,21 @@ public class SonarRevealController : MonoBehaviour
     public void ApplyRevealSettings()
     {
         Shader.SetGlobalFloat(RevealLingerOverrideId, Mathf.Max(0.05f, revealLingerSeconds));
+        Shader.SetGlobalFloat(AfterWaveCountId, Mathf.Clamp(afterWaveCount, 0, 3));
+        Shader.SetGlobalFloat(AfterWaveDelayId, Mathf.Max(0.01f, afterWaveDelaySeconds));
+        Shader.SetGlobalFloat(AfterWaveStrengthId, Mathf.Clamp01(afterWaveStrength));
+        Shader.SetGlobalFloat(AfterWaveStrengthDecayId, Mathf.Clamp01(afterWaveStrengthDecay));
+        Shader.SetGlobalFloat(AfterWaveWidthScaleId, Mathf.Clamp(afterWaveWidthScale, 0.05f, 1.5f));
     }
 
     private void OnValidate()
     {
         revealLingerSeconds = Mathf.Max(0.05f, revealLingerSeconds);
+        afterWaveCount = Mathf.Clamp(afterWaveCount, 0, 3);
+        afterWaveDelaySeconds = Mathf.Max(0.01f, afterWaveDelaySeconds);
+        afterWaveStrength = Mathf.Clamp01(afterWaveStrength);
+        afterWaveStrengthDecay = Mathf.Clamp01(afterWaveStrengthDecay);
+        afterWaveWidthScale = Mathf.Clamp(afterWaveWidthScale, 0.05f, 1.5f);
         ApplyRevealSettings();
     }
 
