@@ -91,6 +91,11 @@ Shader "EchoRoom/EchoSonarReveal"
             float4 _SonarPulseRanges[ECHO_MAX_PULSES];
             float _EchoSceneViewCamera;
             float _EchoRevealLingerOverride;
+            float _EchoAfterWaveCount;
+            float _EchoAfterWaveDelay;
+            float _EchoAfterWaveStrength;
+            float _EchoAfterWaveStrengthDecay;
+            float _EchoAfterWaveWidthScale;
 
             TEXTURE2D(_BaseMap);            SAMPLER(sampler_BaseMap);
             TEXTURE2D(_BumpMap);            SAMPLER(sampler_BumpMap);
@@ -218,7 +223,11 @@ Shader "EchoRoom/EchoSonarReveal"
                     float pulseRevealRadius = _SonarPulseRanges[i].x > 0.0
                         ? _SonarPulseRanges[i].x
                         : _RevealRadius;
-                    float maxAge = pulseRevealRadius / max(_RevealSpeed, 0.001) + revealLingerSeconds;
+                    float afterWaveCount = clamp(floor(_EchoAfterWaveCount + 0.5), 0.0, 3.0);
+                    float afterWaveDelay = max(_EchoAfterWaveDelay, 0.0);
+                    float visualTailDuration = afterWaveCount * afterWaveDelay;
+                    float maxAge = pulseRevealRadius / max(_RevealSpeed, 0.001) +
+                                   max(revealLingerSeconds, visualTailDuration);
                     if (age > maxAge) continue;
 
                     float3 pulsePos = _SonarPulses[i].xyz;
@@ -240,6 +249,38 @@ Shader "EchoRoom/EchoSonarReveal"
                     float ring = 1.0 - smoothstep(0.0, _RingWidth, abs(fromEdge));
                     float ringLife = saturate(1.0 - radius / max(pulseRevealRadius, 0.001));
                     ringGlow += ring * ringLife;
+
+                    // Purely visual followers derived from the original pulse. They add only
+                    // to ringGlow: revealAmt, lightPos, interactions, and pulse data remain
+                    // governed exclusively by the primary wave above.
+                    float followerWidth = max(_RingWidth * _EchoAfterWaveWidthScale, 0.001);
+                    float followerStrength = saturate(_EchoAfterWaveStrength);
+                    [unroll]
+                    for (int afterWaveIndex = 1; afterWaveIndex <= 3; afterWaveIndex++)
+                    {
+                        if ((float)afterWaveIndex > afterWaveCount)
+                            break;
+
+                        float followerAge = age - afterWaveDelay * afterWaveIndex;
+                        if (followerAge <= 0.0)
+                        {
+                            followerStrength *= saturate(_EchoAfterWaveStrengthDecay);
+                            continue;
+                        }
+
+                        float followerRadius = followerAge * _RevealSpeed;
+                        if (followerRadius <= pulseRevealRadius + followerWidth)
+                        {
+                            float followerFromEdge = followerRadius - d;
+                            float followerRing = 1.0 - smoothstep(
+                                0.0, followerWidth, abs(followerFromEdge));
+                            float followerLife = saturate(
+                                1.0 - followerRadius / max(pulseRevealRadius, 0.001));
+                            ringGlow += followerRing * followerLife * followerStrength;
+                        }
+
+                        followerStrength *= saturate(_EchoAfterWaveStrengthDecay);
+                    }
                 }
 
                 half3 tintMul = lerp(half3(1.0, 1.0, 1.0), _RevealTint.rgb, _TintAmount);

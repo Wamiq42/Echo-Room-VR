@@ -2159,7 +2159,7 @@ MonoBehaviour:
   m_RaycastMask:
     serializedVersion: 2
     m_Bits: 1
-  m_RaycastTriggerInteraction: 2
+  m_RaycastTriggerInteraction: 1
   m_RaycastSnapVolumeInteraction: 1
   m_HitClosestOnly: 1
   m_HoverToSelect: 0
@@ -2498,10 +2498,12 @@ MonoBehaviour:
   cameraTransform: {fileID: 0}
   distanceFromCamera: 1.15
   heightOffset: 0
-  minimumDisplayTime: 4
+  useFixedWorldPlacement: 1
+  fixedWorldPosition: {x: 0, y: 1.15, z: -8.75}
+  fixedWorldEulerAngles: {x: 0, y: 180, z: 0}
+  minimumDisplayTime: 5
   thankYouDuration: 5
   worldScale: 0.0016
-  transitionWatchdogSeconds: 25
 --- !u!114 &1156458652
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2518,10 +2520,10 @@ MonoBehaviour:
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: 93a94c98f8d609f4a98661e769072a6e, type: 3}
   m_SortingOrder: 1000
-  m_Position: 1
+  m_Position: 0
   m_WorldSpaceSizeMode: 1
-  m_WorldSpaceWidth: 900
-  m_WorldSpaceHeight: 560
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
@@ -2635,8 +2637,8 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1363827653}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
-  m_LocalPosition: {x: 0, y: 0, z: -9.75}
-  m_LocalScale: {x: -0.0016, y: 0.0016, z: 0.0016}
+  m_LocalPosition: {x: 0, y: 0, z: -8.75}
+  m_LocalScale: {x: -0.00184, y: 0.00184, z: 0.00184}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 391787963}
@@ -2721,15 +2723,12 @@ MonoBehaviour:
   menuStyles: {fileID: 7433441132597879392, guid: 2becd1cdd6fe8ee4ab3ad33fdeaecfa9, type: 3}
   loadingScreen: {fileID: 1156458651}
   cameraTransform: {fileID: 0}
-  vrPointerRoots:
-  - {fileID: 1102790405}
-  - {fileID: 1779060063}
   gameplaySceneName: MainScene
-  distanceFromCamera: 1.5
+  distanceFromCamera: 2.1
   heightOffset: -0.05
   worldScale: 0.0016
   useFixedWorldPlacement: 1
-  fixedWorldPosition: {x: 0, y: 1.15, z: -9.75}
+  fixedWorldPosition: {x: 0, y: 1.15, z: -8.75}
   fixedWorldEulerAngles: {x: 0, y: 180, z: 0}
 --- !u!1 &1371745697
 GameObject:
@@ -3935,7 +3934,7 @@ MonoBehaviour:
   m_RaycastMask:
     serializedVersion: 2
     m_Bits: 1
-  m_RaycastTriggerInteraction: 2
+  m_RaycastTriggerInteraction: 1
   m_RaycastSnapVolumeInteraction: 1
   m_HitClosestOnly: 1
   m_HoverToSelect: 0
@@ -4248,11 +4247,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SonarRevealController
   pingEmitter: {fileID: 1886651329}
   revealLingerSeconds: 2.25
-  afterWaveCount: 2
-  afterWaveDelaySeconds: 0.18
-  afterWaveStrength: 0.1
-  afterWaveStrengthDecay: 1
-  afterWaveWidthScale: 0.65
 --- !u!1001 &1784333477
 PrefabInstance:
   m_ObjectHideFlags: 0

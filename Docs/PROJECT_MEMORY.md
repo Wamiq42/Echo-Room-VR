@@ -3049,3 +3049,80 @@ Verification performed:
 - **Verification:** ADB logcat from the first APK identified `java.lang.ClassNotFoundException: com.unity3d.player.UnityPlayerGameActivity`; after the application-entry correction, the user confirmed the game starts. Live Unity inspection verified the EventSystem, UI Toolkit panel input configuration, both controller components, both active menu rays, and all referenced XRI UI Press/pointer actions. Android OpenXR project validation returned zero issues after enabling Touch Plus. `Builds/Echo Room Quest Touch Plus.apk` built from enabled `MainMenuScene` then `MainScene` with `Succeeded`, zero build errors, and nine non-blocking warnings; the APK is 164,642,605 bytes with SHA-256 `DE1FB8E268376938C4ED040BCB16181D3B51274541CDA305FDD150D885534B3F`. `aapt` readback reports target SDK 34, minimum SDK 32, ARM64, and launchable activity `com.unity3d.player.UnityPlayerGameActivity`. After removing the temporary helper and recompiling, focused fresh Unity Console queries returned zero Errors and zero Exceptions.
 - **Known limitations:** `PENDING-HEADSET` for final physical confirmation that Quest 3/3S controller pose, rays, hover, trigger clicks, sliders, and both MainMenu/MainScene panels respond in the rebuilt APK. The headset was not connected over ADB during the final build, so automatic install/launch and runtime device logging were unavailable. The APK still uses the placeholder `com.DefaultCompany.EchoRoom` identity and local debug signing.
 - **Follow-up:** Install `Builds/Echo Room Quest Touch Plus.apk` on the Quest, confirm both controller rays track and trigger-click UI Toolkit controls, then continue the interactive `Docs/QUEST_TEST_CHECKLIST.html`. If input still fails, reconnect the headset with USB debugging and capture the new build's runtime Input System/OpenXR logs before changing scene wiring.
+
+## 2026-07-24 - SONAR-AFTER-WAVES-001
+
+Goal: Add two delayed visual follower rings behind the primary blue sonar wave to give the pulse more visual detail without producing additional reveal or gameplay effects.
+
+Resulting behavior: Each accepted sonar pulse still creates one gameplay reveal wave. The reveal shader now derives up to three configurable follower rings from that pulse's existing origin, start time, speed, and range. The default presentation adds two narrower cyan followers at 0.18-second intervals. The first uses 45 percent of the primary brightness and each subsequent follower is multiplied by a 0.45 strength decay. Followers use 65 percent of the primary ring width. At the current 8 m/s reveal speed, their centers follow approximately 1.44 m and 2.88 m behind the primary ring.
+
+Files created/moved/deleted: None.
+
+Files modified:
+- Assets/_EchoRoom/Scripts/Controller/SonarRevealController.cs
+- Assets/_EchoRoom/Shaders/EchoSonarReveal.shader
+- Docs/PROJECT_MEMORY.md
+
+Unity objects affected:
+- Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/EchoPulseController
+- Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/EchoPulseController
+
+Important component, asset, setting, and dependency references:
+- SonarRevealController exposes Visual After-Waves settings: afterWaveCount=2, afterWaveDelaySeconds=0.18, afterWaveStrength=0.45, afterWaveStrengthDecay=0.45, and afterWaveWidthScale=0.65.
+- SonarRevealController publishes those values as global shader floats named _EchoAfterWaveCount, _EchoAfterWaveDelay, _EchoAfterWaveStrength, _EchoAfterWaveStrengthDecay, and _EchoAfterWaveWidthScale.
+- EchoSonarReveal.shader evaluates a fixed maximum of three visual followers for each active pulse. Their contribution is added only to ringGlow.
+- Primary-wave revealAmt, dominant reveal light position, pulse buffers, input, cooldown, interaction detection, audio, haptics, and visual range remain unchanged.
+- Pulse lifetime evaluation now retains the shader loop long enough for the configured visual tail to finish when it exceeds the surface-reveal linger duration.
+- No material assets, scenes, prefabs, particle systems, or additional GameObjects were modified.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- Two followers were chosen as the default to add texture without making overlapping VR pings excessively busy.
+- Followers are calculated in the shader rather than emitted as additional pulses, so they cannot reveal surfaces or trigger gameplay and require no additional global pulse slots.
+- The maximum follower count is three to bound per-pixel shader work. The current defaults normally add two small ring calculations per active pulse.
+- The effect was not visually evaluated in a headset. Follow-up: play MainScene in headset and tune delay, strength, decay, or width on SonarRevealController if the rings appear too dense or bright.
+
+Verification performed:
+- Unity MCP AssetDatabase refresh completed successfully after both source files were updated.
+- Unity reported scriptCompilationFailed=False, isCompiling=False, and isUpdating=False.
+- MCP shader inspection reported EchoRoom/EchoSonarReveal supported, HasErrors=False, with its ForwardUnlit, Meta, ShadowCaster, and DepthOnly passes intact.
+- MCP source invariant verification confirmed the follower block contributes to ringGlow and contains no revealAmt assignment.
+- Live MCP inspection reported the enabled MainMenuScene controller and the MainScene controller both resolve to count=2, delay=0.18, strength=0.45, decay=0.45, and widthScale=0.65.
+- Global shader readback reported 2 / 0.18 / 0.45 / 0.45 / 0.65.
+- MainMenuScene remained loaded and clean; the temporary additive MainScene inspection was closed without saving.
+- The project contains no discoverable EditMode tests, so the Unity test runner could not execute a suite. The fresh Console scan showed only the pre-existing project-path-spaces warning and the test runner's no-tests diagnostic; there were no exceptions or shader/script compilation errors.
+
+
+
+## 2026-07-24 - SONAR-AFTER-WAVE-BRIGHTNESS-001
+
+Goal: Reduce the two sonar visual follower rings to ten percent of the primary ring brightness.
+
+Resulting behavior: Both visual after-waves now render at a flat 10 percent of the primary ring brightness. The first follower strength is 0.10 and the successive-wave strength multiplier is 1.0, so the second follower also remains at 10 percent rather than decaying to 4.5 percent. Follower count, 0.18-second spacing, 65 percent width, cyan color, reveal behavior, range, input, interactions, audio, and cooldown remain unchanged.
+
+Files created/moved/deleted: None.
+
+Files modified:
+- Assets/_EchoRoom/Scripts/Controller/SonarRevealController.cs
+- Assets/_EchoRoom/Scenes/MainMenuScene.unity
+- Docs/PROJECT_MEMORY.md
+
+Unity objects affected:
+- Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/EchoPulseController
+- Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Custom Objects Scripts/EchoPulseController
+
+Important component, asset, setting, and dependency references:
+- SonarRevealController defaults are now afterWaveStrength=0.10 and afterWaveStrengthDecay=1.0.
+- MainMenuScene had serialized the previous 0.45/0.45 values, so its component was updated and the scene was saved through Unity MCP.
+- MainScene resolved the new 0.10/1.0 defaults without requiring a scene save.
+- EchoSonarReveal.shader was not modified; its visual-only follower calculation and reveal isolation remain unchanged.
+
+Decisions, assumptions, known limitations, and follow-up work:
+- The request was interpreted to mean each after-wave should be 10 percent of the original ring, not 10 percent followed by another 0.45 decay.
+- No headset visual pass was performed. Follow-up: verify the followers remain visible enough in the darkest maze surfaces.
+
+Verification performed:
+- Unity MCP AssetDatabase refresh completed successfully.
+- Unity reported scriptCompilationFailed=False.
+- MCP source verification found afterWaveStrength=0.10 and afterWaveStrengthDecay=1.0.
+- MCP scene inspection reported MainMenuScene=0.10/1.0 and MainScene=0.10/1.0.
+- MainMenuScene was saved through MCP and finished dirty=False.
