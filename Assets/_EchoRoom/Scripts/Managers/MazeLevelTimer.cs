@@ -130,12 +130,14 @@ public sealed class MazeLevelTimer : MonoBehaviour
 
     void OnEnable()
     {
+        controllerRevealWasPressed = ReadControllerRevealHeld();
 #if ENABLE_INPUT_SYSTEM
         revealAction?.Enable();
 #endif
         LeverInteractable.OnAnyLeverStateChanged += HandleLeverStateChanged;
         EchoButtonInteractable.OnAnyButtonPressed += HandleButtonPressed;
         EchoRoomSettings.Changed += OnSettingChanged;
+        RestartPendingTimerIfNeeded();
     }
 
     void OnDisable()
@@ -152,12 +154,53 @@ public sealed class MazeLevelTimer : MonoBehaviour
             StopCoroutine(flashRoutine);
             flashRoutine = null;
         }
-        timerRunning = false;
         startFlashActive = false;
         controllerRevealWasPressed = false;
         StopWarningAudio();
         targetAlpha = 0f;
         SetDisplayAlpha(0f);
+    }
+
+    void OnApplicationPause(bool paused)
+    {
+        if (paused) SuspendControllerDisplay();
+        else RestoreControllerDisplayAfterResume();
+    }
+
+    void OnApplicationFocus(bool hasFocus)
+    {
+        if (hasFocus) RestoreControllerDisplayAfterResume();
+        else SuspendControllerDisplay();
+    }
+
+    void SuspendControllerDisplay()
+    {
+        controllerRevealWasPressed = false;
+#if ENABLE_INPUT_SYSTEM
+        revealAction?.Disable();
+#endif
+        revealUntilTime = 0f;
+        targetAlpha = 0f;
+        SetDisplayAlpha(0f);
+    }
+
+    void RestoreControllerDisplayAfterResume()
+    {
+        if (!isActiveAndEnabled) return;
+        controllerRevealWasPressed = ReadControllerRevealHeld();
+#if ENABLE_INPUT_SYSTEM
+        revealAction?.Disable();
+        revealAction?.Enable();
+#endif
+        EnsureDisplay();
+        SetDisplayAlpha(0f);
+        RestartPendingTimerIfNeeded();
+    }
+
+    void RestartPendingTimerIfNeeded()
+    {
+        if (remainingSeconds <= 0f || timerRunning || flashRoutine != null || gameManager == null) return;
+        flashRoutine = StartCoroutine(StartTimerWhenTransitionComplete());
     }
 
     void OnDestroy()
@@ -742,11 +785,17 @@ public sealed class MazeLevelTimer : MonoBehaviour
 
     bool ControllerRevealPressed()
     {
-        UnityEngine.XR.InputDevice device = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand);
-        bool pressed = device.isValid &&
-                       device.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out bool value) && value;
+        bool pressed = ReadControllerRevealHeld();
         bool pressedThisFrame = pressed && !controllerRevealWasPressed;
         controllerRevealWasPressed = pressed;
         return pressedThisFrame;
+    }
+
+    static bool ReadControllerRevealHeld()
+    {
+        UnityEngine.XR.InputDevice device =
+            UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand);
+        return device.isValid &&
+               device.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out bool value) && value;
     }
 }
