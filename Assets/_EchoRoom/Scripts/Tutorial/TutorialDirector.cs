@@ -1,4 +1,5 @@
 using System.Collections;
+using EchoRoom.Controller;
 using EchoRoom.Settings;
 using EchoRoom.UI;
 using UnityEngine;
@@ -48,12 +49,12 @@ sealed class TutorialMenuPrompt : MonoBehaviour
         var document = menu != null ? menu.GetComponent<UIDocument>() : null;
         if (document == null) yield break;
         VisualElement root = document.rootVisualElement;
-        AddReplayButton(root);
-        if (!TutorialProgress.ShouldOffer) yield break;
 
         while (!EchoRoom.UI.VRMainMenu.IsPrivacyPolicyAccepted)
             yield return null;
 
+        AddReplayButton(root);
+        if (!TutorialProgress.ShouldOffer) yield break;
 
         overlay = new VisualElement { name = "tutorial-offer-screen" };
         overlay.style.position = Position.Absolute;
@@ -195,31 +196,24 @@ public sealed class TutorialDirector : MonoBehaviour
     const float EntitySoundFadeInDuration = 1.5f;
     const float EntitySoundFadeOutDuration = 1.75f;
 
-    // Built from HandedInput rather than hard-coded, because the handedness setting remaps every
-    // one of these. In left-hand mode the sonar is X, the objective panel is Y, the microphone is
-    // the grip and the trigger is on the left -- a tutorial that still said "Press B" would be
-    // teaching the player four things that are all false.
+    // Keep player-facing copy sourced from the same control table as gameplay. In the current
+    // dual-controller scheme sonar is B, microphone push-to-talk is Y, and interaction is Right Trigger.
     static string SonarMessage =>
         $"SONAR\nPress {HandedInput.SonarPingLabel} to reveal the corridor.";
     static string MicrophoneMessage =>
         $"MICROPHONE\nHold {HandedInput.MicrophonePingLabel} and speak for a stronger microphone ping.";
-    static string DirectionMessage =>
-        $"OBJECTIVE\nPress {HandedInput.ObjectivePanelLabel} anytime to check your timer and goal.\n" +
-        "Head straight, then turn left.";
+    const string DirectionMessage = "MOVEMENT\nHead straight, then turn left.";
     static string InteractionMessage =>
         $"INTERACTION\nMove close, aim at the button or lever, and press " +
         $"{(HandedInput.IsLeftActive ? "LEFT" : "RIGHT")} TRIGGER.";
-    // Touch controllers only carry a Menu button on the left hand, so hold-to-pause is the only
-    // pause a right-hand-only player has. Taught here so it is never discovered by accident.
-    static string PauseMessage =>
-        $"PAUSE\nHold {VRPauseMenu.HoldPauseButtonLabel} for a moment to open the menu.";
+
     const string WarningMessage = "WARNING\nSonar can attract unwanted attention.\nSomething dangerous may be listening.";
 
     // The Auditor showcase. This is deliberately NOT the live hunt: the entity stands still and is
     // explained, because a chase at the end of a tutorial teaches nothing and loses players.
     // It is revealed by the player's own ping so the lesson lands physically -- I made a sound,
     // and it was there -- which is also the game's whole premise.
-    const string AuditorTurnMessage = "BEHIND YOU\nSomething is standing in the dark. Turn around.";
+    const string AuditorTurnMessage = "THE ENTITY\nLook at the Entity.";
     static string AuditorPingMessage =>
         $"SONAR\nPress {HandedInput.SonarPingLabel}. See what is listening.";
     const string AuditorBeatOne = "THE AUDITOR\nFacility records list it as a monitoring unit. " +
@@ -228,30 +222,18 @@ public sealed class TutorialDirector : MonoBehaviour
                                   "sound was born, and searches the dark around it.";
     const string AuditorBeatThree = "IF IT FINDS YOU\nIt puts you back where you started. " +
                                     "Stand still. Stay silent. It cannot see you.";
-    const string AuditorWallText = "LOOK BEHIND YOU";
+    const string AuditorWallText = "LOOK AT THE ENTITY";
 
     const float AuditorDarkBeatSeconds = 1.5f;
     const float AuditorTurnHoldSeconds = 2.25f;
     const float AuditorBeatSeconds = 5.5f;
     // No escape hatch on a forced-input gate at the end of a tutorial would be a softlock.
     const float AuditorPingTimeoutSeconds = 15f;
-    const float PauseLessonDelaySeconds = 6f;
-    const float PauseLessonHoldSeconds = 5f;
 
-    // The tutorial runs a real countdown so "press A to check your timer" teaches something that
-    // exists. It is long enough that it can never run out during the lesson.
-    const float TutorialTimerSeconds = 360f;
-    const string TutorialObjective = "ACTIVATE THE BUTTON AND THE LEVER";
-    const int TutorialObjectiveTotal = 2;
-
-    // Placement is built from a yaw-only head frame, never the full head rotation. Using
-    // head.up/head.forward meant a player who happened to be looking down when a beat fired got
-    // the panel pinned to the floor, and it stayed there -- placement only runs once per prompt.
-    const float PromptDistance = 0.9f;
-    const float PromptHeightOffset = -0.05f;   // ~3 degrees below the eye line at 0.9 m.
-    const float PromptRecentreAngle = 35f;     // Deadzone: below this the panel stays world-locked.
-    const float PromptRecentreDuration = 0.45f;
-    const float PromptHeightTolerance = 0.15f; // Re-place if the player's eye height moves this far.
+    // Controller-local placement. The prompt is parented to the active gameplay controller and
+    // never derives its pose from the headset, so looking around cannot drag UI through the world.
+    static readonly Vector3 PromptControllerOffset = new Vector3(0f, 0.16f, 0.32f);
+    static readonly Quaternion PromptControllerRotation = Quaternion.Euler(0f, 180f, 0f);
     const float PromptWorldScale = 0.0005f;
     static readonly Vector2 PromptPanelSize = new Vector2(700f, 260f);
     const string PromptLayoutResource = "UI/VRTutorialPrompt";
@@ -263,7 +245,7 @@ public sealed class TutorialDirector : MonoBehaviour
     Transform player, startCheckpoint, interactionWall;
     Transform head;
     PingEmitter pingEmitter;
-    MazeLevelTimer mazeTimer;
+
     AudioSource entityAudio, heartbeatAudio;
     UIDocument tutorialPromptDocument;
     VisualElement tutorialPromptRoot;
@@ -275,12 +257,10 @@ public sealed class TutorialDirector : MonoBehaviour
     bool buttonActivated, leverActivated;
     bool activeTutorial;
     bool promptPlacementErrorLogged;
-    Vector3 promptAnchorForward;
-    Coroutine promptRecentreRoutine;
+    Transform promptHandAnchor;
     Transform auditor;
     TextMesh auditorWallText;
     bool auditorPingReceived;
-    Coroutine pauseLessonRoutine;
 
     void Awake()
     {
@@ -307,21 +287,12 @@ public sealed class TutorialDirector : MonoBehaviour
         EchoButtonInteractable.OnAnyButtonPressed -= OnButton;
         LeverInteractable.OnAnyLeverTurnedOn -= OnLever;
         if (pingEmitter != null) pingEmitter.OnPingEmitted -= OnPing;
-        if (mazeTimer != null) mazeTimer.EndTutorialDemo();
         StopAllCoroutines();
-        // StopAllCoroutines does not clear our handle, and a stale non-null handle would block
-        // UpdatePromptFollow forever after a re-enable.
-        promptRecentreRoutine = null;
-        pauseLessonRoutine = null;
         SetPromptPresentation(false, 0f);
     }
 
     void Update()
     {
-        // Runs before the activeTutorial guard: the ending and Auditor beats still show prompts
-        // after the interactive part of the tutorial is over, and those must follow too.
-        UpdatePromptFollow();
-
         if (!activeTutorial || player == null) return;
 
         if (step == Step.Move && interactionWall != null && HorizontalDistance(player.position, interactionWall.position) <= 5f)
@@ -329,15 +300,17 @@ public sealed class TutorialDirector : MonoBehaviour
             step = Step.Button;
             buttonActivated = false;
             leverActivated = false;
-            // Kill the pause lesson outright rather than trusting its step check: if it is mid
-            // SwapPrompt right now, both coroutines would be cross-fading the same panel.
-            if (pauseLessonRoutine != null)
-            {
-                StopCoroutine(pauseLessonRoutine);
-                pauseLessonRoutine = null;
-            }
+
             StartCoroutine(SwapPrompt(InteractionMessage));
         }
+    }
+
+    void LateUpdate()
+    {
+        // Runs after XR tracking updates. Ending and Auditor beats keep presenting after the
+        // interactive tutorial flag is cleared, so presentation state -- not activeTutorial --
+        // decides whether the controller attachment is maintained.
+        UpdatePromptFollow();
     }
 
     void Setup()
@@ -436,7 +409,7 @@ public sealed class TutorialDirector : MonoBehaviour
         GameObject promptObject = new GameObject("Tutorial UI Toolkit Prompt");
         UITKOverlayLayer.Apply(promptObject, false);
         promptObject.SetActive(false);
-        promptObject.transform.SetParent(transform, false);
+        promptObject.transform.SetParent(transform, false); // Temporary host until a hand resolves.
 
         tutorialPromptDocument = promptObject.AddComponent<UIDocument>();
         tutorialPromptDocument.panelSettings = panelSettings;
@@ -456,6 +429,9 @@ public sealed class TutorialDirector : MonoBehaviour
         tutorialPromptRoot = documentRoot.Q<VisualElement>("tutorial-prompt-root");
         tutorialPromptTitle = documentRoot.Q<Label>("tutorial-prompt-title");
         tutorialPromptBody = documentRoot.Q<Label>("tutorial-prompt-body");
+        Label tutorialPromptStatus = documentRoot.Q<Label>(className: "prompt-status");
+        if (tutorialPromptStatus != null)
+            tutorialPromptStatus.text = "ECHO GUIDANCE  //  CONTROLLER ANCHORED";
         if (tutorialPromptRoot == null || tutorialPromptTitle == null || tutorialPromptBody == null)
         {
             Debug.LogError("[Tutorial] VRTutorialPrompt.uxml is missing the prompt root, title, " +
@@ -479,34 +455,29 @@ public sealed class TutorialDirector : MonoBehaviour
             head = player.Find("Camera Offset/Main Camera");
     }
 
-    /// <summary>
-    /// The player's facing direction flattened to horizontal. Falls back to the last good value
-    /// when the player looks straight up or down, where the projection collapses to zero.
-    /// </summary>
-    Vector3 HeadForwardFlat()
+    void ResolvePromptHand()
     {
-        Vector3 flat = Vector3.ProjectOnPlane(head.forward, Vector3.up);
-        if (flat.sqrMagnitude < 0.0001f)
-            flat = promptAnchorForward.sqrMagnitude > 0.0001f ? promptAnchorForward : Vector3.forward;
-        return flat.normalized;
+        Transform resolved = HandednessController.Instance != null
+            ? HandednessController.Instance.ActiveHandTransform
+            : null;
+
+        if (resolved == null && player != null)
+        {
+            string controllerName = HandedInput.IsLeftActive ? "Left Controller" : "Right Controller";
+            resolved = player.Find("Camera Offset/" + controllerName);
+        }
+
+        promptHandAnchor = resolved;
     }
 
-    Vector3 PromptPositionFor(Vector3 forwardFlat) =>
-        head.position + forwardFlat * PromptDistance + Vector3.up * PromptHeightOffset;
-
-    // World up, not head up, so the panel never inherits head roll. The trailing 180 and the
-    // mirrored X scale are what world-space UI Toolkit needs to read the right way round.
-    static Quaternion PromptRotationFor(Vector3 forwardFlat) =>
-        Quaternion.LookRotation(forwardFlat, Vector3.up) * Quaternion.Euler(0f, 180f, 0f);
-
-    bool TryPlacePromptAtHeadPose()
+    bool TryAttachPromptToController()
     {
-        ResolveHead();
-        if (tutorialPromptDocument == null || head == null)
+        ResolvePromptHand();
+        if (tutorialPromptDocument == null || promptHandAnchor == null)
         {
             if (!promptPlacementErrorLogged)
             {
-                Debug.LogError("[Tutorial] Main Camera is missing; the world-space prompt cannot be placed safely.");
+                Debug.LogError("[Tutorial] Active controller is missing; the tutorial prompt cannot be attached safely.");
                 promptPlacementErrorLogged = true;
             }
             return false;
@@ -514,79 +485,25 @@ public sealed class TutorialDirector : MonoBehaviour
 
         promptPlacementErrorLogged = false;
 
-        if (promptRecentreRoutine != null)
-        {
-            StopCoroutine(promptRecentreRoutine);
-            promptRecentreRoutine = null;
-        }
-
-        Vector3 forwardFlat = HeadForwardFlat();
         Transform prompt = tutorialPromptDocument.transform;
-        prompt.position = PromptPositionFor(forwardFlat);
-        prompt.rotation = PromptRotationFor(forwardFlat);
+        if (prompt.parent != promptHandAnchor)
+            prompt.SetParent(promptHandAnchor, false);
+
+        prompt.localPosition = PromptControllerOffset;
+        prompt.localRotation = PromptControllerRotation;
         prompt.localScale = new Vector3(-PromptWorldScale, PromptWorldScale, PromptWorldScale);
-        promptAnchorForward = forwardFlat;
         return true;
     }
 
-    /// <summary>
-    /// Keeps the prompt reachable without making it swim. Inside the deadzone the panel stays
-    /// world-locked, which is what stops it inducing nausea; past it, the panel eases round to
-    /// the new facing so a prompt can never be stranded behind the player.
-    /// </summary>
     void UpdatePromptFollow()
     {
         if (!tutorialPromptPresented || tutorialPromptDocument == null) return;
-        if (promptRecentreRoutine != null) return;
-        ResolveHead();
-        if (head == null) return;
-
-        Vector3 forwardFlat = HeadForwardFlat();
-        bool turnedAway = Vector3.Angle(promptAnchorForward, forwardFlat) >= PromptRecentreAngle;
-
-        // Height drift matters as much as yaw here. The very first prompt is placed from Setup(),
-        // which can run before XR tracking has reported a real eye height -- so panel one gets
-        // pinned near the rig origin, at the floor. This also covers a player who stands up,
-        // sits down, or recentres their guardian part-way through the tutorial.
-        float targetHeight = head.position.y + PromptHeightOffset;
-        bool heightDrifted =
-            Mathf.Abs(tutorialPromptDocument.transform.position.y - targetHeight) > PromptHeightTolerance;
-
-        if (!turnedAway && !heightDrifted) return;
-
-        promptRecentreRoutine = StartCoroutine(RecentrePrompt());
+        TryAttachPromptToController();
     }
-
-    IEnumerator RecentrePrompt()
-    {
-        Transform prompt = tutorialPromptDocument.transform;
-        Vector3 startPosition = prompt.position;
-        Quaternion startRotation = prompt.rotation;
-        float elapsed = 0f;
-
-        while (elapsed < PromptRecentreDuration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            // Re-read the target every frame: the player is usually still turning while this runs.
-            Vector3 forwardFlat = HeadForwardFlat();
-            float t = Mathf.SmoothStep(0f, 1f, elapsed / PromptRecentreDuration);
-            prompt.position = Vector3.Lerp(startPosition, PromptPositionFor(forwardFlat), t);
-            prompt.rotation = Quaternion.Slerp(startRotation, PromptRotationFor(forwardFlat), t);
-            promptAnchorForward = forwardFlat;
-            yield return null;
-        }
-
-        Vector3 settled = HeadForwardFlat();
-        prompt.position = PromptPositionFor(settled);
-        prompt.rotation = PromptRotationFor(settled);
-        promptAnchorForward = settled;
-        promptRecentreRoutine = null;
-    }
-
     void ShowPrompt(string message)
     {
         if (!SetPromptCopy(message)) return;
-        if (!TryPlacePromptAtHeadPose())
+        if (!TryAttachPromptToController())
         {
             SetPromptPresentation(false, 0f);
             return;
@@ -618,7 +535,7 @@ public sealed class TutorialDirector : MonoBehaviour
             yield return FadePrompt(0f, TextFadeDuration);
 
         if (!SetPromptCopy(incoming)) yield break;
-        if (!TryPlacePromptAtHeadPose())
+        if (!TryAttachPromptToController())
         {
             SetPromptPresentation(false, 0f);
             yield break;
@@ -709,7 +626,6 @@ public sealed class TutorialDirector : MonoBehaviour
                 return;
 
             step = Step.Move;
-            pauseLessonRoutine = StartCoroutine(TeachPauseDuringWalk());
 
             // The microphone ping that got us here just armed the longer shared lockout, and the
             // sonar and microphone share it. This lesson then asks the player to walk a dark
@@ -717,50 +633,9 @@ public sealed class TutorialDirector : MonoBehaviour
             // rejected -- no sound, no haptic, no reveal -- and the lesson reads as broken.
             if (pingEmitter != null) pingEmitter.ResetCooldown();
 
-            StartTutorialTimerDemo();
             StartCoroutine(SwapPrompt(DirectionMessage));
         }
 
-    }
-
-    /// <summary>
-    /// Slides the pause lesson in while the player is walking the corridor, then hands the screen
-    /// back to the direction prompt. Deliberately not gated on the player performing it: opening
-    /// the pause menu mid-tutorial stops time and throws away the moment, and this is a binding
-    /// worth knowing rather than a skill worth drilling.
-    /// </summary>
-    IEnumerator TeachPauseDuringWalk()
-    {
-        yield return new WaitForSecondsRealtime(PauseLessonDelaySeconds);
-        if (step != Step.Move) yield break;
-
-        yield return SwapPrompt(PauseMessage);
-        yield return new WaitForSecondsRealtime(PauseLessonHoldSeconds);
-
-        // The player may have reached the interaction wall while this was on screen; in that case
-        // Update has already moved us on and swapped in the interaction copy. Do not stomp it.
-        if (step != Step.Move) yield break;
-        yield return SwapPrompt(DirectionMessage);
-        pauseLessonRoutine = null;
-    }
-
-    void StartTutorialTimerDemo()
-    {
-        if (mazeTimer == null) mazeTimer = FindObjectOfType<MazeLevelTimer>();
-        if (mazeTimer == null)
-        {
-            Debug.LogError("[Tutorial] No MazeLevelTimer was found, so the timer and objective " +
-                           "lesson cannot be shown.");
-            return;
-        }
-
-        mazeTimer.BeginTutorialDemo(TutorialTimerSeconds, TutorialObjective, 0, TutorialObjectiveTotal);
-    }
-
-    void UpdateTutorialObjective()
-    {
-        if (mazeTimer == null) return;
-        mazeTimer.SetTutorialProgress((buttonActivated ? 1 : 0) + (leverActivated ? 1 : 0));
     }
 
     void OnButton(EchoButtonInteractable button)
@@ -769,7 +644,6 @@ public sealed class TutorialDirector : MonoBehaviour
             button == null || !button.transform.IsChildOf(levelRoot.transform)) return;
 
         buttonActivated = true;
-        UpdateTutorialObjective();
         TryCompleteInteractionLesson();
     }
 
@@ -779,7 +653,6 @@ public sealed class TutorialDirector : MonoBehaviour
             lever == null || !lever.transform.IsChildOf(levelRoot.transform)) return;
 
         leverActivated = true;
-        UpdateTutorialObjective();
         TryCompleteInteractionLesson();
     }
 
@@ -891,7 +764,7 @@ public sealed class TutorialDirector : MonoBehaviour
     }
 
     /// <summary>
-    /// Stencils the turn-around line onto whatever surface the player is facing. Self-lit, so it
+    /// Stencils the entity instruction onto whatever surface the player is facing. Self-lit, so it
     /// reads on a black wall. Purely atmospheric -- the prompt panel carries the same instruction,
     /// so nothing breaks if there is no wall to write on.
     /// </summary>
@@ -930,7 +803,6 @@ public sealed class TutorialDirector : MonoBehaviour
     IEnumerator PlayEnding()
     {
         activeTutorial = false;
-        if (mazeTimer != null) mazeTimer.EndTutorialDemo();
         if (tutorialPromptPresented)
             yield return FadePrompt(0f, WarningFadeDuration);
 

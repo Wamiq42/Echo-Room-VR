@@ -23,6 +23,7 @@ public class ControllerInputSource : MonoBehaviour, IPlayerInputSource
     [SerializeField] private InputActionProperty gripAction;
 
     private bool _wasFallbackPingPressed;
+    private InputAction _fallbackPingAction;
 
     private void OnEnable()
     {
@@ -30,14 +31,19 @@ public class ControllerInputSource : MonoBehaviour, IPlayerInputSource
         rightHandMoveAction.action?.Enable();
         sprintAction.action?.Enable();
         pingAction.action?.Enable();
+        RebuildFallbackPingAction();
+        EchoRoomSettings.Changed += OnSettingChanged;
     }
 
     private void OnDisable()
     {
+        EchoRoomSettings.Changed -= OnSettingChanged;
         leftHandMoveAction.action?.Disable();
         rightHandMoveAction.action?.Disable();
         sprintAction.action?.Disable();
         pingAction.action?.Disable();
+        DisposeFallbackPingAction();
+        _wasFallbackPingPressed = false;
     }
 
     public Vector2 GetMoveInput()
@@ -84,20 +90,54 @@ public class ControllerInputSource : MonoBehaviour, IPlayerInputSource
     {
         bool performed = pingAction.action?.WasPerformedThisFrame() ?? false;
 
-        // Preserve any existing InputAction mapping. The current scene has no Ping action
-        // assigned, so the active hand's sonar button is the fallback: B on the right in
-        // two-handed play, A/X on the one controller in single-hand play.
+        // The scene's historical Ping InputActionReference points at an action that no longer
+        // exists in XRI Default Input Actions. Keep accepting a valid authored replacement, but
+        // always own a live binding for the current handedness so Quest/OpenXR is not dependent on
+        // the legacy XR.InputDevices bridge below.
+        performed |= _fallbackPingAction != null && _fallbackPingAction.WasPressedThisFrame();
+
+        // Legacy backstop for runtimes that expose the XR feature before Input System controls
+        // resolve. Edge detection prevents the held feature from emitting every frame.
         bool fallbackHeld = false;
         UnityEngine.XR.InputDevice controller = InputDevices.GetDeviceAtXRNode(HandedInput.ActiveNode);
         if (controller.isValid)
             controller.TryGetFeatureValue(HandedInput.SonarPingUsage, out fallbackHeld);
 
-        bool fallbackPerformed = pingAction.action == null && fallbackHeld && !_wasFallbackPingPressed;
+        bool fallbackPerformed = fallbackHeld && !_wasFallbackPingPressed;
         _wasFallbackPingPressed = fallbackHeld;
         performed |= fallbackPerformed;
 
         if (performed) Log("Ping triggered");
         return performed;
+    }
+
+    private void OnSettingChanged(EchoRoomSetting setting)
+    {
+        if (setting != EchoRoomSetting.Handedness)
+            return;
+
+        _wasFallbackPingPressed = false;
+        RebuildFallbackPingAction();
+    }
+
+    private void RebuildFallbackPingAction()
+    {
+        DisposeFallbackPingAction();
+
+        _fallbackPingAction = new InputAction("Handed Sonar Ping", InputActionType.Button);
+        _fallbackPingAction.AddBinding(HandedInput.SonarPingPath);
+        if (isActiveAndEnabled)
+            _fallbackPingAction.Enable();
+    }
+
+    private void DisposeFallbackPingAction()
+    {
+        if (_fallbackPingAction == null)
+            return;
+
+        _fallbackPingAction.Disable();
+        _fallbackPingAction.Dispose();
+        _fallbackPingAction = null;
     }
 
     public bool GetGripInput()

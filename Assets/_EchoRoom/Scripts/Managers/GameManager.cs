@@ -270,7 +270,7 @@ public class GameManager : MonoBehaviour
             if (loadingScreen != null)
             {
                 // Runs on the persistent loading screen so it survives the scene swap.
-                loadingScreen.ShowThankYouThenLoadScene(mainMenuSceneName);
+                loadingScreen.ShowLevelCompletedThenLoadScene(mainMenuSceneName);
                 yield break;
             }
 

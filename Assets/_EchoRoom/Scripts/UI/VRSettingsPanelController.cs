@@ -14,7 +14,7 @@ namespace EchoRoom.UI
         readonly Button turnSpeedDownButton;
         readonly Button turnSpeedUpButton;
         readonly Label turnSpeedValue;
-        readonly Button handednessButton;
+
         readonly Button vignetteButton;
         readonly Button heightOffsetDownButton;
         readonly Button heightOffsetUpButton;
@@ -32,7 +32,7 @@ namespace EchoRoom.UI
             turnSpeedDownButton = root?.Q<Button>("turn-speed-down-button");
             turnSpeedUpButton = root?.Q<Button>("turn-speed-up-button");
             turnSpeedValue = root?.Q<Label>("turn-speed-value");
-            handednessButton = root?.Q<Button>("handedness-button");
+            VisualElement handednessRow = root?.Q<Button>("handedness-button")?.parent;
             vignetteButton = root?.Q<Button>("vignette-button");
             heightOffsetDownButton = root?.Q<Button>("height-offset-down-button");
             heightOffsetUpButton = root?.Q<Button>("height-offset-up-button");
@@ -41,7 +41,7 @@ namespace EchoRoom.UI
 
             IsValid = locomotionModeButton != null && turnModeButton != null &&
                       turnSpeedDownButton != null && turnSpeedUpButton != null && turnSpeedValue != null &&
-                      handednessButton != null &&
+
                       vignetteButton != null && heightOffsetDownButton != null && heightOffsetUpButton != null &&
                       heightOffsetValue != null && backButton != null;
             if (!IsValid)
@@ -54,7 +54,7 @@ namespace EchoRoom.UI
             turnModeButton.clicked += ToggleTurnMode;
             turnSpeedDownButton.clicked += DecreaseTurnSpeed;
             turnSpeedUpButton.clicked += IncreaseTurnSpeed;
-            handednessButton.clicked += CycleHandedness;
+            if (handednessRow != null) handednessRow.style.display = DisplayStyle.None;
             vignetteButton.clicked += ToggleVignette;
             heightOffsetDownButton.clicked += DecreaseHeightOffset;
             heightOffsetUpButton.clicked += IncreaseHeightOffset;
@@ -71,7 +71,7 @@ namespace EchoRoom.UI
                 : "TELEPORT";
             turnModeButton.text = EchoRoomSettings.TurnMode == TurnMode.Snap ? "SNAP" : "SMOOTH";
             turnSpeedValue.text = Mathf.RoundToInt(EchoRoomSettings.TurnSpeed) + " DEG/S";
-            handednessButton.text = HandedInput.HandednessLabel;
+
             vignetteButton.text = EchoRoomSettings.VignetteEnabled ? "ON" : "OFF";
             heightOffsetValue.text = EchoRoomSettings.HeightOffset.ToString("+0.00;-0.00;0.00") + " M";
 
@@ -98,25 +98,6 @@ namespace EchoRoom.UI
                 : TurnMode.Snap;
         }
 
-        /// <summary>
-        /// Cycles BOTH to LEFT to RIGHT. A cycling button rather than three: the settings panel is
-        /// pointed at with a ray from a moving hand, and one large target beats three small ones.
-        /// </summary>
-        void CycleHandedness()
-        {
-            switch (EchoRoomSettings.Handedness)
-            {
-                case Handedness.Both:
-                    EchoRoomSettings.Handedness = Handedness.Left;
-                    break;
-                case Handedness.Left:
-                    EchoRoomSettings.Handedness = Handedness.Right;
-                    break;
-                default:
-                    EchoRoomSettings.Handedness = Handedness.Both;
-                    break;
-            }
-        }
 
         void DecreaseTurnSpeed() => EchoRoomSettings.TurnSpeed -= EchoRoomSettings.TurnSpeedStep;
         void IncreaseTurnSpeed() => EchoRoomSettings.TurnSpeed += EchoRoomSettings.TurnSpeedStep;
@@ -136,7 +117,7 @@ namespace EchoRoom.UI
             turnModeButton.clicked -= ToggleTurnMode;
             turnSpeedDownButton.clicked -= DecreaseTurnSpeed;
             turnSpeedUpButton.clicked -= IncreaseTurnSpeed;
-            handednessButton.clicked -= CycleHandedness;
+
             vignetteButton.clicked -= ToggleVignette;
             heightOffsetDownButton.clicked -= DecreaseHeightOffset;
             heightOffsetUpButton.clicked -= IncreaseHeightOffset;

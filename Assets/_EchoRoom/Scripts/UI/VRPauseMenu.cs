@@ -1,8 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Reflection;
-using EchoRoom.Settings;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -30,10 +28,7 @@ namespace EchoRoom.UI
         [SerializeField] bool pauseTimeWhileOpen = true;
         [SerializeField] bool pauseEnvironmentAudioWhileOpen = true;
         [SerializeField] bool useControllerMenuButton = true;
-        [SerializeField, Range(0.25f, 2f), Tooltip("Hold time on B/Y that opens the menu. Touch " +
-                                                   "controllers only carry a Menu button on the LEFT hand, so without this a " +
-                                                   "right-hand-only player has no way to pause at all.")]
-        float holdPauseSeconds = DefaultHoldPauseSeconds;
+
         // 0.6 m wide at 0.7 m reads exactly the same size as the old 1.8 m at 2.1 m -- same ratio,
         // so nothing gets harder to read -- but it fits down a maze corridor and stays outside the
         // ~0.5 m vergence-comfort floor.
@@ -60,7 +55,6 @@ namespace EchoRoom.UI
         [SerializeField] UnityEvent onReturnToMenu;
 
         const int MaxPointerCount = 32;
-        public const float DefaultHoldPauseSeconds = 0.75f;
         readonly List<UnityEngine.XR.InputDevice> controllers = new List<UnityEngine.XR.InputDevice>();
         readonly List<RendererOverlayState> playerOverlayStates = new List<RendererOverlayState>();
         UIDocument document;
@@ -85,7 +79,6 @@ namespace EchoRoom.UI
         Transform inactiveHandRoot;
 #if ENABLE_INPUT_SYSTEM
         InputAction pauseAction;
-        InputAction holdPauseAction;
 #endif
 
         sealed class RendererOverlayState
@@ -101,19 +94,6 @@ namespace EchoRoom.UI
         internal VisualElement Root => menuRoot;
         public static event System.Action<MenuState> OnMenuStateChanged;
 
-        /// <summary>
-        /// Raised the instant the hold-to-pause gesture completes, before the menu opens. The
-        /// tutorial uses this to mark the lesson learned; it fires in every menu state, including
-        /// the ones where the hold does not actually open anything.
-        /// </summary>
-        public static event System.Action HoldPausePerformed;
-
-        /// <summary>Face button the hold lives on: "Y" in left-hand mode, "B" otherwise.</summary>
-        public static string HoldPauseButtonLabel => HandedInput.HoldPauseLabel;
-
-        /// <summary>Hold duration to quote in player-facing copy.</summary>
-        public static float HoldPauseSeconds =>
-            Instance != null ? Instance.holdPauseSeconds : DefaultHoldPauseSeconds;
 
         void Awake()
         {
@@ -137,18 +117,14 @@ namespace EchoRoom.UI
         {
 #if ENABLE_INPUT_SYSTEM
             pauseAction?.Enable();
-            holdPauseAction?.Enable();
 #endif
-            EchoRoomSettings.Changed += OnSettingChanged;
         }
 
         void OnDisable()
         {
 #if ENABLE_INPUT_SYSTEM
             pauseAction?.Disable();
-            holdPauseAction?.Disable();
 #endif
-            EchoRoomSettings.Changed -= OnSettingChanged;
             if (State != MenuState.Hidden)
                 HideMenu(true);
             else
@@ -250,38 +226,9 @@ namespace EchoRoom.UI
                 if (isActiveAndEnabled) pauseAction.Enable();
             }
 
-            ConfigureHoldPauseInput();
 #endif
         }
 
-#if ENABLE_INPUT_SYSTEM
-        /// <summary>
-        /// Hold B/Y as a second, always-present way in. Touch controllers expose menuButton on the
-        /// LEFT hand only -- the right hand's twin is the reserved Oculus button -- so the binding
-        /// above silently does nothing for a right-hand-only player. Enabling the hold in every
-        /// handedness mode means the tutorial teaches one gesture that stays true after the player
-        /// changes the setting. The Menu button keeps working; this is additive.
-        /// </summary>
-        void ConfigureHoldPauseInput()
-        {
-            holdPauseAction?.Disable();
-            holdPauseAction?.Dispose();
-
-            holdPauseAction = new InputAction("Hold Pause", InputActionType.Button);
-            // Invariant formatting: a comma decimal separator makes the interaction string unparseable.
-            string hold = "hold(duration=" +
-                          holdPauseSeconds.ToString("0.###", CultureInfo.InvariantCulture) + ")";
-            holdPauseAction.AddBinding(HandedInput.HoldPausePath, interactions: hold);
-            if (isActiveAndEnabled) holdPauseAction.Enable();
-        }
-#endif
-
-        void OnSettingChanged(EchoRoomSetting setting)
-        {
-#if ENABLE_INPUT_SYSTEM
-            if (setting == EchoRoomSetting.Handedness) ConfigureHoldPauseInput();
-#endif
-        }
 
         void BindButton(string name, System.Action action)
         {
@@ -628,20 +575,11 @@ namespace EchoRoom.UI
 #if ENABLE_LEGACY_INPUT_MANAGER
             pressed |= Input.GetKeyDown(keyboardPauseKey) || Input.GetKeyDown(KeyCode.P);
 #endif
-            // Evaluated before the ORs so short-circuiting cannot swallow the tutorial's event.
-            bool heldPause = HoldPausePressed();
-            return pressed || ControllerPausePressed() || heldPause;
-        }
-
-        bool HoldPausePressed()
-        {
-#if ENABLE_INPUT_SYSTEM
-            if (holdPauseAction == null || !holdPauseAction.WasPerformedThisFrame()) return false;
-            HoldPausePerformed?.Invoke();
-            return true;
-#else
-            return false;
-#endif
+            // Always sample the raw XR fallback, even when the Input System already saw the press.
+            // This keeps controllerWasPressed synchronized and prevents the held button from being
+            // misread as a second press on the following frame (which used to close the menu again).
+            bool controllerPressed = ControllerPausePressed();
+            return pressed || controllerPressed;
         }
 
         bool ControllerPausePressed()
@@ -820,8 +758,6 @@ namespace EchoRoom.UI
 #if ENABLE_INPUT_SYSTEM
             pauseAction?.Dispose();
             pauseAction = null;
-            holdPauseAction?.Dispose();
-            holdPauseAction = null;
 #endif
             if (Instance == this) Instance = null;
         }

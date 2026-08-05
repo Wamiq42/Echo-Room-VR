@@ -69,6 +69,17 @@ namespace EchoRoom.Settings
 
         public static event Action<EchoRoomSetting> Changed;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static void EnforceDualControllerMode()
+        {
+            if (!PlayerPrefs.HasKey(HandednessKey) ||
+                PlayerPrefs.GetInt(HandednessKey) == (int)global::EchoRoom.Settings.Handedness.Both)
+                return;
+
+            PlayerPrefs.SetInt(HandednessKey, (int)global::EchoRoom.Settings.Handedness.Both);
+            PlayerPrefs.Save();
+        }
+
         public static LocomotionMode LocomotionMode
         {
             get => ReadEnum(LocomotionModeKey, global::EchoRoom.Settings.LocomotionMode.Smooth);
@@ -83,8 +94,9 @@ namespace EchoRoom.Settings
 
         public static Handedness Handedness
         {
-            get => ReadEnum(HandednessKey, global::EchoRoom.Settings.Handedness.Both);
-            set => WriteInt(HandednessKey, (int)value, EchoRoomSetting.Handedness);
+            get => global::EchoRoom.Settings.Handedness.Both;
+            set => WriteInt(HandednessKey, (int)global::EchoRoom.Settings.Handedness.Both,
+                EchoRoomSetting.Handedness);
         }
 
         public static bool VignetteEnabled

@@ -9,12 +9,8 @@ using UnityEngine.InputSystem;
 #endif
 
 /// <summary>
-/// Drives the wrist status panel for the timed mazes: the countdown on top, the current
-/// objective and lever progress below. The panel is hidden by default -- the player peeks at it
-/// with the face button handedness assigns -- and flashes itself on level start, on every lever
-/// change, and on the automatic
-/// low-time warnings, so progress is never missed without leaving a permanent HUD in a game
-/// built around darkness.
+/// Runs the timed-maze countdown and failure flow. The controller-mounted timer and objective
+/// readout stays completely hidden at rest, then appears briefly when the player presses Right A.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class MazeLevelTimer : MonoBehaviour
@@ -62,6 +58,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
     const string PanelStylesResource = "UI/VRObjectivePanelStyles";
     const string PanelSettingsResource = "UI/VRMenuPanelSettings";
     static readonly Vector2 PanelSize = new Vector2(560f, 300f);
+    static readonly bool ControllerDisplayEnabled = true;
 
     const string ObjectiveFindLevers = "FIND THE LEVERS AND ACTIVATE THEM TO ESCAPE";
     const string ObjectiveAllLeversActive = "ALL LEVERS ACTIVE - FIND THE EXIT";
@@ -69,6 +66,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
     GameManager gameManager;
     UIDocument panelDocument;
     PanelSettings panelSettingsInstance;
+    StyleSheet panelStyles;
     VisualElement panelRoot;
     Label timerLabel;
     Label objectiveLabel;
@@ -85,6 +83,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
     bool startFlashActive;
     bool warningAudioMissingLogged;
     bool handAnchorMissingLogged;
+    bool controllerRevealWasPressed;
     int automaticWarningMask;
 
     // Tutorial demo: the same panel and countdown, but it can never fail the player.
@@ -104,6 +103,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
 
     void Awake()
     {
+        if (!ControllerDisplayEnabled) return;
         CreateRevealAction();
         ResolveTrackingTargets();
         EnsureDisplay();
@@ -154,6 +154,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
         }
         timerRunning = false;
         startFlashActive = false;
+        controllerRevealWasPressed = false;
         StopWarningAudio();
         targetAlpha = 0f;
         SetDisplayAlpha(0f);
@@ -478,6 +479,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
 
     void FadeDisplay(float presentationDeltaTime)
     {
+        if (targetAlpha > 0.001f && !ActivateDisplayDocument()) return;
         if (panelRoot == null) return;
         float duration = displayAlpha < targetAlpha ? fadeInSeconds : fadeOutSeconds;
         float speed = duration <= 0.001f ? 1000f : 1f / duration;
@@ -499,14 +501,14 @@ public sealed class MazeLevelTimer : MonoBehaviour
 
     void EnsureDisplay()
     {
-        if (panelDocument != null) return;
+        if (!ControllerDisplayEnabled || panelDocument != null) return;
         ResolveTrackingTargets();
 
         VisualTreeAsset layout = Resources.Load<VisualTreeAsset>(PanelLayoutResource);
-        StyleSheet styles = Resources.Load<StyleSheet>(PanelStylesResource);
+        panelStyles = Resources.Load<StyleSheet>(PanelStylesResource);
         PanelSettings sharedSettings = Resources.Load<PanelSettings>(PanelSettingsResource);
 
-        if (layout == null || styles == null || sharedSettings == null)
+        if (layout == null || panelStyles == null || sharedSettings == null)
         {
             Debug.LogError("[MazeLevelTimer] Objective panel assets are missing. Expected Resources/" +
                            PanelLayoutResource + ".uxml, Resources/" + PanelStylesResource +
@@ -535,17 +537,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
         panelObject.transform.localScale = new Vector3(-panelWorldScale, panelWorldScale, panelWorldScale);
         panelObject.SetActive(true);
 
-        VisualElement documentRoot = panelDocument.rootVisualElement;
-        if (!documentRoot.styleSheets.Contains(styles)) documentRoot.styleSheets.Add(styles);
-        documentRoot.pickingMode = PickingMode.Ignore;
-        documentRoot.Query<VisualElement>().ForEach(element => element.pickingMode = PickingMode.Ignore);
-
-        panelRoot = documentRoot.Q<VisualElement>("objective-root");
-        timerLabel = documentRoot.Q<Label>("objective-timer");
-        objectiveLabel = documentRoot.Q<Label>("objective-text");
-        progressLabel = documentRoot.Q<Label>("objective-progress");
-
-        if (panelRoot == null || timerLabel == null || objectiveLabel == null || progressLabel == null)
+        if (!BindDisplayElements())
         {
             Debug.LogError("[MazeLevelTimer] VRObjectivePanel.uxml is missing the root, timer, " +
                            "objective, or progress element.", this);
@@ -560,7 +552,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
 
         if (warningAudioSource == null)
         {
-            warningAudioSource = panelObject.AddComponent<AudioSource>();
+            warningAudioSource = gameObject.AddComponent<AudioSource>();
             warningAudioSource.playOnAwake = false;
             warningAudioSource.loop = false;
             warningAudioSource.spatialBlend = 0f;
@@ -570,6 +562,51 @@ public sealed class MazeLevelTimer : MonoBehaviour
         UpdateDisplayText();
         RefreshObjective();
         SetDisplayAlpha(0f);
+    }
+
+    bool ActivateDisplayDocument()
+    {
+        if (panelDocument == null) EnsureDisplay();
+        if (panelDocument == null) return false;
+
+        GameObject panelObject = panelDocument.gameObject;
+        if (!panelObject.activeSelf) panelObject.SetActive(true);
+        if (panelRoot == null || panelRoot.panel == null)
+        {
+            if (!BindDisplayElements()) return false;
+        }
+
+        UpdateDisplayText();
+        RefreshObjective();
+        return panelRoot != null;
+    }
+
+    bool BindDisplayElements()
+    {
+        if (panelDocument == null || panelDocument.rootVisualElement == null) return false;
+
+        VisualElement documentRoot = panelDocument.rootVisualElement;
+        if (panelStyles == null) panelStyles = Resources.Load<StyleSheet>(PanelStylesResource);
+        if (panelStyles != null && !documentRoot.styleSheets.Contains(panelStyles))
+            documentRoot.styleSheets.Add(panelStyles);
+        documentRoot.pickingMode = PickingMode.Ignore;
+        documentRoot.Query<VisualElement>().ForEach(element => element.pickingMode = PickingMode.Ignore);
+
+        panelRoot = documentRoot.Q<VisualElement>("objective-root");
+        timerLabel = documentRoot.Q<Label>("objective-timer");
+        objectiveLabel = documentRoot.Q<Label>("objective-text");
+        progressLabel = documentRoot.Q<Label>("objective-progress");
+        return panelRoot != null && timerLabel != null && objectiveLabel != null && progressLabel != null;
+    }
+
+    void DeactivateDisplayDocument()
+    {
+        if (panelDocument != null && panelDocument.gameObject.activeSelf)
+            panelDocument.gameObject.SetActive(false);
+        panelRoot = null;
+        timerLabel = null;
+        objectiveLabel = null;
+        progressLabel = null;
     }
 
     void ResolveTrackingTargets()
@@ -598,9 +635,23 @@ public sealed class MazeLevelTimer : MonoBehaviour
     void SetDisplayAlpha(float alpha)
     {
         displayAlpha = Mathf.Clamp01(alpha);
-        if (panelRoot == null) return;
+        bool visible = displayAlpha > 0.001f;
+        if (!visible)
+        {
+            if (panelRoot != null)
+            {
+                panelRoot.style.opacity = 0f;
+                panelRoot.style.display = DisplayStyle.None;
+                panelRoot.style.visibility = Visibility.Hidden;
+            }
+            DeactivateDisplayDocument();
+            return;
+        }
+
+        if (!ActivateDisplayDocument()) return;
         panelRoot.style.opacity = displayAlpha;
-        panelRoot.style.display = displayAlpha > 0.001f ? DisplayStyle.Flex : DisplayStyle.None;
+        panelRoot.style.display = DisplayStyle.Flex;
+        panelRoot.style.visibility = Visibility.Visible;
     }
 
     void PlayWarningAudio(int urgency)
@@ -653,6 +704,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
     void CreateRevealAction()
     {
 #if ENABLE_INPUT_SYSTEM
+        if (!ControllerDisplayEnabled) return;
         revealAction = new InputAction("Reveal Maze Timer", InputActionType.Button);
         // A in two-handed play; B/Y on the single controller, because A/X is the sonar there.
         revealAction.AddBinding(HandedInput.ObjectivePanelPath);
@@ -680,10 +732,21 @@ public sealed class MazeLevelTimer : MonoBehaviour
 
     bool RevealPressed()
     {
+        bool actionPressed = false;
 #if ENABLE_INPUT_SYSTEM
-        return revealAction != null && revealAction.WasPressedThisFrame();
-#else
-        return false;
+        actionPressed = revealAction != null && revealAction.WasPressedThisFrame();
 #endif
+        bool rawPressed = ControllerRevealPressed();
+        return actionPressed || rawPressed;
+    }
+
+    bool ControllerRevealPressed()
+    {
+        UnityEngine.XR.InputDevice device = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.RightHand);
+        bool pressed = device.isValid &&
+                       device.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out bool value) && value;
+        bool pressedThisFrame = pressed && !controllerRevealWasPressed;
+        controllerRevealWasPressed = pressed;
+        return pressedThisFrame;
     }
 }

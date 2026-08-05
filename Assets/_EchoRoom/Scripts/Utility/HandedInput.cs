@@ -50,12 +50,6 @@ namespace EchoRoom.Settings
         public static string MicrophonePingPath =>
             IsSingleHand ? ActiveDevice + "{GripButton}" : LeftDevice + "secondaryButton";
 
-        /// <summary>
-        /// Hold-to-pause. Bound in every mode: Touch controllers carry a Menu button on the LEFT
-        /// hand only (the right hand's twin is the reserved system button), so right-hand-only play
-        /// would otherwise have no pause at all.
-        /// </summary>
-        public static string HoldPausePath => ActiveDevice + "secondaryButton";
 
         /// <summary>Legacy XR feature for the sonar ping, for the raw InputDevices read path.</summary>
         public static InputFeatureUsage<bool> SonarPingUsage =>
@@ -69,7 +63,7 @@ namespace EchoRoom.Settings
         public static string SonarPingLabel => IsSingleHand ? PrimaryFaceLabel : "B";
         public static string ObjectivePanelLabel => IsSingleHand ? SecondaryFaceLabel : "A";
         public static string MicrophonePingLabel => IsSingleHand ? "GRIP" : "Y";
-        public static string HoldPauseLabel => SecondaryFaceLabel;
+
 
         public static string HandednessLabel
         {

@@ -17,10 +17,10 @@
         <ui:Label name="progress-label" text="0%" class="progress-label" />
       </ui:VisualElement>
       <ui:VisualElement name="thank-you-screen" class="thank-you-screen hidden">
-        <ui:Label text="SIGNAL COMPLETE" class="loading-title thank-title" />
+        <ui:Label text="LEVEL COMPLETED" class="loading-title thank-title" />
         <ui:VisualElement class="signal-line" />
-        <ui:Label text="THANK YOU FOR PLAYING" class="thank-message" />
-        <ui:Label text="YOUR ECHO WILL REMAIN IN THE ROOM" class="thank-subtitle" />
+        <ui:Label text="FINAL MAZE COMPLETE" class="thank-message" />
+        <ui:Label text="RETURNING TO MAIN MENU" class="thank-subtitle" />
         <ui:Label name="return-countdown" text="RETURNING TO MAIN MENU..." class="progress-label" />
       </ui:VisualElement>
     </ui:VisualElement>

@@ -22,6 +22,7 @@ namespace EchoRoom.UI
 
         // A levelled panel seen from far above or below is edge-on, so stop tracking pitch there.
         const float MaxTargetPitchRadians = 55f * Mathf.Deg2Rad;
+        const float MinimumPrefabSwapDisplaySeconds = 5f;
 
         readonly List<GameObject> suppressedPointers = new List<GameObject>();
         UIDocument document;
@@ -193,9 +194,9 @@ namespace EchoRoom.UI
             if (!busy) StartCoroutine(LoadSceneRoutine(sceneName, message));
         }
 
-        public void ShowThankYouThenLoadScene(string mainMenuSceneName)
+        public void ShowLevelCompletedThenLoadScene(string mainMenuSceneName)
         {
-            if (!busy) StartCoroutine(ShowThankYouThenLoad(mainMenuSceneName));
+            if (!busy) StartCoroutine(ShowLevelCompletedThenLoad(mainMenuSceneName));
         }
 
         public IEnumerator LoadSceneRoutine(string sceneName, string message)
@@ -229,7 +230,7 @@ namespace EchoRoom.UI
             operation.allowSceneActivation = true;
         }
 
-        public IEnumerator ShowThankYouThenLoad(string mainMenuSceneName)
+        public IEnumerator ShowLevelCompletedThenLoad(string mainMenuSceneName)
         {
             busy = true;
             BeginTransition("RETURNING TO MAIN MENU");
@@ -290,22 +291,22 @@ namespace EchoRoom.UI
             try
             {
                 yield return null;
-                SetProgress(0.2f);
-                swapAction?.Invoke();
+                float requiredDisplayTime = Mathf.Max(MinimumPrefabSwapDisplaySeconds, minimumDisplayTime);
+                while (Time.realtimeSinceStartup - shownAt < requiredDisplayTime)
+                {
+                    float elapsed = Time.realtimeSinceStartup - shownAt;
+                    SetProgress(Mathf.Min(0.95f, elapsed / requiredDisplayTime));
+                    yield return null;
+                }
 
-                // The swap teleports the rig to the next level's spawn. This panel is
-                // world-locked and a prefab swap is not a scene load, so nothing else
-                // re-places it -- without this it stays behind at the old spawn and the
-                // player arrives in the new level having never seen a loading screen.
-                PlaceInFrontOfPlayer();
-                placementDirty = true;
-
-                SetProgress(0.85f);
-                yield return null;
                 SetProgress(1f);
+                yield return null;
 
-                float remaining = minimumDisplayTime - (Time.realtimeSinceStartup - shownAt);
-                if (remaining > 0f) yield return new WaitForSecondsRealtime(remaining);
+                // Hide before the synchronous prefab swap. The next level's intro UI is created
+                // inside swapAction, so leaving this visible for even one rendered frame makes the
+                // loading panel and level title overlap through the shared overlay camera.
+                CompleteTransition();
+                swapAction?.Invoke();
             }
             finally
             {
