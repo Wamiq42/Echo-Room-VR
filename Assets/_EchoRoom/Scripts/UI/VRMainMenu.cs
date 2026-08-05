@@ -10,6 +10,11 @@ namespace EchoRoom.UI
     [DisallowMultipleComponent, RequireComponent(typeof(UIDocument), typeof(BoxCollider), typeof(XRUIToolkitManager))]
     public sealed class VRMainMenu : MonoBehaviour
     {
+        const string PrivacyPolicyUrl = "https://w42dev.netlify.app/";
+        const string PrivacyPolicyAcceptedKey = "EchoRoom.PrivacyPolicy.Accepted.v1";
+
+        public static bool IsPrivacyPolicyAccepted => HasAcceptedPrivacyPolicy();
+
         [SerializeField] LevelData levelData;
         [SerializeField] VisualTreeAsset menuLayout;
         [SerializeField] StyleSheet menuStyles;
@@ -31,9 +36,13 @@ namespace EchoRoom.UI
         VisualElement levelScreen;
         VisualElement warningScreen;
         VisualElement settingsScreen;
+        VisualElement privacyScreen;
         Button newGameButton;
         Button loadGameButton;
         Button tutorialButton;
+        Button privacyPolicyButton;
+        Button privacyReviewButton;
+        Button privacyAcceptButton;
         readonly List<Button> levelButtons = new List<Button>();
         PuzzleProgressData progress;
         VRSettingsPanelController settingsController;
@@ -74,14 +83,32 @@ namespace EchoRoom.UI
             levelScreen = root.Q<VisualElement>("level-screen");
             warningScreen = root.Q<VisualElement>("warning-screen");
             settingsScreen = root.Q<VisualElement>("settings-screen");
+            privacyScreen = root.Q<VisualElement>("privacy-screen");
             newGameButton = root.Q<Button>("new-game-button");
             loadGameButton = root.Q<Button>("load-game-button");
             tutorialButton = root.Q<Button>("tutorial-replay-button");
+            privacyPolicyButton = root.Q<Button>("privacy-policy-button");
+            privacyReviewButton = root.Q<Button>("privacy-review-button");
+            privacyAcceptButton = root.Q<Button>("privacy-accept-button");
+            Label appVersionLabel = root.Q<Label>("app-version-label");
+            if (appVersionLabel != null) appVersionLabel.text = "VERSION " + Application.version;
+            else Debug.LogError("[VRMainMenu] App version label is missing from VRMenu.uxml.", this);
+
+            if (privacyScreen == null || privacyPolicyButton == null || privacyReviewButton == null ||
+                privacyAcceptButton == null)
+            {
+                Debug.LogError("[VRMainMenu] Privacy Policy UI is missing from VRMenu.uxml.", this);
+                enabled = false;
+                return;
+            }
 
             newGameButton.clicked += OnNewGamePressed;
             loadGameButton.clicked += ShowLevelPanel;
             if (tutorialButton != null) tutorialButton.clicked += StartTutorial;
             else Debug.LogError("[VRMainMenu] PLAY TUTORIAL button is missing from VRMenu.uxml.", this);
+            privacyPolicyButton.clicked += OpenPrivacyPolicy;
+            privacyReviewButton.clicked += OpenPrivacyPolicy;
+            privacyAcceptButton.clicked += AcceptPrivacyPolicy;
             root.Q<Button>("level-back-button").clicked += ShowStartPanel;
             root.Q<Button>("confirm-new-game-button").clicked += ConfirmNewGame;
             root.Q<Button>("cancel-new-game-button").clicked += ShowStartPanel;
@@ -125,9 +152,37 @@ namespace EchoRoom.UI
 
         public void ShowStartPanel()
         {
+            if (!HasAcceptedPrivacyPolicy())
+            {
+                ShowPrivacyPolicyPanel();
+                return;
+            }
+
             bool hasSave = PuzzleProgressSaveSystem.HasSaveFile;
             loadGameButton.style.display = hasSave ? DisplayStyle.Flex : DisplayStyle.None;
             SetScreen(startScreen);
+        }
+
+        void ShowPrivacyPolicyPanel()
+        {
+            SetScreen(privacyScreen);
+        }
+
+        void OpenPrivacyPolicy()
+        {
+            Application.OpenURL(PrivacyPolicyUrl);
+        }
+
+        void AcceptPrivacyPolicy()
+        {
+            PlayerPrefs.SetInt(PrivacyPolicyAcceptedKey, 1);
+            PlayerPrefs.Save();
+            ShowStartPanel();
+        }
+
+        static bool HasAcceptedPrivacyPolicy()
+        {
+            return PlayerPrefs.GetInt(PrivacyPolicyAcceptedKey, 0) == 1;
         }
 
         void ShowSettingsPanel()
@@ -253,6 +308,7 @@ namespace EchoRoom.UI
             SetVisible(levelScreen, active == levelScreen);
             SetVisible(warningScreen, active == warningScreen);
             SetVisible(settingsScreen, active == settingsScreen);
+            SetVisible(privacyScreen, active == privacyScreen);
             SetVisible(root.Q("pause-screen"), false);
             SetVisible(root.Q("captured-screen"), false);
         }
@@ -312,6 +368,9 @@ namespace EchoRoom.UI
 
         void OnDestroy()
         {
+            if (privacyPolicyButton != null) privacyPolicyButton.clicked -= OpenPrivacyPolicy;
+            if (privacyReviewButton != null) privacyReviewButton.clicked -= OpenPrivacyPolicy;
+            if (privacyAcceptButton != null) privacyAcceptButton.clicked -= AcceptPrivacyPolicy;
             settingsController?.Dispose();
             settingsController = null;
         }

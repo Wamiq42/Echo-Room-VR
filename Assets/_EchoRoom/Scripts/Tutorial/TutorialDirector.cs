@@ -51,6 +51,10 @@ sealed class TutorialMenuPrompt : MonoBehaviour
         AddReplayButton(root);
         if (!TutorialProgress.ShouldOffer) yield break;
 
+        while (!EchoRoom.UI.VRMainMenu.IsPrivacyPolicyAccepted)
+            yield return null;
+
+
         overlay = new VisualElement { name = "tutorial-offer-screen" };
         overlay.style.position = Position.Absolute;
         overlay.style.left = overlay.style.right = overlay.style.top = overlay.style.bottom = 0;

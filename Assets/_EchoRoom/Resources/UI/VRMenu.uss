@@ -325,6 +325,65 @@
   letter-spacing: 5px;
 }
 
+.policy-link-button {
+  height: 40px;
+  margin-top: 5px;
+  margin-bottom: 2px;
+  font-size: 14px;
+  letter-spacing: 3px;
+}
+
+.privacy-screen {
+  top: 35px;
+  bottom: 30px;
+}
+
+.privacy-title {
+  margin-top: 6px;
+  font-size: 39px;
+  letter-spacing: 7px;
+}
+
+.privacy-line {
+  margin-top: 15px;
+  margin-bottom: 18px;
+}
+
+.privacy-copy {
+  width: 525px;
+  min-height: 82px;
+  font-size: 18px;
+  line-height: 25px;
+}
+
+.privacy-url {
+  margin-top: 8px;
+  color: var(--echo-cyan);
+  font-size: 15px;
+  letter-spacing: 2px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+}
+
+.privacy-actions {
+  width: 520px;
+  margin-top: 22px;
+  align-items: center;
+}
+
+.privacy-action-button {
+  width: 430px;
+  height: 54px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  font-size: 17px;
+  letter-spacing: 3px;
+}
+
+.privacy-hint {
+  margin-top: 13px;
+}
+
 .menu-button:hover,
 .menu-button:focus {
   background-color: rgba(7, 63, 70, 0.98);
@@ -563,4 +622,14 @@
   color: rgba(110, 213, 215, 0.48);
   font-size: 9px;
   letter-spacing: 2px;
+}
+
+.app-version {
+  position: absolute;
+  right: 23px;
+  bottom: 15px;
+  color: rgba(110, 213, 215, 0.48);
+  font-size: 9px;
+  letter-spacing: 2px;
+  -unity-text-align: middle-right;
 }

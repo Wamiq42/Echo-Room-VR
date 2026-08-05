@@ -27,8 +27,22 @@
           <ui:Button name="load-game-button" text="LOAD GAME" class="menu-button main-menu-button" />
           <ui:Button name="tutorial-replay-button" text="PLAY TUTORIAL" class="menu-button main-menu-button" />
           <ui:Button name="main-settings-button" text="SETTINGS" class="menu-button main-menu-button" />
+          <ui:Button name="privacy-policy-button" text="PRIVACY POLICY" class="menu-button main-menu-button policy-link-button" />
         </ui:VisualElement>
         <ui:Label text="POINT WITH A CONTROLLER  //  PRESS TRIGGER" class="hint main-hint" />
+      </ui:VisualElement>
+
+      <ui:VisualElement name="privacy-screen" class="screen hidden privacy-screen">
+        <ui:Label text="PRIVACY POLICY" class="title privacy-title" />
+        <ui:Label text="ONE-TIME ACCEPTANCE" class="subtitle" />
+        <ui:VisualElement class="signal-line privacy-line" />
+        <ui:Label text="Before playing Echo Room, please review and accept the Privacy Policy. The policy will open in your browser." class="body privacy-copy" />
+        <ui:Label text="w42dev.netlify.app" class="privacy-url" />
+        <ui:VisualElement class="privacy-actions">
+          <ui:Button name="privacy-review-button" text="REVIEW PRIVACY POLICY" class="menu-button privacy-action-button" />
+          <ui:Button name="privacy-accept-button" text="I ACCEPT" class="menu-button primary privacy-action-button" />
+        </ui:VisualElement>
+        <ui:Label text="ACCEPTANCE IS SAVED ON THIS DEVICE" class="hint privacy-hint" />
       </ui:VisualElement>
 
       <ui:VisualElement name="level-screen" class="screen hidden">
@@ -124,6 +138,7 @@
       <ui:VisualElement class="scanline scanline-one" picking-mode="Ignore" />
       <ui:VisualElement class="scanline scanline-two" picking-mode="Ignore" />
       <ui:Label text="ECHO NETWORK  //  LOCAL" class="status" picking-mode="Ignore" />
+      <ui:Label name="app-version-label" text="" class="app-version" picking-mode="Ignore" />
     </ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>
