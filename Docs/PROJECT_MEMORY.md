@@ -3126,6 +3126,381 @@ Verification performed:
 - MCP source verification found afterWaveStrength=0.10 and afterWaveStrengthDecay=1.0.
 - MCP scene inspection reported MainMenuScene=0.10/1.0 and MainScene=0.10/1.0.
 - MainMenuScene was saved through MCP and finished dirty=False.
+### MKT-ECHO-PROMO-001 — Create echolocation gameplay marketing screenshot
+
+- **Date:** 2026-07-23
+- **Goal:** Turn the supplied maze-and-switch gameplay screenshot into a sharp promotional still that immediately communicates the game's pitch-black echolocation navigation and switch-driven escape loop.
+- **Result:** Created a cinematic 16:9 promotional image that preserves the original brick-maze viewpoint and lever location, reveals the environment through concentric electric-cyan echo bands and edge lighting, highlights the lever in warm amber, and adds the bottom caption `SEE WITH SOUND. FIND THE SWITCHES. ESCAPE THE DARK.` A lossless PNG master and broadly compatible flattened JPEG are available.
+- **Files created:**
+  - `Marketing/EchoRoom_Echolocation_Promo.png`
+  - `Marketing/EchoRoom_Echolocation_Promo.jpg`
+- **Files modified:**
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved/deleted:** None.
+- **Unity objects affected:** None — offline marketing artwork only.
+- **Components/assets/settings:** Built-in image editing used the user-supplied gameplay screenshot as the edit target. The output is `1672x941` pixels (16:9). The JPEG is a black-background RGB flatten of the PNG for predictable preview and sharing.
+- **Decisions and assumptions:** The one-line marketing message was intentionally kept short and mechanic-led. Cyan communicates the echo reveal, amber identifies the switch objective, and the untouched maze layout keeps the image grounded in the actual game. No character, monster, logo, HUD, or unimplemented gameplay object was added.
+- **Verification:** Visually inspected the generated result and the workspace JPEG at original detail. Confirmed the maze, switch, echo-wave treatment, bottom placement, and exact caption spelling. The PNG copied successfully at `2,187,023` bytes with SHA-256 `69CB12F384A2587D7A18432CA42ED6C38985E4EFC44A58B19241E311A3FD32C1`; the flattened JPEG rendered the complete composition in the local viewer.
+- **Known limitations:** This is promotional artwork derived from a gameplay capture, not an in-engine implementation of the enhanced lighting. The Codex local viewer displayed the PNG inconsistently even though RGB flattening recovered the complete image, so the JPEG is the recommended sharing copy.
+- **Follow-up:** Add the final game logo or store/platform badge later if a locked brand treatment becomes available.
+
+### ANDROID-MATERIAL-TEXTURES-001 - Standardize Android imports for material textures
+
+- **Date:** 2026-08-03
+- **Goal:** Apply the requested Android texture override to every project texture referenced by a material.
+- **Result:** Audited all material shader texture slots under `Assets` and updated all 304 eligible referenced texture importers. Each now overrides Android with max size 1024, Mitchell resizing, RGB(A) Compressed ASTC 4x4, Normal compressor quality, and ETC2 fallback set to Use Build Settings.
+- **Files created/moved/deleted:** None.
+- **Files modified:**
+  - `Docs/PROJECT_MEMORY.md`
+  - `Assets/ADG_Textures/walls_vol1/wall01/wall01_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall01/wall01_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall01/wall01_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall01/wall01_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall02/wall02_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall02/wall02_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall02/wall02_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall02/wall02_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall03/wall03_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall03/wall03_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall03/wall03_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall03/wall03_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall04/wall04_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall04/wall04_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall04/wall04_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall04/wall04_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall05/wall05_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall05/wall05_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall05/wall05_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall05/wall05_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall06/wall06_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall06/wall06_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall06/wall06_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall06/wall06_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall07/wall07_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall07/wall07_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall07/wall07_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall07/wall07_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall08/wall08_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall08/wall08_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall08/wall08_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall08/wall08_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall09/wall09_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall09/wall09_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall09/wall09_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall09/wall09_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall10/wall10_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall10/wall10_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall10/wall10_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall10/wall10_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall11/wall11_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall11/wall11_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall11/wall11_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall11/wall11_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall12/wall12_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall12/wall12_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall12/wall12_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall12/wall12_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall13/wall13_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall13/wall13_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall13/wall13_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall13/wall13_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall14/wall14_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall14/wall14_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall14/wall14_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall14/wall14_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall15/wall15_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall15/wall15_Diffuse.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall15/wall15_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall15/wall15_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall16/wall16_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall16/wall16_Diffuse.tif.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall16/wall16_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall16/wall16_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall17/wall17_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall17/wall17_Diffuse.tif.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall17/wall17_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall17/wall17_Normal.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall18/wall18_Ambient_Occlusion.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall18/wall18_Diffuse.tif.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall18/wall18_Height.tga.meta`
+  - `Assets/ADG_Textures/walls_vol1/wall18/wall18_Normal.tga.meta`
+  - `Assets/Samples/XR Hands/1.7.3/HandVisualizer/Materials/HighFidelity.png.meta`
+  - `Assets/Samples/XR Hands/1.7.3/HandVisualizer/Materials/TransparentRed.png.meta`
+  - `Assets/Samples/XR Interaction Toolkit/2.6.4/Hands Interaction Demo/Textures/CombinedFingerIndexHighlight.png.meta`
+  - `Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/DemoSceneAssets/Textures/Concrete_Metallic.tif.meta`
+  - `Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/DemoSceneAssets/Textures/Concrete_Normal.tif.meta`
+  - `Assets/Samples/XR Interaction Toolkit/3.3.1/Starter Assets/Textures/DefaultMaterial_AO.png.meta`
+  - `Assets/_EchoRoom/Art/Ring Textures/Adobe Express - file-Photoroom.png.meta`
+  - `Assets/_EchoRoom/Textures/Lever/rusty_metal_03_Diffuse.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Lever/rusty_metal_03_nor_gl.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Lever/weathered_planks_Diffuse.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Lever/weathered_planks_nor_gl.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/castle_brick_07_Diffuse.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/castle_brick_07_nor_gl.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/cobblestone_floor_04_Diffuse.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/cobblestone_floor_04_nor_gl.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/cobblestone_floor_08_Diffuse.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/cobblestone_floor_08_nor_gl.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/medieval_blocks_05_Diffuse.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/medieval_blocks_05_nor_gl.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/mossy_cobblestone_Diffuse.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/mossy_cobblestone_nor_gl.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/rock_wall_10_Diffuse.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/rock_wall_10_nor_gl.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/stone_brick_wall_001_Diffuse.jpg.meta`
+  - `Assets/_EchoRoom/Textures/Maze/stone_brick_wall_001_nor_gl.jpg.meta`
+  - `Assets/_EchoRoom/Textures/QuestDenseSmokeFlipbook4x4.png.meta`
+  - `Assets/_EchoRoom/Textures/QuestSmokeFlipbook4x4.png.meta`
+  - `Assets/_EchoRoom/Textures/SmokyEyeParticle.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 1 StonePathGrass/StonePathGrass_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 1 StonePathGrass/StonePathGrass_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 1 StonePathGrass/StonePathGrass_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 1 StonePathGrass/StonePathGrass_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 1 StonePathGrass/StonePathGrass_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 10 Metal Grate/Metal Grate_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 10 Metal Grate/Metal Grate_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 10 Metal Grate/Metal Grate_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 10 Metal Grate/Metal Grate_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 10 Metal Grate/Metal Grate_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 10 Sewer Grate/Sewer Grate_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 10 Sewer Grate/Sewer Grate_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 10 Sewer Grate/Sewer Grate_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 10 Sewer Grate/Sewer Grate_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 10 Sewer Grate/Sewer Grate_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 CarpetPurple/CarpetPurple_Base.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 CarpetPurple/CarpetPurple_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 CarpetPurple/CarpetPurple_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 CarpetPurple/CarpetPurple_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 CarpetPurple/CarpetPurple_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 CarpetPurple/CarpetPurple_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 Concrete Bricks/ConcreteBricks_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 Concrete Bricks/ConcreteBricks_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 Concrete Bricks/ConcreteBricks_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 Concrete Bricks/ConcreteBricks_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 Concrete Bricks/ConcreteBricks_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 Dirt/Dirt_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 Dirt/Dirt_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 Dirt/Dirt_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 Dirt/Dirt_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 2 Dirt/Dirt_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 3 GreenBricks/GreenBricks_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 3 GreenBricks/GreenBricks_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 3 GreenBricks/GreenBricks_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 3 GreenBricks/GreenBricks_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 3 GreenBricks/GreenBricks_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 3 PotteryCeramic/PotteryCeramic_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 3 PotteryCeramic/PotteryCeramic_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 3 PotteryCeramic/PotteryCeramic_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 3 PotteryCeramic/PotteryCeramic_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 3 PotteryCeramic/PotteryCeramic_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 4 Diamond Plate/DiamondPlate_Base.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 4 Diamond Plate/DiamondPlate_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 4 Diamond Plate/DiamondPlate_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 4 Diamond Plate/DiamondPlate_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 4 Diamond Plate/DiamondPlate_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 4 Diamond Plate/DiamondPlate_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 5 Sci Fi Metal/SciFiMetal_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 5 Sci Fi Metal/SciFiMetal_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 5 Sci Fi Metal/SciFiMetal_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 5 Sci Fi Metal/SciFiMetal_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 5 Sci Fi Metal/SciFiMetal_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 5 Triangle Pottery/TrianglePottery_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 5 Triangle Pottery/TrianglePottery_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 5 Triangle Pottery/TrianglePottery_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 5 Triangle Pottery/TrianglePottery_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 5 Triangle Pottery/TrianglePottery_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Bricks/Bricks_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Bricks/Bricks_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Bricks/Bricks_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Bricks/Bricks_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Bricks/Bricks_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Carpet Hotel/CarpetHotel_Base.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Carpet Hotel/CarpetHotel_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Carpet Hotel/CarpetHotel_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Carpet Hotel/CarpetHotel_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Carpet Hotel/CarpetHotel_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 6 Carpet Hotel/CarpetHotel_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 8 Stone Path/Stone Path_Base.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 8 Stone Path/Stone Path_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 8 Stone Path/Stone Path_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 8 Stone Path/Stone Path_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 8 Stone Path/Stone Path_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 8 Stone Path/Stone Path_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Bricks Wavy/Bricks Wavy_Base.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Bricks Wavy/Bricks Wavy_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Bricks Wavy/Bricks Wavy_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Bricks Wavy/Bricks Wavy_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Bricks Wavy/Bricks Wavy_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Bricks Wavy/Bricks Wavy_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Carpet/Carpet_Base.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Carpet/Carpet_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Carpet/Carpet_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Carpet/Carpet_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Carpet/Carpet_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Carpet/Carpet_Specular.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Scifi Panels/Scifi Panels_Emission.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Scifi Panels/Scifi Panels_Height.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Scifi Panels/Scifi Panels_Metallic.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Scifi Panels/Scifi Panels_Normal.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Scifi Panels/Scifi Panels_Occlusion.png.meta`
+  - `Assets/_Third Party Assets/Billion Mucks/30 Stylized Textures Free/Textures/Vol 9 Scifi Panels/Scifi Panels_Specular.png.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_1/Door_1_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_1/Door_1_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_1/Door_1_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_10/Door_10_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_10/Door_10_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_10/Door_10_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_11/Door_11_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_11/Door_11_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_11/Door_11_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_12/Door_12_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_12/Door_12_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_12/Door_12_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_13/Door_1_Substance_Hig_Material _2576_MetallicSmoothness.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_13/Door_1_Substance_Hig_Material _2576_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_13/RGB.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_14/Door_14_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_14/Door_14_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_14/Door_14_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_15/Door_15_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_15/Door_15_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_15/Door_15_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_2/Door_2_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_2/Door_2_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_2/Door_2_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_3/Door_3_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_3/Door_3_Albedo.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_3/Door_3_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_3/Door_3_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_4/Door_4_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_4/Door_4_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_4/Door_4_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_5/Door_5_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_5/Door_5_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_5/Door_5_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_6/Door_6_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_6/Door_6_Albedo.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_6/Door_6_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_6/Door_6_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_7/Door_7_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_7/Door_7_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_7/Door_7_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_8/Door_8_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_8/Door_8_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_8/Door_8_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_9/Door_9_AO.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_9/Door_9_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_9/Door_9_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_Knob/Knob_Normal.tga.meta`
+  - `Assets/_Third Party Assets/Free Wood Door Pack/Texture/Door_Knob/Knob_Spec.tga.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T01/Outdoor_Wall_T01_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T01/Outdoor_Wall_T01_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T01/Outdoor_Wall_T01_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T01/Outdoor_Wall_T01_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T02/Outdoor_Wall_T02_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T02/Outdoor_Wall_T02_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T03/Outdoor_Wall_T03_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T03/Outdoor_Wall_T03_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T03/Outdoor_Wall_T03_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T03/Outdoor_Wall_T03_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T04/Outdoor_Wall_T04_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T04/Outdoor_Wall_T04_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T04/Outdoor_Wall_T04_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T04/Outdoor_Wall_T04_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T05/Outdoor_Wall_T05_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T05/Outdoor_Wall_T05_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T05/Outdoor_Wall_T05_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T05/Outdoor_Wall_T05_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T06/Outdoor_Wall_T06_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T06/Outdoor_Wall_T06_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T06/Outdoor_Wall_T06_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T06/Outdoor_Wall_T06_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T07/Outdoor_Wall_T07_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T07/Outdoor_Wall_T07_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T07/Outdoor_Wall_T07_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T07/Outdoor_Wall_T07_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T08/Outdoor_Wall_T08_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T08/Outdoor_Wall_T08_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T08/Outdoor_Wall_T08_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T08/Outdoor_Wall_T08_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T09/Outdoor_Wall_T09_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T09/Outdoor_Wall_T09_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T09/Outdoor_Wall_T09_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T09/Outdoor_Wall_T09_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T10/Outdoor_Wall_T10_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T10/Outdoor_Wall_T10_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T10/Outdoor_Wall_T10_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T10/Outdoor_Wall_T10_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T11/Outdoor_Wall_T11_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T11/Outdoor_Wall_T11_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T11/Outdoor_Wall_T11_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T11/Outdoor_Wall_T11_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T12/Outdoor_Wall_T12_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T12/Outdoor_Wall_T12_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T12/Outdoor_Wall_T12_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T12/Outdoor_Wall_T12_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T13/Outdoor_Wall_T13_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T13/Outdoor_Wall_T13_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T14/Outdoor_Wall_T14_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T14/Outdoor_Wall_T14_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T14/Outdoor_Wall_T14_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T14/Outdoor_Wall_T14_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T15/Outdoor_Wall_T15_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T15/Outdoor_Wall_T15_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T15/Outdoor_Wall_T15_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T15/Outdoor_Wall_T15_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T16/Outdoor_Wall_T16_Ambient_occlusion.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T16/Outdoor_Wall_T16_Base_Color.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T16/Outdoor_Wall_T16_Height.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Outdoor_Wall_T16/Outdoor_Wall_T16_Normal_DirectX.png.meta`
+  - `Assets/_Third Party Assets/Phoenix3D/Textures/Phoenix3D.png.meta`
+  - `Assets/stylized-foliage/textures/FOLIAGE_low_foliage_plane_BaseColor.png.meta`
+  - `Assets/stylized-foliage/textures/FOLIAGE_low_foliage_plane_Normal.png.meta`
+- **Unity objects affected:** None - this is an AssetDatabase texture-importer metadata change; no scene or prefab object was serialized.
+- **Components/assets/settings:** Scanned 359 material assets, 847 non-null material texture slots, and 308 unique project asset references. Updated 304 `TextureImporter` assets using the `Android` platform key with `overridden=true`, `maxTextureSize=1024`, `resizeAlgorithm=Mitchell`, `format=ASTC_4x4`, `textureCompression=Compressed`, `compressionQuality=50` (Normal), and `androidETC2FallbackOverride=UseBuildSettings`. Four material texture-property references were not texture importers and were skipped: `Assets/TextMesh Pro/Fonts/LiberationSans.ttf`, `Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset`, `Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset`, and `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss`.
+- **Decisions and assumptions:** "All the material's texture" was interpreted as every non-null Texture/TexEnv asset referenced by every material under `Assets`, including referenced sample and third-party materials. Unreferenced textures and textures used only by non-material systems were intentionally outside scope. Default-platform import settings and material assignments were not changed. The worktree already contained extensive unrelated edits and `Docs/PROJECT_MEMORY.md` was already in an unresolved merge-conflict state; those existing changes and conflict markers were preserved, and this entry was appended after them.
+- **Verification:** Before the batch, 0 of 304 eligible texture importers matched all requested Android fields. After synchronous reimport, an independent Unity audit reported 304 of 304 compliant, zero failures, and the same four non-texture skips. Git readback found exactly 304 changed texture `.meta` files. Unity finished with `isPlaying=False`, `isCompiling=False`, `isUpdating=False`, and `scriptCompilationFailed=False`; `MainMenuScene` remained loaded and clean. The recent Console contained no texture-import or compilation failures; it only contained the pre-existing Unity-MCP negotiation failure against the inactive `http://localhost:26566` endpoint.
+- **Known limitations:** No Android player build or Quest visual/performance pass was run. ASTC encoding and memory/quality behavior should be confirmed in the next Android build. Texture assets not referenced by materials were not changed.
+- **Follow-up:** Build the Android/Quest player and spot-check high-frequency normals, alpha-cutout foliage, UI-adjacent material textures, and particle flipbooks for acceptable ASTC 4x4 quality.
+
+## 2026-08-05 — UI-LAYER-OVERLAY-001 — Route all game UI through `UITKOverlay`
+
+- **Goal and resulting behavior:** Route scene-resident and runtime-created UI to the existing `UITKOverlay` layer so dedicated UI cameras render it independently of world geometry. Main-menu UI, pause/loading UI, tutorial UI, maze objective/intro text, transition fades, and controller UI rays now use layer 6. Gameplay and menu cameras exclude or isolate that layer as appropriate, preventing UI from being depth-occluded by walls.
+- **Files created:**
+  - `Assets/_EchoRoom/Scripts/UI/UITKOverlayLayer.cs`
+  - `Assets/_EchoRoom/Scripts/UI/UITKOverlayLayer.cs.meta`
+- **Files modified:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity`
+  - `Assets/_EchoRoom/Scripts/Managers/MazeLevelTimer.cs`
+  - `Assets/_EchoRoom/Scripts/MazeWorldTextController.cs`
+  - `Assets/_EchoRoom/Scripts/Tutorial/TutorialDirector.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRPauseMenu.cs`
+  - `Assets/_EchoRoom/Scripts/UI/VRScreenFade.cs`
+  - `Docs/PROJECT_MEMORY.md`
+- **Files moved or deleted:** None.
+- **Unity objects affected and inspected:**
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: Main Menu`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: VR Loading Screen`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainMenuScene.unity :: XR Origin (XR Rig)/Camera Offset/Main Camera/UI Camera`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Pause Menu`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: VR Loading Screen`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Left Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Right Controller/Menu UI Ray`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Main Camera`
+  - `Assets/_EchoRoom/Scenes/MainScene.unity :: XR Origin (XR Rig)/Camera Offset/Main Camera/Menu Overlay Camera`
+  - Runtime Play Mode: `MainMenuScene :: Tutorial First Run Prompt`
+  - Runtime Play Mode: `MainScene :: XR Origin (XR Rig)/Camera Offset/Right Controller/Maze Objective Panel`
+  - Runtime Play Mode: `MainScene :: Maze Runtime Root/Maze_5x5_E(Clone)/Writing placement/Level Intro Text`
+  - Runtime Play Mode: `MainScene :: GameManager/Maze Transition Fade`
+  - Runtime Play Mode: `MainScene :: GameManager/Maze Transition Fade/Black`
+- **Components, assets, settings, and dependencies:** Reused the existing `UITKOverlay` project layer at index 6 (`1 << 6`, culling-mask bit 64); no package dependency was added. `UITKOverlayLayer` assigns the layer recursively, repairs loaded `UIDocument` and `Canvas` roots after scene load, and finds the camera dedicated to layer 6 for Screen Space - Camera canvases. In `MainScene`, the gameplay camera mask is `-65`, the `Menu Overlay Camera` mask is `64`, and that overlay camera remains enabled because HUD, tutorial, loading, fade, and pause UI share it. In `MainMenuScene`, `UI Camera` uses mask `64`; the main camera already excluded layer 6 and was not changed.
+- **Decisions and assumptions:** Controller `Menu UI Ray` objects were treated as part of the UI system and moved with the rendered UI. Maze prefab text is assigned at runtime through `MazeWorldTextController`, avoiding unrelated prefab serialization. The legacy `MenuOverlay` layer at index 8 remains defined for compatibility but is no longer used by the affected pause UI. The worktree contained extensive unrelated staged and unstaged edits, and this journal file was already unmerged; those changes and all existing conflict content were preserved.
+- **Known limitations:** The conditionally spawned tutorial prompt, auditor wall text, tutorial-ending fade, and door-instruction text were not all present in the same verification run; their creation paths now explicitly call the shared layer helper, but no uninspected hierarchy paths are recorded here. Keeping the shared overlay camera active adds an additional camera pass and should be profiled on Quest. Controller-ray interaction and final visual occlusion were not tested in a headset.
+- **Verification:** All new or updated C# files passed Roslyn syntax validation and Unity completed compilation with `IsCompiling=false`. Edit Mode inspection confirmed layer 6 on both scenes' stored UI roots/rays and confirmed camera masks `64`/`-65`. Play Mode inspection confirmed layer 6 on the first-run `UIDocument`, maze objective `UIDocument`, maze intro `TextMesh`, transition-fade Canvas, and its Black child; the fade Canvas camera matched `Menu Overlay Camera`, which remained enabled after the pause menu hid itself. The final Unity audit found no project-originated errors or exceptions; retained Console failures were generated only by inspection calls for conditionally absent objects and an attempted editor scene-open while Play Mode was still exiting. `MainMenuScene` was restored in Edit Mode, loaded cleanly, and remained not dirty. `git diff --check` also reported pre-existing Unity YAML trailing-space serialization in the already-dirty scenes, so no broad formatting rewrite was performed.
+- **Follow-up:** Run a Quest headset pass to verify UI always renders over maze geometry, controller rays still interact with every menu, and the permanently active overlay camera has acceptable GPU cost.
 
 ## 2026-08-05 - QUEST-90HZ-OPENXR-001 - Persist Quest 90 Hz through OpenXR session start
 
@@ -3145,3 +3520,13 @@ Verification performed:
 - **Verification:** Unity 6000.3.8f1 with OpenXR 1.16.1 completed synchronous AssetDatabase refresh and script compilation with `isCompiling=False`, `isUpdating=False`, and `scriptCompilationFailed=False`. Editor verification reported the Echo Room feature present and enabled for Android, absent for Standalone, exactly one Android build target in its attribute, the expected feature ID/extension, and zero Android OpenXR validation issues. Source audit found `Application.targetFrameRate` and `QualitySettings.vSyncCount` writes only in the new feature and found no remaining `OVRPlugin.systemDisplayFrequency`, `OVRPlugin.cpuLevel`, or `OVRPlugin.gpuLevel` writers. Unity was left in its existing paused Play Mode state. The Console retained a pre-existing `MazeLevelTimer` missing-`GameManager` runtime error plus a transient failed verification-tool probe caused by an initially omitted validation namespace; the corrected verification returned PASS. Clearing the Console cache was attempted but the MCP log file was locked by its server process. No player build was made.
 - **Known limitations:** The OpenXR request path cannot execute against a Quest runtime in the desktop Editor, so actual on-headset rate enumeration, session-focus persistence, and Horizon OS behavior still require the user's next Android build/headset test.
 - **Follow-up:** In the next Quest build, confirm logs enumerate supported rates, show the app-session request even when the initial reported rate is 90 Hz, and report `Application.targetFrameRate=90` after a successful request; also verify that a rejected or unavailable extension leaves the game at the 72 FPS fallback.
+
+## 2026-08-05 — GIT-ORGANIZE-001 — Resolve project journal and organize outstanding work
+
+- **Goal and resulting behavior:** Convert the mixed staged, unstaged, untracked, and conflicted workspace into focused commits without losing product changes or combining unrelated systems. Preserved both append-only sides of the `Docs/PROJECT_MEMORY.md` conflict, committed the Quest gameplay/UI foundation, overlay-camera routing, Android texture imports, Unity MCP tooling, render-pipeline material state, and recovery cleanup as independent history units.
+- **Files modified:** `Docs/PROJECT_MEMORY.md`. No files were created, moved, or deleted by the organization work itself.
+- **Unity objects affected:** None — this was repository-history and journal maintenance only. Product object changes remain documented in their original journal entries.
+- **Components/assets/settings:** Organized commits `887a688`, `4a9b26c`, `4de7db7`, `eac5bdd`, `8962f61`, `dc80375`, `0c91f80`, and `e3711a8` in dependency order. The project-memory conflict retained both the sonar after-wave entries and the marketing-art entry. The exact duplicate `Assets/_EchoRoom/Models/Lever 1.fbx` and its six duplicate material pairs were verified unreferenced outside their own importer metadata and intentionally excluded from Git.
+- **Decisions and assumptions:** Focused commits were preferred over a single 400-plus-file snapshot. Unity recovery snapshots were isolated as cleanup; generated/tooling changes were separated from runtime behavior; the required `UITKOverlay` layer definition was committed as an explicit dependency. No push, rebase, amend, or history rewrite was performed.
+- **Verification:** Unity was idle with `IsCompiling=false` and `IsUpdating=false`; recent Console checks contained no project-originated errors or exceptions. Staged C# and asset diffs passed focused `git diff --check` validation. The project-memory file contains no remaining conflict markers, and both conflict-side journal entries remain present.
+- **Known limitations and follow-up:** The user is performing the physical Quest test. The unused duplicate Lever 1 asset set remains local and uncommitted pending an explicit keep/delete decision. Push the finalized commit series only after reviewing headset results.
