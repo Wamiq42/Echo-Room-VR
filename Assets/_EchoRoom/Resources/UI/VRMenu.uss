@@ -193,8 +193,8 @@
 
 .main-title {
   margin-top: 6px;
-  font-size: 50px;
-  letter-spacing: 13px;
+  font-size: 34px;
+  letter-spacing: 5px;
 }
 
 .section-title {

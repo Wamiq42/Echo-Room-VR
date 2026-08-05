@@ -15,7 +15,7 @@
       <ui:VisualElement class="panel-corner corner-bottom-right" picking-mode="Ignore" />
 
       <ui:VisualElement name="start-screen" class="screen start-screen">
-        <ui:Label text="ECHO ROOM" class="title main-title" />
+        <ui:Label text="Echo Room VR : Escape the Dark" class="title main-title" />
         <ui:VisualElement class="title-divider" picking-mode="Ignore">
           <ui:VisualElement class="divider-line" />
           <ui:VisualElement class="divider-core" />
