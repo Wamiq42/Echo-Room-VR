@@ -90,6 +90,7 @@ public sealed class VRScreenFade : MonoBehaviour
         image.color = fadeColor;
         image.raycastTarget = false;
 
+        EchoRoom.UI.UITKOverlayLayer.Apply(canvasObject);
         RefreshCamera();
     }
 
@@ -98,7 +99,7 @@ public sealed class VRScreenFade : MonoBehaviour
         if (_canvas == null)
             return;
 
-        Camera targetCamera = Camera.main;
+        Camera targetCamera = EchoRoom.UI.UITKOverlayLayer.FindRenderingCamera();
         if (targetCamera == null)
             return;
 

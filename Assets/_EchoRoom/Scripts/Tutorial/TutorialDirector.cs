@@ -29,7 +29,11 @@ static class TutorialMenuBootstrap
     static void Install()
     {
         if (SceneManager.GetActiveScene().name == "MainMenuScene")
-            new GameObject("Tutorial First Run Prompt").AddComponent<TutorialMenuPrompt>();
+        {
+            GameObject promptHost = new GameObject("Tutorial First Run Prompt");
+            UITKOverlayLayer.Apply(promptHost, false);
+            promptHost.AddComponent<TutorialMenuPrompt>();
+        }
     }
 }
 
@@ -227,8 +231,6 @@ public sealed class TutorialDirector : MonoBehaviour
     const float AuditorBeatSeconds = 5.5f;
     // No escape hatch on a forced-input gate at the end of a tutorial would be a softlock.
     const float AuditorPingTimeoutSeconds = 15f;
-    const float AuditorRevealDistance = 5f;
-    const float AuditorWallPadding = 0.75f;
     const float PauseLessonDelaySeconds = 6f;
     const float PauseLessonHoldSeconds = 5f;
 
@@ -428,6 +430,7 @@ public sealed class TutorialDirector : MonoBehaviour
         }
 
         GameObject promptObject = new GameObject("Tutorial UI Toolkit Prompt");
+        UITKOverlayLayer.Apply(promptObject, false);
         promptObject.SetActive(false);
         promptObject.transform.SetParent(transform, false);
 
@@ -835,7 +838,7 @@ public sealed class TutorialDirector : MonoBehaviour
         if (tutorialPromptPresented) yield return FadePrompt(0f, TextFadeDuration);
         yield return new WaitForSecondsRealtime(AuditorDarkBeatSeconds);
 
-        PlaceAuditorBehindPlayer();
+        FaceAuditorAtPlayer();
         ShowAuditorWallText();
 
         yield return SwapPrompt(AuditorTurnMessage);
@@ -868,30 +871,19 @@ public sealed class TutorialDirector : MonoBehaviour
     }
 
     /// <summary>
-    /// Puts the Auditor behind the player's current facing, backing off if a wall is in the way so
-    /// it can never be revealed inside geometry. Keeps the authored floor height from the prefab.
+    /// Turns the Auditor to face the player. Its position is authored in the level prefab, in the
+    /// middle of the T-junction: the intersection is the one stage this room has, and the player is
+    /// always at the button and lever wall when the reveal fires, so the junction is already behind
+    /// them. Computing a spot at runtime only added ways for it to end up somewhere odd.
     /// </summary>
-    void PlaceAuditorBehindPlayer()
+    void FaceAuditorAtPlayer()
     {
         ResolveHead();
         if (head == null || auditor == null) return;
 
-        Vector3 back = Vector3.ProjectOnPlane(head.forward, Vector3.up);
-        if (back.sqrMagnitude < 0.0001f) return;
-        back = -back.normalized;
-
-        float distance = AuditorRevealDistance;
-        if (Physics.Raycast(head.position, back, out RaycastHit hit, AuditorRevealDistance,
-                            ~0, QueryTriggerInteraction.Ignore))
-            distance = Mathf.Max(1.5f, hit.distance - AuditorWallPadding);
-
-        Vector3 spot = head.position + back * distance;
-        spot.y = auditor.position.y;
-        auditor.position = spot;
-
-        Vector3 toPlayer = Vector3.ProjectOnPlane(head.position - spot, Vector3.up);
-        if (toPlayer.sqrMagnitude > 0.0001f)
-            auditor.rotation = Quaternion.LookRotation(toPlayer.normalized, Vector3.up);
+        Vector3 toPlayer = Vector3.ProjectOnPlane(head.position - auditor.position, Vector3.up);
+        if (toPlayer.sqrMagnitude < 0.0001f) return;
+        auditor.rotation = Quaternion.LookRotation(toPlayer.normalized, Vector3.up);
     }
 
     /// <summary>
@@ -910,6 +902,7 @@ public sealed class TutorialDirector : MonoBehaviour
         if (auditorWallText == null)
         {
             var textObject = new GameObject("Auditor Wall Text");
+            UITKOverlayLayer.Apply(textObject, false);
             auditorWallText = textObject.AddComponent<TextMesh>();
             auditorWallText.anchor = TextAnchor.MiddleCenter;
             auditorWallText.alignment = TextAlignment.Center;
@@ -989,11 +982,10 @@ public sealed class TutorialDirector : MonoBehaviour
 
     Image CreateFadeOverlay()
     {
-        ResolveHead();
-        Camera camera = head != null ? head.GetComponent<Camera>() : null;
+        Camera camera = UITKOverlayLayer.FindRenderingCamera();
         if (camera == null)
         {
-            Debug.LogError("[Tutorial] Main Camera is missing; the ending fade cannot be rendered safely in stereo.");
+            Debug.LogError("[Tutorial] UITK overlay camera is missing; the ending fade cannot be rendered safely in stereo.");
             return null;
         }
 
@@ -1015,6 +1007,7 @@ public sealed class TutorialDirector : MonoBehaviour
         Image image = imageObject.GetComponent<Image>();
         image.color = new Color(0f, 0f, 0f, 0f);
         image.raycastTarget = true;
+        UITKOverlayLayer.Apply(canvasObject);
         return image;
     }
 

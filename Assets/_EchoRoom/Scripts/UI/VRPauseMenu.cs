@@ -48,8 +48,7 @@ namespace EchoRoom.UI
         [SerializeField, Range(0f, 60f), Tooltip("How far the hand may drag the panel off the eye line. " +
                                                  "Without this, opening the menu with your hand at your hip puts it on the floor.")]
         float handAnchorPitchClamp = 20f;
-        [SerializeField, Tooltip("URP overlay camera that draws the menu over walls. Enabled only while " +
-                                 "the menu is open so it costs nothing during play.")]
+        [SerializeField, Tooltip("URP overlay camera that renders the shared UITKOverlay layer over walls.")]
         Camera menuOverlayCamera;
         [SerializeField] bool useFixedStartMenuPlacement = true;
         [SerializeField] Vector3 fixedStartMenuPosition = new(-3.04f, 0.95f, -1.342f);
@@ -442,21 +441,19 @@ namespace EchoRoom.UI
         }
 
         /// <summary>
-        /// The overlay camera exists only to draw this panel over world geometry, so it is switched
-        /// off whenever the menu is closed. Left enabled it costs a render-pass setup and a depth
-        /// clear per eye, every frame, for a panel that is on screen a fraction of the time -- a
-        /// permanent tax on a device we are already fighting for frames on.
+        /// The overlay camera also renders loading, objective, and tutorial UI, so it must remain
+        /// active even while the pause menu itself is hidden.
         /// </summary>
-        void SetOverlayCameraActive(bool active)
+        void EnsureOverlayCameraActive()
         {
-            if (menuOverlayCamera != null) menuOverlayCamera.enabled = active;
+            if (menuOverlayCamera != null) menuOverlayCamera.enabled = true;
         }
 
         void SetVisible(bool visible)
         {
             StopPendingInputActivation();
             ReleaseMenuPointerState();
-            SetOverlayCameraActive(visible);
+            EnsureOverlayCameraActive();
 
             if (!visible)
             {
@@ -730,7 +727,7 @@ namespace EchoRoom.UI
         }
 
         /// <summary>
-        /// Straight pose assignment. The panel lives on the MenuOverlay layer, which a depth-clearing
+        /// Straight pose assignment. The panel lives on the UITKOverlay layer, which a depth-clearing
         /// URP overlay camera draws after the scene, so wall geometry can no longer hide or clip it --
         /// there is nothing left for a wall-avoidance search to solve.
         /// </summary>

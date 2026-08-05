@@ -21,6 +21,8 @@ public sealed class MazeWorldTextController : MonoBehaviour
 
     private void OnEnable()
     {
+        EchoRoom.UI.UITKOverlayLayer.Apply(introText != null ? introText.gameObject : null, false);
+        EchoRoom.UI.UITKOverlayLayer.Apply(doorPromptText != null ? doorPromptText.gameObject : null, false);
         introElapsed = 0f;
         doorAlpha = 0f;
         SetAlpha(introText, 0f);

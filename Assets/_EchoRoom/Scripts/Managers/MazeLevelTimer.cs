@@ -515,6 +515,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
         }
 
         GameObject panelObject = new GameObject("Maze Objective Panel");
+        EchoRoom.UI.UITKOverlayLayer.Apply(panelObject, false);
         panelObject.SetActive(false);
         panelObject.transform.SetParent(transform, false);
 
