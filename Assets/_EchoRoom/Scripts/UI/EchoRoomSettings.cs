@@ -15,6 +15,17 @@ namespace EchoRoom.Settings
         Smooth = 1
     }
 
+    /// <summary>
+    /// Which controller carries gameplay input. Left and Right are one-handed play; the unused
+    /// controller can be put down entirely.
+    /// </summary>
+    public enum Handedness
+    {
+        Both = 0,
+        Left = 1,
+        Right = 2
+    }
+
     public enum EchoRoomSetting
     {
         LocomotionMode,
@@ -25,7 +36,8 @@ namespace EchoRoom.Settings
         MasterVolume,
         MusicVolume,
         SfxVolume,
-        SubtitlesEnabled
+        SubtitlesEnabled,
+        Handedness
     }
 
     /// <summary>
@@ -40,6 +52,7 @@ namespace EchoRoom.Settings
         const string VignetteEnabledKey = Prefix + "VignetteEnabled";
         const string HeightOffsetKey = Prefix + "HeightOffsetMeters";
         const string TurnSpeedKey = Prefix + "TurnSpeedDegreesPerSecond";
+        const string HandednessKey = Prefix + "Handedness";
 
         // Reserved now so later audio/accessibility work extends the same settings namespace.
         const string MasterVolumeKey = Prefix + "MasterVolume";
@@ -66,6 +79,12 @@ namespace EchoRoom.Settings
         {
             get => ReadEnum(TurnModeKey, global::EchoRoom.Settings.TurnMode.Snap);
             set => WriteInt(TurnModeKey, (int)value, EchoRoomSetting.TurnMode);
+        }
+
+        public static Handedness Handedness
+        {
+            get => ReadEnum(HandednessKey, global::EchoRoom.Settings.Handedness.Both);
+            set => WriteInt(HandednessKey, (int)value, EchoRoomSetting.Handedness);
         }
 
         public static bool VignetteEnabled

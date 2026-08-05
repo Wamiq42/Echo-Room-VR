@@ -1,4 +1,5 @@
 using System;
+using EchoRoom.Settings;
 using UnityEngine;
 using UnityEngine.XR;
 
@@ -108,6 +109,10 @@ public static class EchoHaptics
     {
         if (hand == HapticHand.None)
             return;
+
+        // Every caller names a physical hand at the call site. Routing here instead of at each
+        // one means a one-handed player keeps all of them without touching gameplay code.
+        hand = HandedInput.ResolveHapticHand(hand);
 
         EnsureInitialized();
 

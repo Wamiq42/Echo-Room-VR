@@ -1,3 +1,4 @@
+using EchoRoom.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.XR;
@@ -41,9 +42,7 @@ public class ControllerInputSource : MonoBehaviour, IPlayerInputSource
 
     public Vector2 GetMoveInput()
     {
-        Vector2 left = leftHandMoveAction.action?.ReadValue<Vector2>() ?? Vector2.zero;
-        Vector2 right = rightHandMoveAction.action?.ReadValue<Vector2>() ?? Vector2.zero;
-        Vector2 controllerMove = left.sqrMagnitude > right.sqrMagnitude ? left : right;
+        Vector2 controllerMove = ReadControllerMove();
         Vector2 keyboardMove = ReadKeyboardMove();
         Vector2 chosen = keyboardMove.sqrMagnitude > controllerMove.sqrMagnitude
             ? keyboardMove
@@ -51,6 +50,23 @@ public class ControllerInputSource : MonoBehaviour, IPlayerInputSource
 
         Log($"Move input: {chosen}");
         return chosen;
+    }
+
+    /// <summary>
+    /// One stick cannot both strafe and turn. Single-hand play surrenders the horizontal axis to
+    /// snap turn and keeps only forward/back, and ignores the other controller entirely so one
+    /// left switched on beside the player can never drive the rig.
+    /// </summary>
+    private Vector2 ReadControllerMove()
+    {
+        Vector2 left = leftHandMoveAction.action?.ReadValue<Vector2>() ?? Vector2.zero;
+        Vector2 right = rightHandMoveAction.action?.ReadValue<Vector2>() ?? Vector2.zero;
+
+        if (!HandedInput.IsSingleHand)
+            return left.sqrMagnitude > right.sqrMagnitude ? left : right;
+
+        Vector2 active = HandedInput.IsLeftActive ? left : right;
+        return new Vector2(0f, active.y);
     }
 
     public bool GetSprintInput()
@@ -68,12 +84,13 @@ public class ControllerInputSource : MonoBehaviour, IPlayerInputSource
     {
         bool performed = pingAction.action?.WasPerformedThisFrame() ?? false;
 
-        // Preserve any existing InputAction mapping. The current scene has no Ping
-        // action assigned, so the right-hand secondary button is a safe fallback.
+        // Preserve any existing InputAction mapping. The current scene has no Ping action
+        // assigned, so the active hand's sonar button is the fallback: B on the right in
+        // two-handed play, A/X on the one controller in single-hand play.
         bool fallbackHeld = false;
-        UnityEngine.XR.InputDevice rightController = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
-        if (rightController.isValid)
-            rightController.TryGetFeatureValue(UnityEngine.XR.CommonUsages.secondaryButton, out fallbackHeld);
+        UnityEngine.XR.InputDevice controller = InputDevices.GetDeviceAtXRNode(HandedInput.ActiveNode);
+        if (controller.isValid)
+            controller.TryGetFeatureValue(HandedInput.SonarPingUsage, out fallbackHeld);
 
         bool fallbackPerformed = pingAction.action == null && fallbackHeld && !_wasFallbackPingPressed;
         _wasFallbackPingPressed = fallbackHeld;

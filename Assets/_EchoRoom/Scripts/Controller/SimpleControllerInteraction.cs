@@ -1,9 +1,10 @@
+using EchoRoom.Settings;
 using UnityEngine;
 using UnityEngine.XR;
 
 /// <summary>
 /// Provides a lightweight context interaction without grabbing or a grip system.
-/// Existing InputAction bindings remain untouched; the right controller trigger is
+/// Existing InputAction bindings remain untouched; the active controller's trigger is
 /// read directly and keyboard E remains handled by the interactables themselves.
 /// </summary>
 [DisallowMultipleComponent]
@@ -17,7 +18,7 @@ public sealed class SimpleControllerInteraction : MonoBehaviour
 
     private void Update()
     {
-        bool triggerPressed = ReadRightTrigger();
+        bool triggerPressed = ReadActiveTrigger();
         if (triggerPressed && !_wasTriggerPressed)
             TryInteract();
 
@@ -31,19 +32,21 @@ public sealed class SimpleControllerInteraction : MonoBehaviour
         if (_camera == null)
             return false;
 
+        HapticHand hand = HandedInput.ActiveHapticHand;
+
         if (Physics.Raycast(_camera.transform.position, _camera.transform.forward, out RaycastHit hit, interactionRange))
         {
             EchoButtonInteractable hitButton = hit.collider.GetComponentInParent<EchoButtonInteractable>();
             if (hitButton != null && !hitButton.IsOn)
             {
-                hitButton.TurnOn(HapticHand.Right);
+                hitButton.TurnOn(hand);
                 return true;
             }
 
             LeverInteractable hitLever = hit.collider.GetComponentInParent<LeverInteractable>();
             if (hitLever != null)
             {
-                hitLever.Toggle(HapticHand.Right);
+                hitLever.Toggle(hand);
                 return true;
             }
         }
@@ -51,13 +54,13 @@ public sealed class SimpleControllerInteraction : MonoBehaviour
         Component bestTarget = FindBestNearbyTarget();
         if (bestTarget is EchoButtonInteractable button && !button.IsOn)
         {
-            button.TurnOn(HapticHand.Right);
+            button.TurnOn(hand);
             return true;
         }
 
         if (bestTarget is LeverInteractable lever)
         {
-            lever.Toggle(HapticHand.Right);
+            lever.Toggle(hand);
             return true;
         }
 
@@ -104,9 +107,9 @@ public sealed class SimpleControllerInteraction : MonoBehaviour
         bestScore = score;
     }
 
-    private static bool ReadRightTrigger()
+    private static bool ReadActiveTrigger()
     {
-        InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+        InputDevice device = InputDevices.GetDeviceAtXRNode(HandedInput.ActiveNode);
         return device.isValid &&
                device.TryGetFeatureValue(CommonUsages.triggerButton, out bool pressed) &&
                pressed;

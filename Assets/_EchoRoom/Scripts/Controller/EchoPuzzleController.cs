@@ -8,6 +8,29 @@ public class EchoPuzzleController : PuzzleBase
     private HashSet<IPuzzleElement> _countedTargets = new HashSet<IPuzzleElement>();
     private int _hitCount = 0;
 
+    /// <summary>How many levers/buttons this puzzle needs in total.</summary>
+    public int TargetCount => _targets.Count;
+
+    /// <summary>
+    /// How many are currently active. Counted on demand rather than read from
+    /// <see cref="_hitCount"/> so a listener on the same lever event cannot observe a
+    /// stale value just because it ran before this puzzle's own handler.
+    /// </summary>
+    public int ActivatedCount
+    {
+        get
+        {
+            int count = 0;
+            foreach (IPuzzleElement target in _targets)
+            {
+                if (target is LeverInteractable lever && lever.IsOn) count++;
+                else if (target is EchoButtonInteractable button && button.IsOn) count++;
+            }
+
+            return count;
+        }
+    }
+
     void Awake()
     {
         RefreshTargets();

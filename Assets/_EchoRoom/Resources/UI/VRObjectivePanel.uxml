@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:VisualElement name="objective-root" class="objective-root" picking-mode="Ignore">
+    <ui:VisualElement class="objective-shell" picking-mode="Ignore">
+      <ui:VisualElement class="obj-corner corner-top-left" picking-mode="Ignore" />
+      <ui:VisualElement class="obj-corner corner-top-right" picking-mode="Ignore" />
+      <ui:VisualElement class="obj-corner corner-bottom-left" picking-mode="Ignore" />
+      <ui:VisualElement class="obj-corner corner-bottom-right" picking-mode="Ignore" />
+      <ui:VisualElement class="objective-content" picking-mode="Ignore">
+        <ui:Label name="objective-timer" text="TIME  06:00" class="obj-timer" picking-mode="Ignore" />
+        <ui:VisualElement class="obj-divider" picking-mode="Ignore" />
+        <ui:Label name="objective-text" text="FIND THE LEVERS AND ACTIVATE THEM TO ESCAPE" class="obj-text" picking-mode="Ignore" />
+        <ui:Label name="objective-progress" text="0 / 3" class="obj-progress" picking-mode="Ignore" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

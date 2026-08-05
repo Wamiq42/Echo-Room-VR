@@ -1,0 +1,148 @@
+/* Wrist-anchored status panel: countdown on top, objective + lever progress below.
+   Colours are inlined rather than pulled from VRMenu.uss so this panel renders
+   correctly on its own PanelSettings instance without a second stylesheet. */
+
+.objective-root {
+  width: 560px;
+  height: 300px;
+  flex-grow: 0;
+  overflow: hidden;
+}
+
+.objective-shell {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  bottom: 8px;
+  overflow: hidden;
+  /* Fully opaque: this is a readability HUD, and anything bright behind it (a lit
+     door, the menu) bleeds straight through a translucent card. */
+  background-color: rgb(2, 11, 16);
+  border-left-width: 2px;
+  border-right-width: 2px;
+  border-top-width: 2px;
+  border-bottom-width: 2px;
+  border-left-color: rgba(45, 226, 230, 0.72);
+  border-right-color: rgba(45, 226, 230, 0.72);
+  border-top-color: rgba(45, 226, 230, 0.72);
+  border-bottom-color: rgba(45, 226, 230, 0.72);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+.obj-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+}
+
+.corner-top-left {
+  left: 6px;
+  top: 6px;
+  border-left-width: 3px;
+  border-top-width: 3px;
+  border-left-color: rgb(45, 226, 230);
+  border-top-color: rgb(45, 226, 230);
+}
+
+.corner-top-right {
+  right: 6px;
+  top: 6px;
+  border-right-width: 3px;
+  border-top-width: 3px;
+  border-right-color: rgb(45, 226, 230);
+  border-top-color: rgb(45, 226, 230);
+}
+
+.corner-bottom-left {
+  left: 6px;
+  bottom: 6px;
+  border-left-width: 3px;
+  border-bottom-width: 3px;
+  border-left-color: rgb(45, 226, 230);
+  border-bottom-color: rgb(45, 226, 230);
+}
+
+.corner-bottom-right {
+  right: 6px;
+  bottom: 6px;
+  border-right-width: 3px;
+  border-bottom-width: 3px;
+  border-right-color: rgb(45, 226, 230);
+  border-bottom-color: rgb(45, 226, 230);
+}
+
+.objective-content {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  top: 24px;
+  bottom: 24px;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.obj-timer {
+  font-size: 66px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  color: rgb(45, 226, 230);
+  letter-spacing: 5px;
+  -unity-text-outline-width: 1px;
+  -unity-text-outline-color: rgba(0, 6, 10, 0.92);
+}
+
+.obj-divider {
+  width: 380px;
+  height: 2px;
+  margin-top: 10px;
+  margin-bottom: 14px;
+  background-color: rgba(45, 226, 230, 0.42);
+}
+
+.obj-text {
+  width: 470px;
+  font-size: 24px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  color: rgb(197, 228, 234);
+  white-space: normal;
+  letter-spacing: 1px;
+}
+
+/* Same colour family and spacing as .obj-timer so both numbers read as one instrument;
+   smaller so the countdown stays the primary readout. */
+.obj-progress {
+  margin-top: 12px;
+  font-size: 38px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  color: rgb(45, 226, 230);
+  letter-spacing: 5px;
+  -unity-text-outline-width: 1px;
+  -unity-text-outline-color: rgba(0, 6, 10, 0.92);
+}
+
+/* Countdown running out: timer and frame shift to the danger colour. */
+.objective-root.low-time .obj-timer {
+  color: rgb(255, 92, 122);
+}
+
+.objective-root.low-time .objective-shell {
+  border-left-color: rgba(255, 92, 122, 0.82);
+  border-right-color: rgba(255, 92, 122, 0.82);
+  border-top-color: rgba(255, 92, 122, 0.82);
+  border-bottom-color: rgba(255, 92, 122, 0.82);
+}
+
+/* Every lever thrown: the goal line becomes "find the exit". */
+.objective-root.complete .obj-text {
+  color: rgb(255, 194, 61);
+}
+
+.objective-root.complete .obj-progress {
+  color: rgb(255, 194, 61);
+}

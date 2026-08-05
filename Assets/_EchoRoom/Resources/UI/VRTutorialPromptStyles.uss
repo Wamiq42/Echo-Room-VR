@@ -239,3 +239,34 @@
   border-top-color: var(--echo-danger);
   border-bottom-color: var(--echo-danger);
 }
+
+/* Auditor dossier state. Amber rather than the cyan of an instruction or the red of the WARNING
+   beat: these are facility records being read out, not an alarm. Coming straight after the red
+   warning, returning to cyan would read as "danger over", which is the opposite of the intent. */
+.auditor-state .prompt-shell {
+  border-left-color: rgba(255, 176, 59, 0.80);
+  border-right-color: rgba(255, 176, 59, 0.80);
+  border-top-color: rgba(255, 176, 59, 0.80);
+  border-bottom-color: rgba(255, 176, 59, 0.80);
+}
+
+.auditor-state .prompt-title {
+  color: rgb(255, 214, 138);
+}
+
+.auditor-state .prompt-glow,
+.auditor-state .divider-line,
+.auditor-state .prompt-pulse {
+  background-color: rgba(255, 176, 59, 0.72);
+}
+
+.auditor-state .divider-core,
+.auditor-state .corner-top-left,
+.auditor-state .corner-top-right,
+.auditor-state .corner-bottom-left,
+.auditor-state .corner-bottom-right {
+  border-left-color: rgb(255, 176, 59);
+  border-right-color: rgb(255, 176, 59);
+  border-top-color: rgb(255, 176, 59);
+  border-bottom-color: rgb(255, 176, 59);
+}

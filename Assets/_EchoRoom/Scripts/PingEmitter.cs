@@ -136,6 +136,17 @@ public class PingEmitter : MonoBehaviour
     }
 
     /// <summary>
+    /// Clears the shared sonar/microphone lockout so the next ping is accepted immediately.
+    /// The tutorial uses this: it forces a microphone ping, which arms the longer microphone
+    /// cooldown, and the very next lesson asks the player to reveal with the sonar again. Without
+    /// this the sonar silently no-ops (no sound, no haptic) and the lesson reads as broken.
+    /// </summary>
+    public void ResetCooldown()
+    {
+        _nextPingTime = 0f;
+    }
+
+    /// <summary>
     /// Emits a ping using overlap detection and triggers directional echo feedback.
     /// Applies internal cooldown to prevent rapid reuse.
     /// </summary>

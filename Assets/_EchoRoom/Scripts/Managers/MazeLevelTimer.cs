@@ -1,35 +1,50 @@
 using System.Collections;
+using EchoRoom.Settings;
 using EchoRoom.UI;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.UIElements;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
 
+/// <summary>
+/// Drives the wrist status panel for the timed mazes: the countdown on top, the current
+/// objective and lever progress below. The panel is hidden by default -- the player peeks at it
+/// with the face button handedness assigns -- and flashes itself on level start, on every lever
+/// change, and on the automatic
+/// low-time warnings, so progress is never missed without leaving a permanent HUD in a game
+/// built around darkness.
+/// </summary>
 [DisallowMultipleComponent]
 public sealed class MazeLevelTimer : MonoBehaviour
 {
     [Header("Maze Time Limits")]
-    [SerializeField, Min(1f)] float mazeATimeSeconds = 180f;
-    [SerializeField, Min(1f)] float mazeBTimeSeconds = 180f;
-    [SerializeField, Min(1f)] float mazeCTimeSeconds = 180f;
-    [SerializeField, Min(1f)] float mazeDTimeSeconds = 180f;
+    [SerializeField, Min(1f)] float mazeATimeSeconds = 360f;
+    [SerializeField, Min(1f)] float mazeBTimeSeconds = 360f;
+    [SerializeField, Min(1f)] float mazeCTimeSeconds = 360f;
+    [SerializeField, Min(1f)] float mazeDTimeSeconds = 360f;
 
     [Header("Controller Display")]
-    [SerializeField] Transform rightController;
+    [FormerlySerializedAs("rightController")]
+    [SerializeField, Tooltip("Controller the panel is strapped to. HandednessController overrides " +
+                             "this at runtime so the panel always rides the hand in play.")]
+    Transform handAnchor;
     [SerializeField] Transform head;
     [SerializeField] Vector3 displayOffsetFromView = new Vector3(-0.13f, 0.035f, 0.015f);
-    [SerializeField, Min(0.001f)] float displayScale = 0.035f;
+    [SerializeField, Min(0.00001f), Tooltip("World size of one panel pixel. The panel layout is 560x300.")]
+    float panelWorldScale = 0.00028f;
     [FormerlySerializedAs("buttonRevealSeconds")]
-    [SerializeField, Min(0.1f), Tooltip("How long the timer remains fully visible after pressing A or keyboard T.")]
+    [SerializeField, Min(0.1f), Tooltip("How long the panel remains fully visible after pressing A or keyboard T.")]
     float visibleDurationSeconds = 3f;
     [FormerlySerializedAs("fadeSeconds")]
     [SerializeField, Min(0.01f)] float fadeInSeconds = 0.18f;
     [SerializeField, Min(0.01f)] float fadeOutSeconds = 0.22f;
-    [SerializeField] Color normalColor = new Color(0.34f, 0.94f, 0.94f, 1f);
-    [SerializeField] Color lowTimeColor = new Color(1f, 0.36f, 0.20f, 1f);
     [SerializeField, Min(1f)] float lowTimeThresholdSeconds = 30f;
+
+    [Header("Objective")]
+    [SerializeField, Min(0.1f), Tooltip("How long the panel auto-reveals when a lever changes state.")]
+    float objectiveFlashSeconds = 2.5f;
 
     [Header("Automatic Warnings")]
     [SerializeField, Min(0.1f), Tooltip("Base visibility for the 60-second warning. Later warnings remain visible longer.")]
@@ -43,18 +58,41 @@ public sealed class MazeLevelTimer : MonoBehaviour
     [SerializeField, Min(0.05f)] float startFlashOnSeconds = 0.22f;
     [SerializeField, Min(0.05f)] float startFlashOffSeconds = 0.16f;
 
+    const string PanelLayoutResource = "UI/VRObjectivePanel";
+    const string PanelStylesResource = "UI/VRObjectivePanelStyles";
+    const string PanelSettingsResource = "UI/VRMenuPanelSettings";
+    static readonly Vector2 PanelSize = new Vector2(560f, 300f);
+
+    const string ObjectiveFindLevers = "FIND THE LEVERS AND ACTIVATE THEM TO ESCAPE";
+    const string ObjectiveAllLeversActive = "ALL LEVERS ACTIVE - FIND THE EXIT";
+
     GameManager gameManager;
-    TextMeshPro timerText;
+    UIDocument panelDocument;
+    PanelSettings panelSettingsInstance;
+    VisualElement panelRoot;
+    Label timerLabel;
+    Label objectiveLabel;
+    Label progressLabel;
+    EchoPuzzleController puzzle;
     AudioSource warningAudioSource;
     Coroutine flashRoutine;
     Coroutine warningAudioRoutine;
     float remainingSeconds;
     float targetAlpha;
+    float displayAlpha;
     float revealUntilTime;
     bool timerRunning;
     bool startFlashActive;
     bool warningAudioMissingLogged;
+    bool handAnchorMissingLogged;
     int automaticWarningMask;
+
+    // Tutorial demo: the same panel and countdown, but it can never fail the player.
+    bool demoMode;
+    string demoObjective = ObjectiveFindLevers;
+    int demoActivated;
+    int demoTotal;
+
 #if ENABLE_INPUT_SYSTEM
     InputAction revealAction;
 #endif
@@ -95,6 +133,9 @@ public sealed class MazeLevelTimer : MonoBehaviour
 #if ENABLE_INPUT_SYSTEM
         revealAction?.Enable();
 #endif
+        LeverInteractable.OnAnyLeverStateChanged += HandleLeverStateChanged;
+        EchoButtonInteractable.OnAnyButtonPressed += HandleButtonPressed;
+        EchoRoomSettings.Changed += OnSettingChanged;
     }
 
     void OnDisable()
@@ -102,6 +143,10 @@ public sealed class MazeLevelTimer : MonoBehaviour
 #if ENABLE_INPUT_SYSTEM
         revealAction?.Disable();
 #endif
+        LeverInteractable.OnAnyLeverStateChanged -= HandleLeverStateChanged;
+        EchoButtonInteractable.OnAnyButtonPressed -= HandleButtonPressed;
+        EchoRoomSettings.Changed -= OnSettingChanged;
+
         if (flashRoutine != null)
         {
             StopCoroutine(flashRoutine);
@@ -121,6 +166,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
             gameManager.OnLevelLoaded -= HandleLevelLoaded;
             gameManager.OnLevelCompleted -= HandleLevelCompleted;
         }
+        if (panelSettingsInstance != null) Destroy(panelSettingsInstance);
 #if ENABLE_INPUT_SYSTEM
         revealAction?.Dispose();
 #endif
@@ -135,15 +181,20 @@ public sealed class MazeLevelTimer : MonoBehaviour
 
     void LateUpdate()
     {
-        if (timerText == null) return;
-        if (rightController == null || head == null) ResolveTrackingTargets();
-        if (rightController == null || head == null) return;
+        if (panelDocument == null) return;
+        if (handAnchor == null || head == null) ResolveTrackingTargets();
+        if (handAnchor == null || head == null) return;
 
+        Transform panel = panelDocument.transform;
         Vector3 offset = head.right * displayOffsetFromView.x +
                          head.up * displayOffsetFromView.y +
                          head.forward * displayOffsetFromView.z;
-        timerText.transform.position = rightController.position + offset;
-        timerText.transform.rotation = Quaternion.LookRotation(timerText.transform.position - head.position, head.up);
+        panel.position = handAnchor.position + offset;
+        // The extra 180 and the mirrored X are what world-space UI Toolkit needs to read
+        // the right way round, matching the tutorial prompt's placement.
+        panel.rotation = Quaternion.LookRotation(panel.position - head.position, head.up) *
+                         Quaternion.Euler(0f, 180f, 0f);
+        panel.localScale = new Vector3(-panelWorldScale, panelWorldScale, panelWorldScale);
     }
 
     void HandleLevelLoaded(Level level)
@@ -165,6 +216,8 @@ public sealed class MazeLevelTimer : MonoBehaviour
             return;
         }
 
+        demoMode = false;
+        puzzle = null;
         remainingSeconds = duration;
         timerRunning = false;
         revealUntilTime = 0f;
@@ -172,6 +225,7 @@ public sealed class MazeLevelTimer : MonoBehaviour
         StopWarningAudio();
         EnsureDisplay();
         UpdateDisplayText();
+        RefreshObjective();
         SetDisplayAlpha(0f);
 
         if (flashRoutine != null) StopCoroutine(flashRoutine);
@@ -186,6 +240,48 @@ public sealed class MazeLevelTimer : MonoBehaviour
         if (value == "MAZE C" || value.Contains("5X5_C")) return mazeCTimeSeconds;
         if (value == "MAZE D" || value.Contains("5X5_D")) return mazeDTimeSeconds;
         return -1f;
+    }
+
+    /// <summary>
+    /// Runs the real countdown and panel for the tutorial so "press A to check your timer"
+    /// teaches something that actually exists. Expiry is neutered while this is active.
+    /// </summary>
+    public void BeginTutorialDemo(float seconds, string objectiveLine, int activated, int total)
+    {
+        demoMode = true;
+        demoObjective = string.IsNullOrWhiteSpace(objectiveLine) ? ObjectiveFindLevers : objectiveLine;
+        demoActivated = Mathf.Max(0, activated);
+        demoTotal = Mathf.Max(0, total);
+        puzzle = null;
+
+        EnsureDisplay();
+        remainingSeconds = Mathf.Max(1f, seconds);
+        timerRunning = false;
+        revealUntilTime = 0f;
+        automaticWarningMask = 0;
+        StopWarningAudio();
+        UpdateDisplayText();
+        RefreshObjective();
+        SetDisplayAlpha(0f);
+
+        if (flashRoutine != null) StopCoroutine(flashRoutine);
+        flashRoutine = StartCoroutine(StartTimerWhenTransitionComplete());
+    }
+
+    /// <summary>Advances the tutorial's demo objective count and flashes the panel.</summary>
+    public void SetTutorialProgress(int activated)
+    {
+        if (!demoMode) return;
+        demoActivated = Mathf.Clamp(activated, 0, demoTotal);
+        RefreshObjective();
+        RevealFor(objectiveFlashSeconds, Time.time);
+    }
+
+    public void EndTutorialDemo()
+    {
+        if (!demoMode) return;
+        demoMode = false;
+        StopTimer();
     }
 
     void StopTimer()
@@ -212,6 +308,14 @@ public sealed class MazeLevelTimer : MonoBehaviour
         startFlashActive = false;
         StopWarningAudio();
         UpdateDisplayText();
+
+        // The tutorial's demo countdown is a lesson, not a fail state.
+        if (demoMode)
+        {
+            targetAlpha = 0f;
+            SetDisplayAlpha(0f);
+            return;
+        }
 
         if (VRPauseMenu.TryShowTimeUpMenu())
         {
@@ -270,7 +374,6 @@ public sealed class MazeLevelTimer : MonoBehaviour
         if (!startFlashActive)
             targetAlpha = presentationTime < revealUntilTime ? 1f : 0f;
         FadeDisplay(presentationDeltaTime);
-
     }
 
     void TryTriggerAutomaticWarning(float previousSeconds, float currentSeconds, float presentationTime)
@@ -310,68 +413,193 @@ public sealed class MazeLevelTimer : MonoBehaviour
         targetAlpha = 1f;
     }
 
+    // ---------- Objective ----------
+
+    void HandleLeverStateChanged(LeverInteractable lever)
+    {
+        FlashObjectiveProgress();
+    }
+
+    void HandleButtonPressed(EchoButtonInteractable button)
+    {
+        FlashObjectiveProgress();
+    }
+
+    /// <summary>
+    /// A lever moved: refresh the count and auto-reveal the panel briefly so the player feels
+    /// the progress without having to remember to peek.
+    /// </summary>
+    void FlashObjectiveProgress()
+    {
+        if (!timerRunning) return;
+        RefreshObjective();
+        RevealFor(objectiveFlashSeconds, Time.time);
+    }
+
+    void ResolvePuzzle()
+    {
+        if (puzzle != null) return;
+        GameObject level = gameManager != null ? gameManager.CurrentLevelInstance : null;
+        if (level != null) puzzle = level.GetComponentInChildren<EchoPuzzleController>(true);
+    }
+
+    void RefreshObjective()
+    {
+        if (objectiveLabel == null || progressLabel == null) return;
+
+        int activated;
+        int total;
+        string goal;
+
+        if (demoMode)
+        {
+            activated = demoActivated;
+            total = demoTotal;
+            goal = demoObjective;
+        }
+        else
+        {
+            ResolvePuzzle();
+            total = puzzle != null ? puzzle.TargetCount : 0;
+            activated = puzzle != null ? puzzle.ActivatedCount : 0;
+            goal = ObjectiveFindLevers;
+        }
+
+        bool complete = total > 0 && activated >= total;
+        if (complete) goal = ObjectiveAllLeversActive;
+
+        objectiveLabel.text = goal;
+        progressLabel.text = total > 0 ? activated + " / " + total : string.Empty;
+        progressLabel.style.display = total > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+        if (panelRoot != null) panelRoot.EnableInClassList("complete", complete);
+    }
+
+    // ---------- Display ----------
+
     void FadeDisplay(float presentationDeltaTime)
     {
-        if (timerText == null) return;
-        Color color = timerText.color;
-        float duration = color.a < targetAlpha ? fadeInSeconds : fadeOutSeconds;
+        if (panelRoot == null) return;
+        float duration = displayAlpha < targetAlpha ? fadeInSeconds : fadeOutSeconds;
         float speed = duration <= 0.001f ? 1000f : 1f / duration;
-        color.a = Mathf.MoveTowards(color.a, targetAlpha, Mathf.Max(0f, presentationDeltaTime) * speed);
-        timerText.color = color;
+        SetDisplayAlpha(Mathf.MoveTowards(displayAlpha, targetAlpha,
+            Mathf.Max(0f, presentationDeltaTime) * speed));
     }
 
     void UpdateDisplayText()
     {
-        if (timerText == null) return;
+        if (timerLabel == null) return;
         int totalSeconds = Mathf.CeilToInt(remainingSeconds);
         int minutes = totalSeconds / 60;
         int seconds = totalSeconds % 60;
-        timerText.text = $"TIME  {minutes:00}:{seconds:00}";
+        timerLabel.text = $"TIME  {minutes:00}:{seconds:00}";
 
-        Color baseColor = remainingSeconds <= lowTimeThresholdSeconds ? lowTimeColor : normalColor;
-        baseColor.a = timerText.color.a;
-        timerText.color = baseColor;
+        if (panelRoot != null)
+            panelRoot.EnableInClassList("low-time", remainingSeconds <= lowTimeThresholdSeconds);
     }
 
     void EnsureDisplay()
     {
-        if (timerText != null) return;
+        if (panelDocument != null) return;
         ResolveTrackingTargets();
 
-        GameObject display = new GameObject("Maze Timer Display");
-        if (rightController != null) display.transform.SetParent(rightController, true);
-        display.transform.localScale = Vector3.one * displayScale;
+        VisualTreeAsset layout = Resources.Load<VisualTreeAsset>(PanelLayoutResource);
+        StyleSheet styles = Resources.Load<StyleSheet>(PanelStylesResource);
+        PanelSettings sharedSettings = Resources.Load<PanelSettings>(PanelSettingsResource);
 
-        timerText = display.AddComponent<TextMeshPro>();
-        timerText.alignment = TextAlignmentOptions.Center;
-        timerText.fontSize = 2.2f;
-        timerText.fontStyle = FontStyles.Bold;
-        timerText.enableWordWrapping = false;
-        timerText.rectTransform.sizeDelta = new Vector2(3.8f, 0.8f);
-        timerText.outlineWidth = 0.18f;
-        timerText.outlineColor = new Color32(0, 8, 12, 220);
-        timerText.text = "TIME  00:00";
-        timerText.color = normalColor;
+        if (layout == null || styles == null || sharedSettings == null)
+        {
+            Debug.LogError("[MazeLevelTimer] Objective panel assets are missing. Expected Resources/" +
+                           PanelLayoutResource + ".uxml, Resources/" + PanelStylesResource +
+                           ".uss, and Resources/" + PanelSettingsResource + ".asset.", this);
+            return;
+        }
 
-        warningAudioSource = display.AddComponent<AudioSource>();
-        warningAudioSource.playOnAwake = false;
-        warningAudioSource.loop = false;
-        warningAudioSource.spatialBlend = 0f;
-        warningAudioSource.dopplerLevel = 0f;
+        GameObject panelObject = new GameObject("Maze Objective Panel");
+        panelObject.SetActive(false);
+        panelObject.transform.SetParent(transform, false);
+
+        // A private PanelSettings copy. Sharing the menu asset would merge this document with
+        // the tutorial prompt's, and both are on screen at once during the tutorial.
+        panelSettingsInstance = Instantiate(sharedSettings);
+        panelSettingsInstance.name = sharedSettings.name + " (Objective Panel)";
+
+        panelDocument = panelObject.AddComponent<UIDocument>();
+        panelDocument.panelSettings = panelSettingsInstance;
+        panelDocument.visualTreeAsset = layout;
+        panelDocument.worldSpaceSizeMode = UIDocument.WorldSpaceSizeMode.Fixed;
+        panelDocument.worldSpaceSize = PanelSize;
+        panelDocument.pivot = Pivot.Center;
+        panelDocument.position = Position.Absolute;
+        panelDocument.sortingOrder = short.MaxValue;
+        panelObject.transform.localScale = new Vector3(-panelWorldScale, panelWorldScale, panelWorldScale);
+        panelObject.SetActive(true);
+
+        VisualElement documentRoot = panelDocument.rootVisualElement;
+        if (!documentRoot.styleSheets.Contains(styles)) documentRoot.styleSheets.Add(styles);
+        documentRoot.pickingMode = PickingMode.Ignore;
+        documentRoot.Query<VisualElement>().ForEach(element => element.pickingMode = PickingMode.Ignore);
+
+        panelRoot = documentRoot.Q<VisualElement>("objective-root");
+        timerLabel = documentRoot.Q<Label>("objective-timer");
+        objectiveLabel = documentRoot.Q<Label>("objective-text");
+        progressLabel = documentRoot.Q<Label>("objective-progress");
+
+        if (panelRoot == null || timerLabel == null || objectiveLabel == null || progressLabel == null)
+        {
+            Debug.LogError("[MazeLevelTimer] VRObjectivePanel.uxml is missing the root, timer, " +
+                           "objective, or progress element.", this);
+            Destroy(panelObject);
+            panelDocument = null;
+            panelRoot = null;
+            timerLabel = null;
+            objectiveLabel = null;
+            progressLabel = null;
+            return;
+        }
+
+        if (warningAudioSource == null)
+        {
+            warningAudioSource = panelObject.AddComponent<AudioSource>();
+            warningAudioSource.playOnAwake = false;
+            warningAudioSource.loop = false;
+            warningAudioSource.spatialBlend = 0f;
+            warningAudioSource.dopplerLevel = 0f;
+        }
+
+        UpdateDisplayText();
+        RefreshObjective();
+        SetDisplayAlpha(0f);
     }
 
     void ResolveTrackingTargets()
     {
         if (head == null && Camera.main != null) head = Camera.main.transform;
-        if (rightController == null) rightController = transform;
+        if (handAnchor != null) return;
+
+        handAnchor = transform;
+        if (handAnchorMissingLogged) return;
+        handAnchorMissingLogged = true;
+        Debug.LogError("[MazeLevelTimer] No controller transform is assigned, so the readout " +
+                       "falls back to '" + name + "' and will not follow the hand.", this);
+    }
+
+    /// <summary>
+    /// Re-points the wrist panel at the controller handedness put in play. Called by
+    /// HandednessController rather than serialized, because the answer changes at runtime.
+    /// </summary>
+    public void SetHandAnchor(Transform anchor)
+    {
+        if (anchor == null) return;
+        handAnchor = anchor;
+        handAnchorMissingLogged = false;
     }
 
     void SetDisplayAlpha(float alpha)
     {
-        if (timerText == null) return;
-        Color color = timerText.color;
-        color.a = alpha;
-        timerText.color = color;
+        displayAlpha = Mathf.Clamp01(alpha);
+        if (panelRoot == null) return;
+        panelRoot.style.opacity = displayAlpha;
+        panelRoot.style.display = displayAlpha > 0.001f ? DisplayStyle.Flex : DisplayStyle.None;
     }
 
     void PlayWarningAudio(int urgency)
@@ -425,11 +653,28 @@ public sealed class MazeLevelTimer : MonoBehaviour
     {
 #if ENABLE_INPUT_SYSTEM
         revealAction = new InputAction("Reveal Maze Timer", InputActionType.Button);
-        revealAction.AddBinding("<XRController>{RightHand}/primaryButton");
-        revealAction.AddBinding("<OculusTouchController>{RightHand}/buttonA");
+        // A in two-handed play; B/Y on the single controller, because A/X is the sonar there.
+        revealAction.AddBinding(HandedInput.ObjectivePanelPath);
         revealAction.AddBinding("<Gamepad>/buttonSouth");
         revealAction.AddBinding("<Keyboard>/t");
 #endif
+    }
+
+    void RebuildRevealAction()
+    {
+#if ENABLE_INPUT_SYSTEM
+        bool wasEnabled = revealAction != null && revealAction.enabled;
+        revealAction?.Disable();
+        revealAction?.Dispose();
+        revealAction = null;
+        CreateRevealAction();
+        if (wasEnabled) revealAction?.Enable();
+#endif
+    }
+
+    void OnSettingChanged(EchoRoomSetting setting)
+    {
+        if (setting == EchoRoomSetting.Handedness) RebuildRevealAction();
     }
 
     bool RevealPressed()

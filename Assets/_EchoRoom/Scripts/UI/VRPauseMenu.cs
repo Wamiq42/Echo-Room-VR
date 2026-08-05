@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
+using EchoRoom.Settings;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -28,22 +30,38 @@ namespace EchoRoom.UI
         [SerializeField] bool pauseTimeWhileOpen = true;
         [SerializeField] bool pauseEnvironmentAudioWhileOpen = true;
         [SerializeField] bool useControllerMenuButton = true;
-        [SerializeField, Min(0.25f)] float distanceFromCamera = 2.1f;
+        [SerializeField, Range(0.25f, 2f), Tooltip("Hold time on B/Y that opens the menu. Touch " +
+                                                   "controllers only carry a Menu button on the LEFT hand, so without this a " +
+                                                   "right-hand-only player has no way to pause at all.")]
+        float holdPauseSeconds = DefaultHoldPauseSeconds;
+        // 0.6 m wide at 0.7 m reads exactly the same size as the old 1.8 m at 2.1 m -- same ratio,
+        // so nothing gets harder to read -- but it fits down a maze corridor and stays outside the
+        // ~0.5 m vergence-comfort floor.
+        [SerializeField, Min(0.25f)] float distanceFromCamera = 0.7f;
         [SerializeField] float heightOffset = -0.05f;
+        [SerializeField, Tooltip("Usually the Left Controller. The menu appears along this hand's " +
+                                 "direction on open, then freezes in world space so it is stable to point at.")]
+        Transform menuHandAnchor;
+        [SerializeField, Min(0.00001f), Tooltip("World size of one panel pixel. The layout is 900x560, " +
+                                                "so 0.000667 gives a 0.6 m x 0.37 m panel.")]
+        float dynamicPanelWorldScale = 0.000667f;
+        [SerializeField, Range(0f, 60f), Tooltip("How far the hand may drag the panel off the eye line. " +
+                                                 "Without this, opening the menu with your hand at your hip puts it on the floor.")]
+        float handAnchorPitchClamp = 20f;
+        [SerializeField, Tooltip("URP overlay camera that draws the menu over walls. Enabled only while " +
+                                 "the menu is open so it costs nothing during play.")]
+        Camera menuOverlayCamera;
         [SerializeField] bool useFixedStartMenuPlacement = true;
         [SerializeField] Vector3 fixedStartMenuPosition = new(-3.04f, 0.95f, -1.342f);
         [SerializeField] Vector3 fixedStartMenuEulerAngles = new(0f, 89.752f, 0f);
         [SerializeField] Vector3 fixedStartMenuScale = new(-0.002f, 0.002f, 0.002f);
-        [SerializeField] bool keepInFrontOfWalls = true;
-        [SerializeField, Min(0.01f)] float wallPadding = 0.15f;
-        [SerializeField, Min(0.25f)] float minimumDistanceFromCamera = 0.45f;
-        [SerializeField] LayerMask wallMask = (1 << 0) | (1 << 10);
         [SerializeField] KeyCode keyboardPauseKey = KeyCode.Escape;
 
         [Header("Return To Menu")]
         [SerializeField] UnityEvent onReturnToMenu;
 
         const int MaxPointerCount = 32;
+        public const float DefaultHoldPauseSeconds = 0.75f;
         readonly List<UnityEngine.XR.InputDevice> controllers = new List<UnityEngine.XR.InputDevice>();
         readonly List<RendererOverlayState> playerOverlayStates = new List<RendererOverlayState>();
         UIDocument document;
@@ -65,8 +83,10 @@ namespace EchoRoom.UI
         bool previousAudioPause;
         Vector3 dynamicMenuScale;
         Coroutine enableInputRoutine;
+        Transform inactiveHandRoot;
 #if ENABLE_INPUT_SYSTEM
         InputAction pauseAction;
+        InputAction holdPauseAction;
 #endif
 
         sealed class RendererOverlayState
@@ -82,6 +102,20 @@ namespace EchoRoom.UI
         internal VisualElement Root => menuRoot;
         public static event System.Action<MenuState> OnMenuStateChanged;
 
+        /// <summary>
+        /// Raised the instant the hold-to-pause gesture completes, before the menu opens. The
+        /// tutorial uses this to mark the lesson learned; it fires in every menu state, including
+        /// the ones where the hold does not actually open anything.
+        /// </summary>
+        public static event System.Action HoldPausePerformed;
+
+        /// <summary>Face button the hold lives on: "Y" in left-hand mode, "B" otherwise.</summary>
+        public static string HoldPauseButtonLabel => HandedInput.HoldPauseLabel;
+
+        /// <summary>Hold duration to quote in player-facing copy.</summary>
+        public static float HoldPauseSeconds =>
+            Instance != null ? Instance.holdPauseSeconds : DefaultHoldPauseSeconds;
+
         void Awake()
         {
             if (Instance == null) Instance = this;
@@ -91,7 +125,9 @@ namespace EchoRoom.UI
             documentCollider = GetComponent<BoxCollider>();
             ResolveAssets();
             ConfigureDocument();
-            dynamicMenuScale = transform.localScale;
+            // Driven by dynamicPanelWorldScale rather than whatever the scene authored, so the
+            // panel's physical size is one number in one place. X is mirrored for world-space UI Toolkit.
+            dynamicMenuScale = new Vector3(-dynamicPanelWorldScale, dynamicPanelWorldScale, dynamicPanelWorldScale);
             ResolveVisualElements();
             BindCoreButtons();
             ResolveCamera();
@@ -102,14 +138,18 @@ namespace EchoRoom.UI
         {
 #if ENABLE_INPUT_SYSTEM
             pauseAction?.Enable();
+            holdPauseAction?.Enable();
 #endif
+            EchoRoomSettings.Changed += OnSettingChanged;
         }
 
         void OnDisable()
         {
 #if ENABLE_INPUT_SYSTEM
             pauseAction?.Disable();
+            holdPauseAction?.Disable();
 #endif
+            EchoRoomSettings.Changed -= OnSettingChanged;
             if (State != MenuState.Hidden)
                 HideMenu(true);
             else
@@ -200,15 +240,47 @@ namespace EchoRoom.UI
         void ConfigurePauseInput()
         {
 #if ENABLE_INPUT_SYSTEM
-            if (pauseAction != null) return;
+            if (pauseAction == null)
+            {
+                pauseAction = new InputAction("Pause", InputActionType.Button);
+                pauseAction.AddBinding("<Keyboard>/escape");
+                pauseAction.AddBinding("<Keyboard>/p");
+                pauseAction.AddBinding("<Gamepad>/start");
+                pauseAction.AddBinding("<XRController>{LeftHand}/menuButton");
+                pauseAction.AddBinding("<XRController>{RightHand}/menuButton");
+                if (isActiveAndEnabled) pauseAction.Enable();
+            }
 
-            pauseAction = new InputAction("Pause", InputActionType.Button);
-            pauseAction.AddBinding("<Keyboard>/escape");
-            pauseAction.AddBinding("<Keyboard>/p");
-            pauseAction.AddBinding("<Gamepad>/start");
-            pauseAction.AddBinding("<XRController>{LeftHand}/menuButton");
-            pauseAction.AddBinding("<XRController>{RightHand}/menuButton");
-            if (isActiveAndEnabled) pauseAction.Enable();
+            ConfigureHoldPauseInput();
+#endif
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        /// <summary>
+        /// Hold B/Y as a second, always-present way in. Touch controllers expose menuButton on the
+        /// LEFT hand only -- the right hand's twin is the reserved Oculus button -- so the binding
+        /// above silently does nothing for a right-hand-only player. Enabling the hold in every
+        /// handedness mode means the tutorial teaches one gesture that stays true after the player
+        /// changes the setting. The Menu button keeps working; this is additive.
+        /// </summary>
+        void ConfigureHoldPauseInput()
+        {
+            holdPauseAction?.Disable();
+            holdPauseAction?.Dispose();
+
+            holdPauseAction = new InputAction("Hold Pause", InputActionType.Button);
+            // Invariant formatting: a comma decimal separator makes the interaction string unparseable.
+            string hold = "hold(duration=" +
+                          holdPauseSeconds.ToString("0.###", CultureInfo.InvariantCulture) + ")";
+            holdPauseAction.AddBinding(HandedInput.HoldPausePath, interactions: hold);
+            if (isActiveAndEnabled) holdPauseAction.Enable();
+        }
+#endif
+
+        void OnSettingChanged(EchoRoomSetting setting)
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (setting == EchoRoomSetting.Handedness) ConfigureHoldPauseInput();
 #endif
         }
 
@@ -369,10 +441,22 @@ namespace EchoRoom.UI
             if (element != null) element.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
+        /// <summary>
+        /// The overlay camera exists only to draw this panel over world geometry, so it is switched
+        /// off whenever the menu is closed. Left enabled it costs a render-pass setup and a depth
+        /// clear per eye, every frame, for a panel that is on screen a fraction of the time -- a
+        /// permanent tax on a device we are already fighting for frames on.
+        /// </summary>
+        void SetOverlayCameraActive(bool active)
+        {
+            if (menuOverlayCamera != null) menuOverlayCamera.enabled = active;
+        }
+
         void SetVisible(bool visible)
         {
             StopPendingInputActivation();
             ReleaseMenuPointerState();
+            SetOverlayCameraActive(visible);
 
             if (!visible)
             {
@@ -455,12 +539,54 @@ namespace EchoRoom.UI
                 SetButtonsEnabled(child, enabled);
         }
 
+        /// <summary>
+        /// Drawing the menu does not entitle every controller to a pointer. In single-hand play the
+        /// idle controller stays dark, otherwise a device the player has put down still shoots a ray
+        /// across the menu.
+        /// </summary>
         void SetVRPointersVisible(bool visible)
         {
             if (vrPointerRoots == null) return;
             for (int i = 0; i < vrPointerRoots.Length; i++)
-                if (vrPointerRoots[i] != null && vrPointerRoots[i].activeSelf != visible)
-                    vrPointerRoots[i].SetActive(visible);
+            {
+                GameObject pointer = vrPointerRoots[i];
+                if (pointer == null) continue;
+                bool wanted = visible && !IsOnIdleHand(pointer.transform);
+                if (pointer.activeSelf != wanted) pointer.SetActive(wanted);
+            }
+        }
+
+        bool IsOnIdleHand(Transform pointer)
+        {
+            return inactiveHandRoot != null && pointer.IsChildOf(inactiveHandRoot);
+        }
+
+        /// <summary>
+        /// Points the summon direction at whichever controller handedness put in play. Placement
+        /// itself is untouched -- only the transform it reads.
+        /// </summary>
+        public void SetMenuHandAnchor(Transform anchor)
+        {
+            if (anchor != null) menuHandAnchor = anchor;
+        }
+
+        /// <summary>
+        /// The controller that is out of play, or null in two-handed mode. Pointer roots parented
+        /// under it are kept dark while the menu is open. This can only ever take a pointer away --
+        /// switching one on is the layout coroutine's job, and doing it here would hand the player
+        /// a ray before the panel has any geometry to hit.
+        /// </summary>
+        public void SetIdleHandRoot(Transform idleHand)
+        {
+            inactiveHandRoot = idleHand;
+            if (inactiveHandRoot == null || vrPointerRoots == null) return;
+
+            for (int i = 0; i < vrPointerRoots.Length; i++)
+            {
+                GameObject pointer = vrPointerRoots[i];
+                if (pointer != null && pointer.activeSelf && IsOnIdleHand(pointer.transform))
+                    pointer.SetActive(false);
+            }
         }
 
         void PauseTime()
@@ -505,7 +631,20 @@ namespace EchoRoom.UI
 #if ENABLE_LEGACY_INPUT_MANAGER
             pressed |= Input.GetKeyDown(keyboardPauseKey) || Input.GetKeyDown(KeyCode.P);
 #endif
-            return pressed || ControllerPausePressed();
+            // Evaluated before the ORs so short-circuiting cannot swallow the tutorial's event.
+            bool heldPause = HoldPausePressed();
+            return pressed || ControllerPausePressed() || heldPause;
+        }
+
+        bool HoldPausePressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (holdPauseAction == null || !holdPauseAction.WasPerformedThisFrame()) return false;
+            HoldPausePerformed?.Invoke();
+            return true;
+#else
+            return false;
+#endif
         }
 
         bool ControllerPausePressed()
@@ -540,149 +679,65 @@ namespace EchoRoom.UI
                 fixedStartMenuScale);
         }
 
+        /// <summary>
+        /// Places the menu along the anchor hand's direction at a fixed distance, then leaves it
+        /// frozen in world space. Anchoring to the hand makes the menu feel summoned rather than
+        /// dropped in front of you; freezing it keeps it stable enough to point at, which a panel
+        /// that tracked the hand every frame would not be.
+        /// </summary>
         void PlaceMenuInFrontOfPlayer()
         {
             if (!IsOpen) return;
             ResolveCamera();
             if (cameraTransform == null) return;
 
-            Vector3 preferredPosition = cameraTransform.position + cameraTransform.forward * distanceFromCamera +
-                                        cameraTransform.up * heightOffset;
-            PlaceMenu(preferredPosition, cameraTransform.rotation * Quaternion.Euler(0f, 180f, 0f),
-                dynamicMenuScale);
+            Vector3 direction = ResolveAnchorDirection();
+            Vector3 preferredPosition = cameraTransform.position + direction * distanceFromCamera +
+                                        Vector3.up * heightOffset;
+            // World up, not camera up: the panel must never inherit head roll.
+            Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up) *
+                                  Quaternion.Euler(0f, 180f, 0f);
+            PlaceMenu(preferredPosition, rotation, dynamicMenuScale);
         }
 
-        void PlaceMenu(Vector3 preferredPosition, Quaternion rotation, Vector3 localScale)
+        /// <summary>
+        /// Direction from the head toward the anchor hand, pitch-clamped so a low hand cannot drag
+        /// the panel to the floor. Falls back to the camera's flattened forward when no hand is
+        /// assigned, which keeps the menu working on the desktop simulator.
+        /// </summary>
+        Vector3 ResolveAnchorDirection()
         {
-            if (!keepInFrontOfWalls || cameraTransform == null || documentCollider == null)
-            {
-                transform.SetPositionAndRotation(preferredPosition, rotation);
-                transform.localScale = localScale;
-                return;
-            }
+            Vector3 fallback = Vector3.ProjectOnPlane(cameraTransform.forward, Vector3.up);
+            if (fallback.sqrMagnitude < 0.0001f) fallback = cameraTransform.forward;
+            fallback.Normalize();
 
-            Vector3 position = GetOcclusionAdjustedPosition(preferredPosition, rotation, localScale);
-            Vector3 placementScale = localScale;
-            Vector3 halfExtents = GetPanelHalfExtents(placementScale);
-            bool positionIsClear = IsPanelPositionClear(position, rotation, halfExtents);
-            bool foundClearPlacement = positionIsClear;
-            float placementDistance = cameraTransform != null
-                ? Vector3.Distance(cameraTransform.position, position)
-                : 0f;
-            if (!positionIsClear || placementDistance < minimumDistanceFromCamera)
-            {
-                Vector3 bestPosition = position;
-                Vector3 bestScale = placementScale;
-                float bestDistance = positionIsClear ? placementDistance : -1f;
-                for (int step = 1; step <= 9; step++)
-                {
-                    float scaleFactor = 1f - step * 0.1f;
-                    Vector3 candidateScale = localScale * scaleFactor;
-                    Vector3 candidatePosition = GetOcclusionAdjustedPosition(preferredPosition, rotation,
-                        candidateScale);
-                    Vector3 candidateHalfExtents = GetPanelHalfExtents(candidateScale);
-                    if (!IsPanelPositionClear(candidatePosition, rotation, candidateHalfExtents)) continue;
+            if (menuHandAnchor == null) return fallback;
 
-                    float candidateDistance = cameraTransform != null
-                        ? Vector3.Distance(cameraTransform.position, candidatePosition)
-                        : 0f;
-                    foundClearPlacement = true;
-                    if (candidateDistance > bestDistance + 0.01f)
-                    {
-                        bestPosition = candidatePosition;
-                        bestScale = candidateScale;
-                        bestDistance = candidateDistance;
-                    }
+            Vector3 toHand = menuHandAnchor.position - cameraTransform.position;
+            Vector3 flat = Vector3.ProjectOnPlane(toHand, Vector3.up);
+            // Hand directly above or below the head carries no usable heading.
+            if (flat.sqrMagnitude < 0.0001f) return fallback;
 
-                    if (candidateDistance < minimumDistanceFromCamera) continue;
-                    bestPosition = candidatePosition;
-                    bestScale = candidateScale;
-                    bestDistance = candidateDistance;
-                    break;
-                }
+            float horizontal = flat.magnitude;
+            flat /= horizontal;
 
-                position = bestPosition;
-                placementScale = bestScale;
-                placementDistance = bestDistance;
-            }
+            // Positive pitch means the hand is above the eye line. AngleAxis about (up x flat)
+            // tilts downward for a positive angle, hence the negation.
+            float pitch = Mathf.Clamp(Mathf.Atan2(toHand.y, horizontal) * Mathf.Rad2Deg,
+                -handAnchorPitchClamp, handAnchorPitchClamp);
 
-            halfExtents = GetPanelHalfExtents(placementScale);
-            if (!foundClearPlacement || !IsPanelPositionClear(position, rotation, halfExtents))
-            {
-                Debug.LogError("[VRPauseMenu] No wall-free placement exists at this viewpoint, even at the " +
-                               "minimum fallback scale. Move away from the wall and reopen the menu.", this);
-                return;
-            }
+            return Quaternion.AngleAxis(-pitch, Vector3.Cross(Vector3.up, flat)) * flat;
+        }
 
-            float scaleRatio = Mathf.Abs(localScale.x) > Mathf.Epsilon
-                ? Mathf.Abs(placementScale.x / localScale.x)
-                : 1f;
-            if (scaleRatio < 0.999f)
-                Debug.LogWarning($"[VRPauseMenu] The full-size panel does not fit comfortably at this viewpoint; " +
-                                 $"temporarily scaled it to {scaleRatio:P0} to prevent wall clipping.", this);
-
-            if (placementDistance < minimumDistanceFromCamera)
-                Debug.LogWarning($"[VRPauseMenu] Wall geometry leaves only {placementDistance:F2} m for the " +
-                                 "menu; placing it closer than the configured comfort minimum to prevent " +
-                                 "clipping.", this);
-
+        /// <summary>
+        /// Straight pose assignment. The panel lives on the MenuOverlay layer, which a depth-clearing
+        /// URP overlay camera draws after the scene, so wall geometry can no longer hide or clip it --
+        /// there is nothing left for a wall-avoidance search to solve.
+        /// </summary>
+        void PlaceMenu(Vector3 position, Quaternion rotation, Vector3 localScale)
+        {
             transform.SetPositionAndRotation(position, rotation);
-            transform.localScale = placementScale;
-        }
-
-        Vector3 GetOcclusionAdjustedPosition(Vector3 preferredPosition, Quaternion rotation, Vector3 localScale)
-        {
-            if (!keepInFrontOfWalls || cameraTransform == null || documentCollider == null)
-                return preferredPosition;
-
-            Vector3 offset = preferredPosition - cameraTransform.position;
-            float preferredDistance = offset.magnitude;
-            if (preferredDistance <= Mathf.Epsilon) return preferredPosition;
-
-            Vector3 direction = offset / preferredDistance;
-            Vector3 halfExtents = GetPanelHalfExtents(localScale);
-            float safeDistance = preferredDistance;
-            RaycastHit[] hits = Physics.BoxCastAll(cameraTransform.position, halfExtents, direction, rotation,
-                preferredDistance, wallMask, QueryTriggerInteraction.Ignore);
-            for (int i = 0; i < hits.Length; i++)
-                if (hits[i].collider != documentCollider)
-                    safeDistance = Mathf.Min(safeDistance, Mathf.Max(0f, hits[i].distance - wallPadding));
-
-            Vector3 position = cameraTransform.position + direction * safeDistance;
-            if (!IsPanelPositionClear(position, rotation, halfExtents))
-            {
-                const float searchStep = 0.05f;
-                for (float distance = safeDistance - searchStep; distance >= 0f; distance -= searchStep)
-                {
-                    Vector3 candidate = cameraTransform.position + direction * distance;
-                    if (!IsPanelPositionClear(candidate, rotation, halfExtents)) continue;
-                    safeDistance = distance;
-                    position = candidate;
-                    break;
-                }
-            }
-
-            return position;
-        }
-
-        bool IsPanelPositionClear(Vector3 position, Quaternion rotation, Vector3 halfExtents)
-        {
-            Collider[] overlaps = Physics.OverlapBox(position, halfExtents, rotation, wallMask,
-                QueryTriggerInteraction.Ignore);
-            for (int i = 0; i < overlaps.Length; i++)
-                if (overlaps[i] != documentCollider) return false;
-            return true;
-        }
-
-        Vector3 GetPanelHalfExtents(Vector3 localScale)
-        {
-            Vector3 parentScale = transform.parent != null ? transform.parent.lossyScale : Vector3.one;
-            Vector3 worldScale = Vector3.Scale(parentScale, localScale);
-            worldScale = new Vector3(Mathf.Abs(worldScale.x), Mathf.Abs(worldScale.y),
-                Mathf.Abs(worldScale.z));
-            Vector3 halfExtents = Vector3.Scale(documentCollider.size, worldScale) * 0.5f;
-            halfExtents.z = Mathf.Max(halfExtents.z, 0.005f);
-            return halfExtents;
+            transform.localScale = localScale;
         }
 
         void ResolveCamera()
@@ -768,6 +823,8 @@ namespace EchoRoom.UI
 #if ENABLE_INPUT_SYSTEM
             pauseAction?.Dispose();
             pauseAction = null;
+            holdPauseAction?.Dispose();
+            holdPauseAction = null;
 #endif
             if (Instance == this) Instance = null;
         }
@@ -775,8 +832,6 @@ namespace EchoRoom.UI
         void OnValidate()
         {
             distanceFromCamera = Mathf.Max(0.25f, distanceFromCamera);
-            minimumDistanceFromCamera = Mathf.Clamp(minimumDistanceFromCamera, 0.25f, distanceFromCamera);
-            wallPadding = Mathf.Max(0.01f, wallPadding);
         }
     }
 }

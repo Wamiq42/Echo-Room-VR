@@ -92,6 +92,10 @@
           </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement class="setting-row">
+          <ui:Label text="HANDEDNESS" class="setting-label" />
+          <ui:Button name="handedness-button" text="BOTH" class="menu-button setting-value-button" />
+        </ui:VisualElement>
+        <ui:VisualElement class="setting-row">
           <ui:Label text="COMFORT VIGNETTE" class="setting-label" />
           <ui:Button name="vignette-button" text="ON" class="menu-button setting-value-button" />
         </ui:VisualElement>

@@ -23,7 +23,7 @@ public class PingAttractedEntity : MonoBehaviour
     [SerializeField] private bool resetOnCapture = true;
     [SerializeField] private bool resetToInitialPlayerSpawn = true;
     [SerializeField] private bool respawnPlayerWithGameManager = true;
-    [SerializeField] private bool enableDebugLogs = true;
+    [SerializeField] private bool enableDebugLogs = false;
 
     [Header("Proximity Sound")]
     [SerializeField] private float maxAudioDistance = 12f;

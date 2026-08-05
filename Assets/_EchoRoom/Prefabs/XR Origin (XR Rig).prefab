@@ -1902,6 +1902,10 @@ PrefabInstance:
       propertyPath: m_SelectInput.m_InputActionReferencePerformed
       value: 
       objectReference: {fileID: -8061240218431744966, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+    - target: {fileID: 2761784063978902504, guid: c1800acf6366418a9b5f610249000331, type: 3}
+      propertyPath: m_Parameters.widthMultiplier
+      value: 0.015
+      objectReference: {fileID: 0}
     - target: {fileID: 2761784063978902505, guid: c1800acf6366418a9b5f610249000331, type: 3}
       propertyPath: m_LineWidth
       value: 0.015
@@ -2090,6 +2094,10 @@ PrefabInstance:
       propertyPath: m_SelectInput.m_InputActionReferencePerformed
       value: 
       objectReference: {fileID: 1263111715868034790, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+    - target: {fileID: 2761784063978902504, guid: c1800acf6366418a9b5f610249000331, type: 3}
+      propertyPath: m_Parameters.widthMultiplier
+      value: 0.015
+      objectReference: {fileID: 0}
     - target: {fileID: 2761784063978902505, guid: c1800acf6366418a9b5f610249000331, type: 3}
       propertyPath: m_LineWidth
       value: 0.015

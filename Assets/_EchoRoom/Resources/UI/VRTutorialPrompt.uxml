@@ -22,7 +22,7 @@
           <ui:VisualElement class="divider-core" picking-mode="Ignore" />
           <ui:VisualElement class="divider-line" picking-mode="Ignore" />
         </ui:VisualElement>
-        <ui:Label name="tutorial-prompt-body" text="Press the SONAR button to reveal the corridor." class="body prompt-body" picking-mode="Ignore" />
+        <ui:Label name="tutorial-prompt-body" text="Press B to reveal the corridor." class="body prompt-body" picking-mode="Ignore" />
         <ui:Label text="ECHO GUIDANCE  //  WORLD LOCKED" class="status prompt-status" picking-mode="Ignore" />
       </ui:VisualElement>
     </ui:VisualElement>
