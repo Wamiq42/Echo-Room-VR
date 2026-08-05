@@ -1,12 +1,5 @@
 {
   "mcpServers": {
-    "unity-mcp": {
-      "command": "Library/mcp-server/win-x64/gamedev-mcp-server.exe",
-      "args": [
-        "port=8080",
-        "client-transport=stdio"
-      ]
-    },
     "blender": {
       "command": "C:\\Users\\wamiq\\.local\\bin\\uvx.exe",
       "args": [
@@ -15,7 +8,7 @@
     },
     "ai-game-developer": {
       "type": "http",
-      "url": "http://localhost:26566"
+      "url": "http://localhost:26566/p/a1370f8e"
     }
   }
 }

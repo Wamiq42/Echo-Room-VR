@@ -33,4 +33,4 @@ args = ["blender-mcp"]
 enabled = true
 startup_timeout_sec = 30
 tool_timeout_sec = 300
-url = "http://localhost:27734/p/f670d6e8"
+url = "http://localhost:26566/p/a1370f8e"
