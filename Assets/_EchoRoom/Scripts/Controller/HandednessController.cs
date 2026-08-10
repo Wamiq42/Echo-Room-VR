@@ -1,9 +1,8 @@
 using EchoRoom.Settings;
 using EchoRoom.UI;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
 
-#pragma warning disable CS0618 // The rig still serializes XRI's legacy action-based turn providers.
 
 namespace EchoRoom.Controller
 {
@@ -29,7 +28,7 @@ namespace EchoRoom.Controller
         [Header("Turn")]
         [Tooltip("Snap turn provider. Stick-down turn-around is switched off in single-hand play, " +
                  "where the same axis is reverse movement.")]
-        [SerializeField] ActionBasedSnapTurnProvider snapTurnProvider;
+        [SerializeField] SnapTurnProvider snapTurnProvider;
 
         Transform[] authoredParents;
         bool authoredTurnAround;
@@ -53,6 +52,7 @@ namespace EchoRoom.Controller
         void Awake()
         {
             if (Instance == null || Instance == this) Instance = this;
+            ResolveSnapTurnProvider();
             CaptureAuthoredState();
         }
 
@@ -144,6 +144,7 @@ namespace EchoRoom.Controller
         void CaptureAuthoredState()
         {
             if (capturedAuthoredState) return;
+            ResolveSnapTurnProvider();
             capturedAuthoredState = true;
 
             authoredTurnAround = snapTurnProvider == null || snapTurnProvider.enableTurnAround;
@@ -158,7 +159,18 @@ namespace EchoRoom.Controller
             for (int i = 0; i < handMountedObjects.Length; i++)
                 authoredParents[i] = handMountedObjects[i] != null ? handMountedObjects[i].parent : null;
         }
+
+        void ResolveSnapTurnProvider()
+        {
+            if (snapTurnProvider == null)
+                snapTurnProvider = GetComponentInChildren<SnapTurnProvider>(true);
+        }
+
+#if UNITY_EDITOR
+        void OnValidate()
+        {
+            ResolveSnapTurnProvider();
+        }
+#endif
     }
 }
-
-#pragma warning restore CS0618

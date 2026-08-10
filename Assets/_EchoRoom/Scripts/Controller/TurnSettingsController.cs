@@ -1,16 +1,15 @@
 using EchoRoom.Settings;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
 
-#pragma warning disable CS0618 // The existing rig still serializes XRI's legacy action-based providers.
 
 namespace EchoRoom.Controller
 {
     [DisallowMultipleComponent]
     public sealed class TurnSettingsController : MonoBehaviour
     {
-        [SerializeField] ActionBasedSnapTurnProvider snapTurnProvider;
-        [SerializeField] ActionBasedContinuousTurnProvider smoothTurnProvider;
+        [SerializeField] SnapTurnProvider snapTurnProvider;
+        [SerializeField] ContinuousTurnProvider smoothTurnProvider;
 
         void Reset() => ResolveProviders();
 
@@ -54,9 +53,9 @@ namespace EchoRoom.Controller
 
         void ResolveProviders()
         {
-            if (snapTurnProvider == null) snapTurnProvider = GetComponent<ActionBasedSnapTurnProvider>();
+            if (snapTurnProvider == null) snapTurnProvider = GetComponent<SnapTurnProvider>();
             if (smoothTurnProvider == null)
-                smoothTurnProvider = GetComponent<ActionBasedContinuousTurnProvider>();
+                smoothTurnProvider = GetComponent<ContinuousTurnProvider>();
         }
 
 #if UNITY_EDITOR
@@ -67,5 +66,3 @@ namespace EchoRoom.Controller
 #endif
     }
 }
-
-#pragma warning restore CS0618

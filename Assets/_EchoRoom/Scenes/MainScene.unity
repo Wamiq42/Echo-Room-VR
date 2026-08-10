@@ -4777,7 +4777,6 @@ MonoBehaviour:
   pauseTimeWhileOpen: 1
   pauseEnvironmentAudioWhileOpen: 1
   useControllerMenuButton: 1
-  holdPauseSeconds: 0.75
   distanceFromCamera: 0.7
   heightOffset: -0.05
   menuHandAnchor: {fileID: 1781579284}
@@ -7475,6 +7474,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 36823050186726595, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_Mediator
+      value: 
+      objectReference: {fileID: 8338603742182400837}
+    - target: {fileID: 36823050186726595, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_LeftHandTurnInput.m_InputActionReference
+      value: 
+      objectReference: {fileID: 1010738217276881514, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+    - target: {fileID: 36823050186726595, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_RightHandTurnInput.m_InputActionReference
+      value: 
+      objectReference: {fileID: -6493913391331992944, guid: c348712bda248c246b8c49b3db54643f, type: 3}
     - target: {fileID: 856360250439717618, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.71
@@ -7583,6 +7594,18 @@ PrefabInstance:
       propertyPath: pingAudioOption
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9102791474220375490, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_Mediator
+      value: 
+      objectReference: {fileID: 8338603742182400837}
+    - target: {fileID: 9102791474220375490, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_LeftHandTurnInput.m_InputActionReference
+      value: 
+      objectReference: {fileID: -7374733323251553461, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+    - target: {fileID: 9102791474220375490, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+      propertyPath: m_RightHandTurnInput.m_InputActionReference
+      value: 
+      objectReference: {fileID: -8525429354371678379, guid: c348712bda248c246b8c49b3db54643f, type: 3}
     - target: {fileID: 9130616330724265117, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
       propertyPath: m_Name
       value: XR Origin (XR Rig)
@@ -7734,22 +7757,22 @@ MonoBehaviour:
       m_SingletonActionBindings: []
       m_Flags: 0
     m_Reference: {fileID: 1906631214875697067, guid: c348712bda248c246b8c49b3db54643f, type: 3}
---- !u!4 &8338603742182400830 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5772631025027859343, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
-  m_PrefabInstance: {fileID: 8338603742182400825}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &8338603742182400831 stripped
+--- !u!114 &8338603742182400829 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7275216542888700965, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+  m_CorrespondingSourceObject: {fileID: 9102791474220375490, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
   m_PrefabInstance: {fileID: 8338603742182400825}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 0
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2213c36610e3b1c4bbf886810ed9db12, type: 3}
+  m_Script: {fileID: 11500000, guid: e9f365cf844c03449bc8973eead2c3c1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning.SnapTurnProvider
+--- !u!4 &8338603742182400830 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5772631025027859343, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+  m_PrefabInstance: {fileID: 8338603742182400825}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &8338603742182400832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7781,7 +7804,18 @@ MonoBehaviour:
   rightController: {fileID: 508977651}
   handMountedObjects:
   - {fileID: 8338603742182400830}
-  snapTurnProvider: {fileID: 8338603742182400831}
+  snapTurnProvider: {fileID: 8338603742182400829}
+--- !u!114 &8338603742182400837 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5269596716605633915, guid: 6f80bb346b48deb4882abdf57c0f7c41, type: 3}
+  m_PrefabInstance: {fileID: 8338603742182400825}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 804398065}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6fa7b4195685c3846be746c74f0ab2f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Locomotion.LocomotionMediator
 --- !u!1001 &8598491970374124207
 PrefabInstance:
   m_ObjectHideFlags: 0
